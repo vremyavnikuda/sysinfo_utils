@@ -59,12 +59,23 @@ pub enum Type {
 }
 
 impl Default for Type {
+    /// Returns the default `Type`, which is `Type::Unknown`.
+    ///
+    /// This is used to provide a default value for the `Type` enum
+    /// when one is not explicitly specified.
     fn default() -> Self {
         Type::Unknown
     }
 }
 
 impl Display for Type {
+    /// Formats the OS type into a string.
+    ///
+    /// The string is the name of the OS type, without any additional information.
+    ///
+    /// # Examples
+    ///
+    ///
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
             Type::AIX => write!(f, "AIX"),
@@ -118,5 +129,80 @@ impl Display for Type {
             Type::Unknown => write!(f, "Unknown"),
             Type::Windows => write!(f, "Windows"),
         }
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+    use crate::system_info::Info;
+
+    /// Tests that `Info::default()` is correct.
+    ///
+    /// A default `Info` should have an `Unknown` system type, an `Unknown`
+    /// version, and `None` for all other fields.
+    #[test]
+    fn test_info_default() {
+        let info = Info::default();
+        assert_eq!(info.system_type, Type::Unknown);
+        assert_eq!(info.version, Version::unknown());
+        assert_eq!(info.edition, None);
+        assert_eq!(info.codename, None);
+        assert_eq!(info.bit_depth, BitDepth::Unknown);
+        assert_eq!(info.architecture, None);
+    }
+
+    /// Tests that `Info::unknown()` returns an `Info` with all fields set to
+    /// their default values.
+    ///
+    /// Verifies that the output of `unknown()` is an `Info` with an
+    /// `Unknown` system type, an `Unknown` version, and `None` for all
+    /// other fields.
+    #[test]
+    fn test_info_unknown() {
+        let info = Info::unknown();
+        assert_eq!(info.system_type, Type::Unknown);
+        assert_eq!(info.version, Version::unknown());
+        assert_eq!(info.edition, None);
+        assert_eq!(info.codename, None);
+        assert_eq!(info.bit_depth, BitDepth::Unknown);
+        assert_eq!(info.architecture, None);
+    }
+
+    /// Test that `Info::write_type` creates an `Info` with the specified system type
+    /// and all other fields set to their default values.
+    #[test]
+    fn test_info_write_type() {
+        let info = Info::write_type(Type::Linux);
+        assert_eq!(info.system_type, Type::Linux);
+        assert_eq!(info.version, Version::unknown());
+        assert_eq!(info.edition, None);
+        assert_eq!(info.codename, None);
+    /// Tests that `Info` implements `Display` correctly.
+    ///
+    /// Verifies that the output of `Display` for `Info` is in the
+    /// correct format, including the system type, version number,
+    /// edition, codename, bit depth, and architecture.
+        assert_eq!(info.bit_depth, BitDepth::Unknown);
+        assert_eq!(info.architecture, None);
+    }
+
+    /// Tests that `Info` implements `Display` correctly.
+    ///
+    /// Verifies that the output of `Display` for `Info` is in the
+    /// correct format, including the system type, version number,
+    /// edition, codename, bit depth, and architecture.
+    #[test]
+    fn test_info_display() {
+        let info = Info {
+            system_type: Type::Linux,
+            version: Version::new(1, 0, 0),
+            edition: Some("Pro".to_string()),
+            codename: Some("Focal".to_string()),
+            bit_depth: BitDepth::X64,
+            architecture: Some("x86_64".to_string()),
+        };
+        let display = format!("{}", info);
+        assert_eq!(display, "Linux Pro (Focal) 1.0.0, 64-bit, x86_64");
     }
 }

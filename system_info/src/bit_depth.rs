@@ -22,6 +22,13 @@ pub enum BitDepth {
 }
 
 impl Display for BitDepth {
+    /// Formats the bit depth as a string.
+    ///
+    /// Returns a `Result` indicating whether the formatting was successful.
+    ///
+    /// # Examples
+    ///
+    ///
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
             BitDepth::Unknown => write!(f, "Unknown"),
@@ -38,6 +45,12 @@ impl Display for BitDepth {
     target_os = "macos",
 ))]
 
+/// Returns the bit depth of the system as a `BitDepth`.
+///
+/// The bit depth is determined by running the `getconf LONG_BIT` command
+/// and parsing the output. If the output is "32", returns `BitDepth::X32`.
+/// If the output is "64", returns `BitDepth::X64`. Otherwise, returns
+/// `BitDepth::Unknown`.
 pub fn get() -> BitDepth {
     match &Command::new("getconf").arg("LONG_BIT").output() {
         Ok(Output { stdout, .. }) if stdout == b"32\n" => BitDepth::X32,
@@ -46,6 +59,15 @@ pub fn get() -> BitDepth {
     }
 }
 
+/// Returns the bit depth of the system as a `BitDepth`.
+///
+/// The bit depth is determined by running the `sysctl -n hw.machine_arch` command
+/// and checking the output. If the output is "amd64\n", "x86_64\n", "aarch64\n",
+/// or "sparc64\n", the bit depth is `BitDepth::X64`. If the output is "i386\n"
+/// or "earmv7hf\n", the bit depth is `BitDepth::X32`. Otherwise, the bit depth is
+/// `BitDepth::Unknown`.
+///
+/// This function is only available on NetBSD systems.
 #[cfg(target_os = "netbsd")]
 pub fn get() -> BitDepth {
     match &Command::new("sysctl")
@@ -63,6 +85,14 @@ pub fn get() -> BitDepth {
     }
 }
 
+/// Returns the bit depth of the system as a `BitDepth`.
+///
+/// The bit depth is determined by running the `isainfo -b` command and
+/// checking the output. If the output is "64\n", the bit depth is
+/// `BitDepth::X64`. If the output is "32\n", the bit depth is
+/// `BitDepth::X32`. Otherwise, the bit depth is `BitDepth::Unknown`.
+///
+/// This function is only available on Illumos systems.
 #[cfg(target_os = "illumos")]
 pub fn get() -> BitDepth {
     match Command::new("isainfo").arg("-b").output() {
@@ -72,6 +102,14 @@ pub fn get() -> BitDepth {
     }
 }
 
+    /// Returns the bit depth of the system as a `BitDepth`.
+    ///
+    /// The bit depth is determined by running the `prtconf -c` command and
+    /// checking the output. If the output is "CPU :64-bit\n", the bit depth
+    /// is `BitDepth::X64`. If the output is "CPU :32-bit\n", the bit depth
+    /// is `BitDepth::X32`. Otherwise, the bit depth is `BitDepth::Unknown`.
+    ///
+    /// This function is only available on AIX systems.
 #[cfg(target_os = "aix")]
 pub fn get() -> BitDepth {
     match Command::new("prtconf").arg("-c").output() {
@@ -98,12 +136,28 @@ mod tests {
     use super::*;
     use pretty_assertions::assert_ne;
 
+    /// Tests the `get` function to ensure it returns a bit depth
+    /// that is not `BitDepth::Unknown`.
+    #[test]
+    fn get_bitness() {
+        let b = get();
+        assert_ne!(b, BitDepth::Unknown);
+    }
+    /// Tests that the `get` function returns a `BitDepth` that is not
+    /// `BitDepth::Unknown`.
     #[test]
     fn get_bitness() {
         let b = get();
         assert_ne!(b, BitDepth::Unknown);
     }
 
+    /// Tests the `Display` implementation for the `BitDepth` enum.
+    ///
+    /// This test verifies that each variant of `BitDepth` is correctly
+    /// formatted as a string according to its expected representation.
+    /// - `BitDepth::Unknown` should be represented as "unknown bit depth".
+    /// - `BitDepth::X32` should be represented as "32-bit".
+    /// - `BitDepth::X64` should be represented as "64-bit".
     #[test]
     fn display() {
         let data = [
