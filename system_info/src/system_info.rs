@@ -1,6 +1,7 @@
-use std::fmt::Display;
+use crate::bit_depth::BitDepth;
 use crate::system_os::Type;
 use crate::system_version::SystemVersion;
+use std::fmt::Display;
 
 pub struct Info {
     pub(crate) system_type: Type,
@@ -26,7 +27,7 @@ impl Info {
     pub fn unknown() -> Self {
         Self {
             system_type: Type::Unknown,
-            version: Version::unknown(),
+            version: SystemVersion::Unknown,
             edition: None,
             codename: None,
             bit_depth: BitDepth::Unknown,
@@ -61,8 +62,8 @@ impl Info {
     /// # Returns
     ///
     /// * `&Version` - The version of the OS.
-    pub fn version(&self) -> &Version {
-        self.version
+    pub fn version(&self) -> &SystemVersion {
+        &self.version
     }
 
     /// Returns the edition of the OS.

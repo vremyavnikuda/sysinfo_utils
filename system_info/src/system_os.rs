@@ -134,8 +134,10 @@ impl Display for Type {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pretty_assertions::assert_eq;
+    use crate::bit_depth::BitDepth;
     use crate::system_info::Info;
+    use crate::system_version::SystemVersion;
+    use pretty_assertions::assert_eq;
 
     /// Tests that `Info::default()` is correct.
     ///
@@ -145,7 +147,7 @@ mod tests {
     fn test_info_default() {
         let info = Info::default();
         assert_eq!(info.system_type, Type::Unknown);
-        assert_eq!(info.version, Version::unknown());
+        assert_eq!(info.version, SystemVersion::Unknown);
         assert_eq!(info.edition, None);
         assert_eq!(info.codename, None);
         assert_eq!(info.bit_depth, BitDepth::Unknown);
@@ -162,7 +164,7 @@ mod tests {
     fn test_info_unknown() {
         let info = Info::unknown();
         assert_eq!(info.system_type, Type::Unknown);
-        assert_eq!(info.version, Version::unknown());
+        assert_eq!(info.version, SystemVersion::Unknown);
         assert_eq!(info.edition, None);
         assert_eq!(info.codename, None);
         assert_eq!(info.bit_depth, BitDepth::Unknown);
@@ -175,14 +177,14 @@ mod tests {
     fn test_info_write_type() {
         let info = Info::write_type(Type::Linux);
         assert_eq!(info.system_type, Type::Linux);
-        assert_eq!(info.version, Version::unknown());
+        assert_eq!(info.version, SystemVersion::Unknown);
         assert_eq!(info.edition, None);
         assert_eq!(info.codename, None);
-    /// Tests that `Info` implements `Display` correctly.
-    ///
-    /// Verifies that the output of `Display` for `Info` is in the
-    /// correct format, including the system type, version number,
-    /// edition, codename, bit depth, and architecture.
+        /// Tests that `Info` implements `Display` correctly.
+        ///
+        /// Verifies that the output of `Display` for `Info` is in the
+        /// correct format, including the system type, version number,
+        /// edition, codename, a bit of depth, and architecture.
         assert_eq!(info.bit_depth, BitDepth::Unknown);
         assert_eq!(info.architecture, None);
     }
@@ -191,12 +193,12 @@ mod tests {
     ///
     /// Verifies that the output of `Display` for `Info` is in the
     /// correct format, including the system type, version number,
-    /// edition, codename, bit depth, and architecture.
+    /// edition, codename, a bit of depth, and architecture.
     #[test]
     fn test_info_display() {
         let info = Info {
             system_type: Type::Linux,
-            version: Version::new(1, 0, 0),
+            version: SystemVersion::New(1, 1, 1),
             edition: Some("Pro".to_string()),
             codename: Some("Focal".to_string()),
             bit_depth: BitDepth::X64,

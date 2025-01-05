@@ -11,6 +11,7 @@ pub enum SystemVersion {
     Semantic(u64, u64, u64),
     Rolling(Option<String>),
     Custom(String),
+    New(u64, u64, u64),
 }
 
 impl SystemVersion {
