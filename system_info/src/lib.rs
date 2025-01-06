@@ -1,10 +1,10 @@
+mod architecture;
+mod bit_depth;
 #[cfg(target_os = "aix")]
 #[path = "aix/mod.rs"]
 mod imp;
 mod system_info;
-mod architecture;
-mod system_os;
-mod system_version;
-mod bit_depth;
-mod system_uname;
 mod system_matcher;
+mod system_os;
+mod system_uname;
+mod system_version;
