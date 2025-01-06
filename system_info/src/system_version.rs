@@ -73,6 +73,7 @@ impl Display for SystemVersion {
                 }
             }
             SystemVersion::Custom(ref version) => write!(f, "{}", version),
+            SystemVersion::New(_, _, _) => todo!(),
         }
     }
 }
@@ -187,37 +188,6 @@ mod tests {
         let version = SystemVersion::Rolling(None);
         assert_eq!(version.to_string(), "Rolling");
     }
-    /// Tests that a rolling version without a codename is formatted as `"Rolling"`.
-    ///
-    /// This test case ensures that `Display` for `SystemVersion` returns the
-    /// string `"Rolling"` when given a `SystemVersion::Rolling` instance
-    /// without a codename.
-    #[test]
-    fn test_display_rolling_without_codename() {
-        let version = SystemVersion::Rolling(None);
-        assert_eq!(version.to_string(), "Rolling");
-    }
-    /// Tests that a rolling version without a codename is formatted as `"Rolling"`.
-    ///
-    /// This test case ensures that `Display` for `SystemVersion` returns the
-    /// string `"Rolling"` when given a `SystemVersion::Rolling` instance
-    /// without a codename.
-    #[test]
-    fn test_display_rolling_without_codename() {
-        let version = SystemVersion::Rolling(None);
-        assert_eq!(version.to_string(), "Rolling");
-    }
-    /// Tests that a rolling version without a codename is formatted as `"Rolling"`.
-    ///
-    /// This test case ensures that the `Display` trait for `SystemVersion` returns
-    /// the string `"Rolling"` when given a `SystemVersion::Rolling` instance
-    /// without a codename.
-    #[test]
-    fn test_display_rolling_without_codename() {
-        let version = SystemVersion::Rolling(None);
-        assert_eq!(version.to_string(), "Rolling");
-    }
-
     /// Tests that a custom version is formatted correctly.
     ///
     /// This test case ensures that `Display` for `SystemVersion` returns the

@@ -69,6 +69,8 @@
     "Cargo.Test architecture::tests.executor": "Run",
     "Cargo.Test architecture::tests::test_get_success.executor": "Run",
     "Cargo.Test bit_depth::tests.executor": "Run",
+    "Cargo.Test imp::tests.executor": "Run",
+    "Cargo.Test system_matcher::tests.executor": "Run",
     "Cargo.Test system_os::tests::test_info_display.executor": "Run",
     "Cargo.Test system_version::tests.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -84,7 +86,7 @@
     "nodejs_package_manager_path": "npm",
     "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
     "org.rust.first.attach.projects": "true",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "settings.editor.selected.configurable": "com.github.copilot.settings.ApplicationConfigurable",
     "vue.rearranger.settings.migration": "true"
   },
   "keyToStringList": {
@@ -95,7 +97,7 @@
     ]
   }
 }]]></component>
-  <component name="RunManager" selected="Cargo.Test system_os::tests::test_info_display">
+  <component name="RunManager" selected="Cargo.Test system_matcher::tests">
     <configuration name="Run system_cli" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="command" value="run --package system_cli --bin system_cli" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$/.." />
@@ -130,42 +132,25 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Test architecture::tests" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="command" value="test --package system_info --lib architecture::tests" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$/.." />
-      <envs />
-      <option name="emulateTerminal" value="true" />
-      <option name="channel" value="DEFAULT" />
-      <option name="requiredFeatures" value="true" />
-      <option name="allFeatures" value="false" />
-      <option name="withSudo" value="false" />
-      <option name="buildTarget" value="REMOTE" />
-      <option name="backtrace" value="SHORT" />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Test architecture::tests::test_get_success" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="command" value="test --package system_info --lib architecture::tests::test_get_success -- --exact" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$/.." />
-      <envs />
-      <option name="emulateTerminal" value="true" />
-      <option name="channel" value="DEFAULT" />
-      <option name="requiredFeatures" value="true" />
-      <option name="allFeatures" value="false" />
-      <option name="withSudo" value="false" />
-      <option name="buildTarget" value="REMOTE" />
-      <option name="backtrace" value="SHORT" />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="Test bit_depth::tests" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="command" value="test --package system_info --lib bit_depth::tests" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$/.." />
+      <envs />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Test imp::tests" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="test --package system_info --lib imp::tests" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$/.." />
       <envs />
       <option name="emulateTerminal" value="true" />
@@ -184,6 +169,23 @@
     <configuration name="Test system_info" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="buildProfileId" value="test" />
       <option name="command" value="test --workspace" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$/.." />
+      <envs />
+      <option name="emulateTerminal" value="true" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Test system_matcher::tests" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="test --package system_info --lib system_matcher::tests" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$/.." />
       <envs />
       <option name="emulateTerminal" value="true" />
@@ -235,11 +237,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Cargo.Test system_matcher::tests" />
+        <item itemvalue="Cargo.Test imp::tests" />
         <item itemvalue="Cargo.Test system_os::tests::test_info_display" />
         <item itemvalue="Cargo.Test bit_depth::tests" />
         <item itemvalue="Cargo.Test system_version::tests" />
-        <item itemvalue="Cargo.Test architecture::tests::test_get_success" />
-        <item itemvalue="Cargo.Test architecture::tests" />
       </list>
     </recent_temporary>
   </component>
@@ -258,7 +260,7 @@
       <workItem from="1736014258766" duration="522000" />
       <workItem from="1736014795572" duration="4540000" />
       <workItem from="1736055743702" duration="2000" />
-      <workItem from="1736059064732" duration="9200000" />
+      <workItem from="1736059064732" duration="28537000" />
     </task>
     <task id="LOCAL-00001" summary="- Add `Type` enum in `src/system_os.rs` to represent various operating systems.&#10;- Implement `Info` struct in `src/system_info.rs` to store system information.&#10;- Add `get` function in `src/architecture.rs` to retrieve system architecture.&#10;- Implement `SystemVersion` enum in `src/system_version.rs` to represent OS versions.&#10;- Add `BitDepth` enum in `src/bit_depth.rs` to represent system bit depth.&#10;- Update `src/lib.rs` to include new modules and provide a `get` function to retrieve system info.&#10;- Add tests for `SystemVersion` and `BitDepth` enums.&quot;">
       <option name="closed" value="true" />
@@ -288,5 +290,9 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="- Add `Type` enum in `src/system_os.rs` to represent various operating systems.&#10;- Implement `Info` struct in `src/system_info.rs` to store system information.&#10;- Add `get` function in `src/architecture.rs` to retrieve system architecture.&#10;- Implement `SystemVersion` enum in `src/system_version.rs` to represent OS versions.&#10;- Add `BitDepth` enum in `src/bit_depth.rs` to represent system bit depth.&#10;- Update `src/lib.rs` to include new modules and provide a `get` function to retrieve system info.&#10;- Add tests for `SystemVersion` and `BitDepth` enums.&quot;" />
     <option name="LAST_COMMIT_MESSAGE" value="- Add `Type` enum in `src/system_os.rs` to represent various operating systems.&#10;- Implement `Info` struct in `src/system_info.rs` to store system information.&#10;- Add `get` function in `src/architecture.rs` to retrieve system architecture.&#10;- Implement `SystemVersion` enum in `src/system_version.rs` to represent OS versions.&#10;- Add `BitDepth` enum in `src/bit_depth.rs` to represent system bit depth.&#10;- Update `src/lib.rs` to include new modules and provide a `get` function to retrieve system info.&#10;- Add tests for `SystemVersion` and `BitDepth` enums.&quot;" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

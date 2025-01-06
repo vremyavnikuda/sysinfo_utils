@@ -1,3 +1,7 @@
+//! Prints OS information.
+//!
+//! Prints the full information as well as the components of `system_info::Info`
+//! separately.
 fn main() {
     let info = system_info::get();
 

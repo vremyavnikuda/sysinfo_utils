@@ -1,6 +1,15 @@
 use log::error;
 use std::process::Command;
 
+/// Executes the `uname` command with the given argument.
+///
+/// # Arguments
+///
+/// * `arg` - The argument to pass to `uname`.
+///
+/// # Returns
+///
+/// * `Option<String>` - The output of the `uname` command, if successful.
 pub fn uname(arg: &str) -> Option<String> {
     Command::new("uname")
         .arg(arg)
@@ -23,13 +32,18 @@ pub fn uname(arg: &str) -> Option<String> {
 mod tests {
     use super::*;
 
+    /// Tests that calling `uname` with an empty argument fails.
     #[test]
     fn test_uname() {
         assert!(uname("").is_none());
     }
 
+    /// Tests that calling `uname` with a non-empty argument returns a non-empty result.
+    ///
+    /// This test ensures that when `uname` is called with the `-s` argument,
+    /// it successfully returns a string that is not empty.
     #[test]
-    fn uname_nonempty(){
+    fn uname_nonempty() {
         let val = uname("-s").expect("uname failed");
         assert!(!val.is_empty())
     }

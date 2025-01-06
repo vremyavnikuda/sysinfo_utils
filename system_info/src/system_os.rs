@@ -180,11 +180,6 @@ mod tests {
         assert_eq!(info.version, SystemVersion::Unknown);
         assert_eq!(info.edition, None);
         assert_eq!(info.codename, None);
-        /// Tests that `Info` implements `Display` correctly.
-        ///
-        /// Verifies that the output of `Display` for `Info` is in the
-        /// correct format, including the system type, version number,
-        /// edition, codename, a bit of depth, and architecture.
         assert_eq!(info.bit_depth, BitDepth::Unknown);
         assert_eq!(info.architecture, None);
     }

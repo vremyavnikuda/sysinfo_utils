@@ -102,14 +102,14 @@ pub fn get() -> BitDepth {
     }
 }
 
-    /// Returns the bit depth of the system as a `BitDepth`.
-    ///
-    /// The bit depth is determined by running the `prtconf -c` command and
-    /// checking the output. If the output is "CPU :64-bit\n", the bit depth
-    /// is `BitDepth::X64`. If the output is "CPU :32-bit\n", the bit depth
-    /// is `BitDepth::X32`. Otherwise, the bit depth is `BitDepth::Unknown`.
-    ///
-    /// This function is only available on AIX systems.
+/// Returns the bit depth of the system as a `BitDepth`.
+///
+/// The bit depth is determined by running the `prtconf -c` command and
+/// checking the output. If the output is "CPU :64-bit\n", the bit depth
+/// is `BitDepth::X64`. If the output is "CPU :32-bit\n", the bit depth
+/// is `BitDepth::X32`. Otherwise, the bit depth is `BitDepth::Unknown`.
+///
+/// This function is only available on AIX systems.
 #[cfg(target_os = "aix")]
 pub fn get() -> BitDepth {
     match Command::new("prtconf").arg("-c").output() {
@@ -138,13 +138,6 @@ mod tests {
 
     /// Tests the `get` function to ensure it returns a bit depth
     /// that is not `BitDepth::Unknown`.
-    #[test]
-    fn get_bitness() {
-        let b = get();
-        assert_ne!(b, BitDepth::Unknown);
-    }
-    /// Tests that the `get` function returns a `BitDepth` that is not
-    /// `BitDepth::Unknown`.
     #[test]
     fn get_bitness() {
         let b = get();
