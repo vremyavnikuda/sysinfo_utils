@@ -1,3 +1,5 @@
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum SystemMatcher {
     AllTrimmed,
     PrefixedWord { prefix: &'static str },
@@ -6,7 +8,7 @@ pub enum SystemMatcher {
 }
 
 impl SystemMatcher {
-    pub fn find(&self, string: &str) -> Option<String> {
+    fn find(&self, string: &str) -> Option<String> {
         match *self {
             Self::AllTrimmed => Some(string.trim().to_string()),
             Self::PrefixedWord { prefix } => {

@@ -9,6 +9,11 @@
   <component name="ChangeListManager">
     <list default="true" id="8ac7b28f-2f9d-475c-8f92-7e2e1ebe0232" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/version.rs" beforeDir="false" afterPath="$PROJECT_DIR$/examples/version.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/system_info.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/system_info.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/system_matcher.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/system_matcher.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,41 +67,41 @@
     <option name="showMembers" value="true" />
     <option name="showVisibilityIcons" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "Cargo.Build `Test system_version::tests`.executor": "Run",
-    "Cargo.Test architecture::tests.executor": "Run",
-    "Cargo.Test architecture::tests::test_get_success.executor": "Run",
-    "Cargo.Test bit_depth::tests.executor": "Run",
-    "Cargo.Test imp::tests.executor": "Run",
-    "Cargo.Test system_matcher::tests.executor": "Run",
-    "Cargo.Test system_os::tests::test_info_display.executor": "Run",
-    "Cargo.Test system_version::tests.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.rust.reset.selective.auto.import": "true",
-    "com.codeium.enabled": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "/home/vremyavnikuda/repository/system_info/system_info",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
-    "org.rust.first.attach.projects": "true",
-    "settings.editor.selected.configurable": "com.github.copilot.settings.ApplicationConfigurable",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;Cargo.Build `Test system_version::tests`.executor&quot;: &quot;Run&quot;,
+    &quot;Cargo.Test architecture::tests.executor&quot;: &quot;Run&quot;,
+    &quot;Cargo.Test architecture::tests::test_get_success.executor&quot;: &quot;Run&quot;,
+    &quot;Cargo.Test bit_depth::tests.executor&quot;: &quot;Run&quot;,
+    &quot;Cargo.Test imp::tests.executor&quot;: &quot;Run&quot;,
+    &quot;Cargo.Test system_matcher::tests.executor&quot;: &quot;Run&quot;,
+    &quot;Cargo.Test system_os::tests::test_info_display.executor&quot;: &quot;Run&quot;,
+    &quot;Cargo.Test system_version::tests.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.rust.reset.selective.auto.import&quot;: &quot;true&quot;,
+    &quot;com.codeium.enabled&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/vremyavnikuda/repository/system_info/system_info&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
+    &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "GitStage.ChangesTree.GroupingKeys": [
-      "directory",
-      "module",
-      "repository"
+  &quot;keyToStringList&quot;: {
+    &quot;GitStage.ChangesTree.GroupingKeys&quot;: [
+      &quot;directory&quot;,
+      &quot;module&quot;,
+      &quot;repository&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Cargo.Test system_matcher::tests">
     <configuration name="Run system_cli" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="command" value="run --package system_cli --bin system_cli" />
@@ -237,11 +242,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Cargo.Test system_version::tests" />
+        <item itemvalue="Cargo.Test system_os::tests::test_info_display" />
         <item itemvalue="Cargo.Test system_matcher::tests" />
         <item itemvalue="Cargo.Test imp::tests" />
-        <item itemvalue="Cargo.Test system_os::tests::test_info_display" />
         <item itemvalue="Cargo.Test bit_depth::tests" />
-        <item itemvalue="Cargo.Test system_version::tests" />
       </list>
     </recent_temporary>
   </component>
@@ -261,6 +266,14 @@
       <workItem from="1736014795572" duration="4540000" />
       <workItem from="1736055743702" duration="2000" />
       <workItem from="1736059064732" duration="28537000" />
+      <workItem from="1736198351229" duration="616000" />
+      <workItem from="1736199354998" duration="524000" />
+      <workItem from="1736200295943" duration="88000" />
+      <workItem from="1736200546591" duration="196000" />
+      <workItem from="1737458629398" duration="490000" />
+      <workItem from="1737459542827" duration="47000" />
+      <workItem from="1737459597936" duration="717000" />
+      <workItem from="1737460326539" duration="4000" />
     </task>
     <task id="LOCAL-00001" summary="- Add `Type` enum in `src/system_os.rs` to represent various operating systems.&#10;- Implement `Info` struct in `src/system_info.rs` to store system information.&#10;- Add `get` function in `src/architecture.rs` to retrieve system architecture.&#10;- Implement `SystemVersion` enum in `src/system_version.rs` to represent OS versions.&#10;- Add `BitDepth` enum in `src/bit_depth.rs` to represent system bit depth.&#10;- Update `src/lib.rs` to include new modules and provide a `get` function to retrieve system info.&#10;- Add tests for `SystemVersion` and `BitDepth` enums.&quot;">
       <option name="closed" value="true" />

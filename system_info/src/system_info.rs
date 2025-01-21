@@ -3,6 +3,8 @@ use crate::system_os::Type;
 use crate::system_version::SystemVersion;
 use std::fmt::Display;
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Info {
     pub(crate) system_type: Type,
     pub(crate) version: SystemVersion,
