@@ -19,6 +19,6 @@ mod test{
     #[test]
     fn os_type(){
         let version = current_platform();
-        assert_eq!(Type::Emscripten, version.os_type());
+        assert_eq!(Type::Emscripten, version.system_type());
     }
 }

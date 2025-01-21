@@ -14,6 +14,8 @@ pub struct Info {
     pub(crate) architecture: Option<String>,
 }
 
+
+
 impl Info {
     /// Returns an `Info` instance with all fields set to their unknown or default values.
     ///
@@ -37,14 +39,12 @@ impl Info {
         }
     }
 
-    /// Creates a new `Info` from the given `system_type`, using default values for all other fields.
-    pub fn write_type(system_type: Type) -> Self {
+    pub fn with_type(system_type: Type) -> Self {
         Self {
             system_type,
             ..Default::default()
         }
     }
-
     /// Returns the system type.
     ///
     /// # Returns
