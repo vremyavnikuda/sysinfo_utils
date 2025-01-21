@@ -22,11 +22,58 @@
     unsafe_code,
     missing_doc_code_examples
 )]
-mod architecture;
-mod bit_depth;
+extern crate core;
+
 #[cfg(target_os = "aix")]
 #[path = "aix/mod.rs"]
 mod imp;
+
+#[cfg(target_os = "android")]
+#[path = "android/mod.rs"]
+mod imp;
+
+#[cfg(target_os = "dragonfly")]
+#[path = "dragonfly/mod.rs"]
+mod imp;
+
+#[cfg(target_os = "emscripten")]
+#[path = "emscripten/mod.rs"]
+mod imp;
+
+#[cfg(target_os = "freebsd")]
+#[path = "freebsd/mod.rs"]
+mod imp;
+
+#[cfg(target_os = "illumos")]
+#[path = "illumos/mod.rs"]
+mod imp;
+
+#[cfg(target_os = "linux")]
+#[path = "linux/mod.rs"]
+mod imp;
+
+#[cfg(target_os = "macos")]
+#[path = "macos/mod.rs"]
+mod imp;
+
+#[cfg(target_os = "netbsd")]
+#[path = "netbsd/mod.rs"]
+mod imp;
+
+#[cfg(target_os = "openbsd")]
+#[path = "openbsd/mod.rs"]
+mod imp;
+
+#[cfg(target_os = "redox")]
+#[path = "redox/mod.rs"]
+mod imp;
+
+#[cfg(windows)]
+#[path = "windows/mod.rs"]
+mod imp;
+
+mod architecture;
+mod bit_depth;
 mod system_info;
 mod system_matcher;
 mod system_os;
@@ -38,11 +85,13 @@ mod system_os;
     target_os = "netbsd",
     target_os = "openbsd"
 ))]
+
 mod system_uname;
 mod system_version;
 mod android;
 mod dragonfly;
 mod emscripten;
+mod freebsd;
 
 pub use crate::{
     architecture::Architecture,

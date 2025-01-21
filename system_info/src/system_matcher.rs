@@ -8,7 +8,7 @@ pub enum SystemMatcher {
 }
 
 impl SystemMatcher {
-    fn find(&self, string: &str) -> Option<String> {
+    pub(crate) fn find(&self, string: &str) -> Option<String> {
         match *self {
             Self::AllTrimmed => Some(string.trim().to_string()),
             Self::PrefixedWord { prefix } => {

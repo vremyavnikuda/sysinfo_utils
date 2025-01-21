@@ -39,8 +39,8 @@ pub enum Type {
     Nobara,
     OpenBSD,
     OpenCloudOS,
-    openEuler,
-    openSUSE,
+    OpenEuler,
+    OpenSUSE,
     OracleLinux,
     Pop,
     Raspbian,
@@ -175,7 +175,7 @@ mod tests {
     /// and all other fields set to their default values.
     #[test]
     fn test_info_write_type() {
-        let info = Info::write_type(Type::Linux);
+        let info = Info::with_type(Type::Linux);
         assert_eq!(info.system_type, Type::Linux);
         assert_eq!(info.version, SystemVersion::Unknown);
         assert_eq!(info.edition, None);
