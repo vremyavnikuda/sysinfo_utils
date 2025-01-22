@@ -2,6 +2,25 @@ use std::process::Command;
 use log::{error, trace};
 use crate::{bit_depth, system_os::Type, system_uname::uname, Info, SystemVersion};
 
+/// Возвращает информацию о текущей платформе, включая тип системы, версию и разрядность.
+///
+/// Эта функция определяет текущую платформу, используя:
+/// - `uname` для получения версии системы.
+/// - Вспомогательную функцию `get_os` для определения типа системы.
+/// - Функцию `bit_depth::get` для определения разрядности системы.
+///
+/// Возвращаемая структура `Info` содержит следующие данные:
+/// - `system_type`: тип операционной системы (например, FreeBSD, MidnightBSD).
+/// - `version`: версия системы, определенная с помощью `uname -r`.
+/// - `bit_depth`: разрядность системы.
+///
+/// # Пример
+/// ```
+/// let platform_info = current_platform();
+/// println!("System type: {:?}", platform_info.system_type);
+/// println!("System version: {:?}", platform_info.version);
+/// println!("Bit depth: {:?}", platform_info.bit_depth);
+/// ```
 pub fn current_platform() -> Info {
     trace!("freebsd::current_platform is called");
 
@@ -20,7 +39,6 @@ pub fn current_platform() -> Info {
     info
 }
 
-
 /// Executes the `/sbin/sysctl` command with the argument `hardening.version`
 /// to check the hardening version of the system. If the command is successful,
 /// it returns the output. If the command fails, it logs an error message and
@@ -33,9 +51,9 @@ fn get_os() -> Type {
                 .arg("hardening.version")
                 .output()
             {
-                Ok(o) => o,
-                Err(e) => {
-                    error!("Failed to invoke '/sbin/sysctl': {:?}", e);
+                Ok(ok) => ok,
+                Err(error) => {
+                    error!("Failed to invoke '/sbin/sysctl': {:?}", error);
                     return Type::FreeBSD;
                 }
             };
@@ -49,15 +67,16 @@ fn get_os() -> Type {
     }
 }
 
-
 #[cfg(test)]
 mod freebsd_tests {
     use super::*;
     use pretty_assertions::assert_eq;
+    use crate::system_os::Type;
 
+    /// Проверяет, что текущая платформа правильно определяется как FreeBSD.
     #[test]
-    fn os_type() {
-        let version = current_platform();
-        assert_eq!(Type::FreeBSD, version.system_type());
+    fn current_platform_freebsd() {
+        let platform = current_platform();
+        assert_eq!(platform.system_type, Type::FreeBSD);
     }
 }

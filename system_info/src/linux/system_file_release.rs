@@ -1,5 +1,6 @@
+use crate::system_matcher::SystemMatcher;
 use crate::system_os::Type;
-use crate::{BitDepth, Info, SystemMatcher, SystemVersion};
+use crate::{BitDepth, Info, SystemVersion};
 use log::{trace, warn};
 use std::fs::File;
 use std::io::Read;
@@ -202,7 +203,6 @@ mod system_file_release_test {
     use super::*;
     use std::fs;
     use std::io::Write;
-    use std::path::Path;
 
     #[test]
     fn retrieve_release_info_finds_valid_distribution() {

@@ -137,7 +137,7 @@ pub fn get() -> BitDepth {
     )
 ))]
 
-mod tests {
+mod bit_depth_tests {
     use super::*;
     use pretty_assertions::assert_ne;
 

@@ -22,7 +22,6 @@
     unsafe_code,
     missing_doc_code_examples
 )]
-extern crate core;
 
 #[cfg(target_os = "aix")]
 #[path = "aix/mod.rs"]
@@ -72,22 +71,6 @@ mod imp;
 #[path = "windows/mod.rs"]
 mod imp;
 
-mod architecture;
-mod bit_depth;
-mod system_info;
-mod system_matcher;
-mod system_os;
-#[cfg(any(
-    target_os = "aix",
-    target_os = "dragonfly",
-    target_os = "freebsd",
-    target_os = "illumos",
-    target_os = "netbsd",
-    target_os = "openbsd"
-))]
-
-pub use crate::{BitDepth::*, info::Info, os_type::Type, version::Version};
-
 #[cfg(not(any(
     target_os = "aix",
     target_os = "android",
@@ -105,29 +88,39 @@ pub use crate::{BitDepth::*, info::Info, os_type::Type, version::Version};
 #[path = "unknown/mod.rs"]
 mod imp;
 
-mod system_uname;
+#[cfg(any(
+    target_os = "linux",
+    target_os = "macos",
+    target_os = "netbsd",
+    target_os = "openbsd"
+))]
+mod architecture;
+mod bit_depth;
+mod system_info;
+#[cfg(not(windows))]
+mod system_matcher;
+mod system_os;
+#[cfg(any(
+    target_os = "aix",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "illumos",
+    target_os = "netbsd",
+    target_os = "openbsd"
+))]
+mod uname;
 mod system_version;
-mod android;
-mod dragonfly;
-mod emscripten;
-mod freebsd;
-mod illumos;
-mod macos;
-use system_info::Info;
 
-pub use crate::{
-    bit_depth::BitDepth,
-    system_matcher::SystemMatcher,
-    system_version::SystemVersion,
-};
+pub use crate::{bit_depth::BitDepth, system_info::Info, system_os::Type, system_version::SystemVersion};
+
 /// Returns information about the current operating system (type, version, edition, etc.).
 ///
 /// # Examples
 ///
 /// ```
-/// use system_info;
+/// use os_info;
 ///
-/// let info = system_info::get();
+/// let info = os_info::get();
 ///
 /// // Print full information:
 /// println!("OS information: {info}");
@@ -137,9 +130,9 @@ pub use crate::{
 /// println!("Version: {}", info.version());
 /// println!("Edition: {:?}", info.edition());
 /// println!("Codename: {:?}", info.codename());
-/// println!("BitDepth: {}", info.bit_depth());
+/// println!("Bitness: {}", info.bitness());
 /// println!("Architecture: {:?}", info.architecture());
 /// ```
-pub fn get() -> Info{
+pub fn get() -> Info {
     imp::current_platform()
 }
