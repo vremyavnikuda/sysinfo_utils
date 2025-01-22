@@ -113,6 +113,7 @@ impl Info {
         self.architecture.as_ref().map(String::as_ref)
     }
 }
+
 impl Default for Info {
     /// Creates a new `Info` instance with all fields set to their unknown or default values.
     ///

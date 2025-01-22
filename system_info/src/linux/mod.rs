@@ -9,7 +9,7 @@ pub fn current_platform() -> Info {
     trace!("linux::current_platform() is called");
 
     let mut info = system_release_lsb::get()
-        .or_else(|_| Ok(Info::with_type(Type::Linux)))
+        .or_else(system_file_release::get)
         .unwrap_or_else(|| Info::with_type(Type::Linux));
     info.bit_depth = bit_depth::get();
     info.architecture = architecture::get();

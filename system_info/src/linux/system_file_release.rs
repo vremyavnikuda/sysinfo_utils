@@ -33,16 +33,16 @@ fn retrieve_release_info(distributions: &[ReleaseInfo], root: &str) -> Option<In
         }
 
         let mut file = match File::open(&path) {
-            Ok(val) => val,
-            Err(e) => {
-                warn!("Unable to open {:?} file: {:?}", &path, e);
+            Ok(value) => value,
+            Err(error) => {
+                warn!("Unable to open {:?} file: {:?}", &path, error);
                 continue;
             }
         };
 
         let mut file_content = String::new();
-        if let Err(e) = file.read_to_string(&mut file_content) {
-            warn!("Unable to read {:?} file: {:?}", &path, e);
+        if let Err(error) = file.read_to_string(&mut file_content) {
+            warn!("Unable to read {:?} file: {:?}", &path, error);
             continue;
         }
 
@@ -67,7 +67,9 @@ fn retrieve_release_info(distributions: &[ReleaseInfo], root: &str) -> Option<In
 #[derive(Clone)]
 struct ReleaseInfo<'a> {
     path: &'a str,
+
     type_var: for<'b> fn(&'b str) -> Option<Type>,
+    
     version: for<'b> fn(&'b str) -> Option<SystemVersion>,
 }
 

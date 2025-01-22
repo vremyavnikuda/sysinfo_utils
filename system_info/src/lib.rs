@@ -93,11 +93,13 @@ mod dragonfly;
 mod emscripten;
 mod freebsd;
 
+use system_info::Info;
+
 pub use crate::{
-    architecture::Architecture,
     bit_depth::BitDepth,
-    system_info::{Info, get},
     system_matcher::SystemMatcher,
-    system_os::SystemOS,
     system_version::SystemVersion,
 };
+pub fn get() -> Info{
+    imp::current_platform()
+}

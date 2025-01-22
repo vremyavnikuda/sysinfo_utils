@@ -1,22 +1,67 @@
-use crate::SystemMatcher;
-use core::num::dec2flt::parse::parse_number;
+use crate::{system_os::Type, Info, SystemMatcher, SystemVersion};
 use log::{debug, trace};
-use std::process::{Command, Output};
+use std::process::Command;
 
-pub fn get() -> Option<String> {
-    None
+pub fn get() -> Option<Info> {
+    let _release = retrieve()?;
+    let version = match _release.version.as_deref() {
+        Some("rolling") => SystemVersion::Rolling(None),
+        Some(version) => SystemVersion::from_string(version.to_owned()),
+        None => SystemVersion::Unknown,
+    };
+
+
+    let system_type = match _release.distributor_id.as_ref().map(String::as_ref){
+        Some("Alpaquita") => Type::Alpaquita,
+        Some("Amazon") | Some("AmazonAMI") => Type::Amazon,
+        Some("Arch") => Type::Arch,
+        Some("Artix") => Type::Artix,
+        Some("cachyos") => Type::CachyOS,
+        Some("CentOS") => Type::CentOS,
+        Some("Debian") => Type::Debian,
+        Some("EndeavourOS") => Type::EndeavourOS,
+        Some("Fedora") | Some("Fedora Linux") => Type::Fedora,
+        Some("Garuda") => Type::Garuda,
+        Some("Gentoo") => Type::Gentoo,
+        Some("Kali") => Type::Kali,
+        Some("Linuxmint") => Type::Mint,
+        Some("MaboxLinux") => Type::Mabox,
+        Some("ManjaroLinux") => Type::Manjaro,
+        Some("Mariner") => Type::Mariner,
+        Some("NixOS") => Type::NixOS,
+        Some("NobaraLinux") => Type::Nobara,
+        Some("Uos") => Type::Uos,
+        Some("OpenCloudOS") => Type::OpenCloudOS,
+        Some("openEuler") => Type::OpenEuler,
+        Some("openSUSE") => Type::OpenSUSE,
+        Some("OracleServer") => Type::OracleLinux,
+        Some("Pop") => Type::Pop,
+        Some("Raspbian") => Type::Raspbian,
+        Some("RedHatEnterprise") | Some("RedHatEnterpriseServer") => Type::RedHatEnterprise,
+        Some("Solus") => Type::Solus,
+        Some("SUSE") => Type::SUSE,
+        Some("Ubuntu") => Type::Ubuntu,
+        Some("UltramarineLinux") => Type::Ultramarine,
+        Some("VoidLinux") => Type::Void,
+        _ => Type::Linux,
+    };
+
+    Some(Info{
+        system_type,
+        version,
+        ..Default::default()
+    })
 }
 
-fn retrieve() {
-    match Command::new("lsb_release").arg("-a").output() {
-        Ok(output) => {
-            trace!("lsb release -a command returned {:?}", output);
-            Some(parse_number(
-                (&String::from_utf8_lossy(&output.stdout)).as_ref().as_ref(),
-            ));
+fn retrieve() -> Option<LsbRelease>{
+    match Command::new ("system_lsb_release").arg("-a").output(){
+        Ok(output)=>{
+            trace!("system_lsb_release command returned: {:?}",output);
+            Some(parse(&String::from_utf8_lossy(&output.stdout)))
         }
-        Err(error) => {
-            debug!("Error running lsb_release -a command: {:?}", error);
+        Err(error)=>{
+            debug!("Failed to execute system_lsb_release command: {:?}",error);
+            None
         }
     }
 }
@@ -42,10 +87,9 @@ fn parse(output: &str) -> LsbRelease {
     .find(output)
     .filter(|c| !c.is_empty());
 
-    trace!("Parsed lsb_release output: {:?}"
+    trace!("Parsed lsb_release output: {:?} version",
         distributor_id,
         version,
-        codename,
     );
 
     LsbRelease {
@@ -60,7 +104,6 @@ mod tests {
     use std::os::unix::prelude::ExitStatusExt;
     use super::*;
     use std::process::Output;
-    use std::str;
 
     #[test]
     fn get_returns_none() {
