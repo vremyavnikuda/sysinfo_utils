@@ -1,17 +1,97 @@
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 
+/// The `SystemMatcher` enum provides various strategies for searching and extracting data from strings.
+///
+/// It is used to parse strings, such as configuration files or system metadata,
+/// to extract specific values, such as key-value pairs, versions, or strings with a certain prefix.
+///
+/// # Variants
+///
+/// - `AllTrimmed`
+///     - Returns the input string with leading and trailing whitespace removed.
+///
+/// - `PrefixedWord`
+///     - Extracts the word following a specified prefix.
+///     - Example: For the input string `"prefix value"` and the prefix `"prefix"`, it will return `"value"`.
+///
+/// - `PrefixedVersion`
+///     - Extracts the version number following a specified prefix.
+///     - Ignores values that start or end with a dot (`.`).
+///     - Example: For the input string `"version 1.2.3"`, it will return `"1.2.3"`.
+///
+/// - `KeyValue`
+///     - Extracts the value for a given key in a key-value format (`key=value`).
+///     - Removes surrounding quotes from the value, if present.
+///     - Example: For the input string `"key=\"value\""`, it will return `"value"`.
+///
+/// # Example Usage
+///
+/// ```rust
+/// let matcher = SystemMatcher::KeyValue { key: "ID" };
+/// let result = matcher.find("ID=ubuntu");
+/// assert_eq!(result, Some("ubuntu".to_string()));
+/// ```
+//#[derive(Debug, Clone)]
 pub enum SystemMatcher {
+    /// Trims leading and trailing whitespace from the string.
     AllTrimmed,
-    PrefixedWord { prefix: &'static str },
-    PrefixedVersion { prefix: &'static str },
-    KeyValue { key: &'static str },
+    /// Finds the word following a specified prefix.
+    ///
+    /// # Fields
+    ///
+    /// - `prefix`: The prefix string to search for.
+    PrefixedWord {
+        /// The prefix to search for in the string.
+        prefix: &'static str,
+    },
+    /// Finds a version number following a specified prefix.
+    ///
+    /// Skips invalid version formats.
+    ///
+    /// # Fields
+    ///
+    /// - `prefix`: The prefix string to search for.
+    PrefixedVersion {
+        /// The prefix to search for in the string.
+        prefix: &'static str,
+    },
+    /// Finds the value associated with a given key in a key-value pair.
+    ///
+    /// # Fields
+    ///
+    /// - `key`: The key to search for in the key-value pair.
+    KeyValue {
+        /// The key to search for in the string.
+        key: &'static str,
+    },
 }
 
-
-
-//FIXME: Implement the SystemMatcher trait for the SystemMatcher enum.
 impl SystemMatcher {
+    /// Searches for a specific value in the given string based on the `SystemMatcher` variant.
+    ///
+    /// # Arguments
+    ///
+    /// * `string` - The input string to search within.
+    ///
+    /// # Returns
+    ///
+    /// Returns an `Option<String>` containing the matched value, or `None` if no match is found.
+    ///
+    /// # Variants Behavior
+    ///
+    /// - **AllTrimmed**: Trims leading and trailing whitespace from the input string.
+    /// - **PrefixedWord**: Finds the word following the specified prefix.
+    /// - **PrefixedVersion**: Finds the version following the specified prefix, skipping invalid formats.
+    /// - **KeyValue**: Extracts the value associated with a key in the `key=value` format.
+    ///
+    /// # Example Usage
+    ///
+    /// ```rust
+    /// let matcher = SystemMatcher::KeyValue { key: "ID" };
+    /// let result = matcher.find("ID=ubuntu");
+    /// assert_eq!(result, Some("ubuntu".to_string()));
+    /// ```
     pub fn find(&self, string: &str) -> Option<String> {
         match *self {
             Self::AllTrimmed => Some(string.trim().to_string()),
@@ -25,6 +105,7 @@ impl SystemMatcher {
         }
     }
 }
+
 
 /// Concatenates the given `key` with an equals sign (`=`).
 /// 
@@ -73,7 +154,7 @@ fn find_to_prefixed_word<'a>(string: &'a str, prefix: &str) -> Option<&'a str> {
 }
 
 #[cfg(test)]
-mod tests {
+mod system_matcher_tests {
     use super::*;
     use pretty_assertions::assert_eq;
 

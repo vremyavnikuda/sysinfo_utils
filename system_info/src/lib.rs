@@ -111,7 +111,8 @@ mod android;
 mod dragonfly;
 mod emscripten;
 mod freebsd;
-
+mod illumos;
+mod macos;
 use system_info::Info;
 
 pub use crate::{

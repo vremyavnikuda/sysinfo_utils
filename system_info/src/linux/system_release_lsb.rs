@@ -100,7 +100,7 @@ fn parse(output: &str) -> LsbRelease {
 }
 
 #[cfg(test)]
-mod tests {
+mod system_release_lsb_tests {
     use std::os::unix::prelude::ExitStatusExt;
     use super::*;
     use std::process::Output;

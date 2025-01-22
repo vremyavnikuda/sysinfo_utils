@@ -196,3 +196,119 @@ static DISTRIBUTIONS: [ReleaseInfo; 6] = [
         },
     },
 ];
+
+#[cfg(test)]
+mod system_file_release_test {
+    use super::*;
+    use std::fs;
+    use std::io::Write;
+    use std::path::Path;
+
+    #[test]
+    fn retrieve_release_info_finds_valid_distribution() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_path = temp_dir.path().join("os-release");
+        let mut file = fs::File::create(&temp_path).unwrap();
+        writeln!(
+            file,
+            "ID=ubuntu\nVERSION_ID=\"20.04\"\nPRETTY_NAME=\"Ubuntu 20.04 LTS\""
+        )
+        .unwrap();
+
+        let custom_distributions = [ReleaseInfo {
+            path: "os-release",
+            type_var: |content| {
+                SystemMatcher::KeyValue { key: "ID" }
+                    .find(content)
+                    .and_then(|id| match id.as_str() {
+                        "ubuntu" => Some(Type::Ubuntu),
+                        _ => None,
+                    })
+            },
+            version: |content| {
+                SystemMatcher::KeyValue { key: "VERSION_ID" }
+                    .find(content)
+                    .map(SystemVersion::from_string)
+            },
+        }];
+
+        let result = retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
+        assert!(result.is_some());
+        let info = result.unwrap();
+        assert_eq!(info.system_type, Type::Ubuntu);
+        assert_eq!(info.version, SystemVersion::from_string("20.04".to_string()));
+    }
+
+    #[test]
+    fn retrieve_release_info_handles_missing_file() {
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        let custom_distributions = [ReleaseInfo {
+            path: "os-release",
+            type_var: |_| Some(Type::Ubuntu),
+            version: |_| Some(SystemVersion::from_string("20.04".to_string())),
+        }];
+
+        let result = retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn retrieve_release_info_handles_invalid_content() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_path = temp_dir.path().join("os-release");
+        let mut file = fs::File::create(&temp_path).unwrap();
+        writeln!(file, "INVALID_CONTENT").unwrap();
+
+        let custom_distributions = [ReleaseInfo {
+            path: "os-release",
+            type_var: |content| {
+                SystemMatcher::KeyValue { key: "ID" }
+                    .find(content)
+                    .and_then(|id| match id.as_str() {
+                        "ubuntu" => Some(Type::Ubuntu),
+                        _ => None,
+                    })
+            },
+            version: |content| {
+                SystemMatcher::KeyValue { key: "VERSION_ID" }
+                    .find(content)
+                    .map(SystemVersion::from_string)
+            },
+        }];
+
+        let result = retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn retrieve_release_info_handles_partial_content() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_path = temp_dir.path().join("os-release");
+        let mut file = fs::File::create(&temp_path).unwrap();
+        writeln!(file, "ID=ubuntu").unwrap();
+
+        let custom_distributions = [ReleaseInfo {
+            path: "os-release",
+            type_var: |content| {
+                SystemMatcher::KeyValue { key: "ID" }
+                    .find(content)
+                    .and_then(|id| match id.as_str() {
+                        "ubuntu" => Some(Type::Ubuntu),
+                        _ => None,
+                    })
+            },
+            version: |content| {
+                SystemMatcher::KeyValue { key: "VERSION_ID" }
+                    .find(content)
+                    .map(SystemVersion::from_string)
+            },
+        }];
+
+        let result = retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
+        assert!(result.is_some());
+        let info = result.unwrap();
+        assert_eq!(info.system_type, Type::Ubuntu);
+        assert_eq!(info.version, SystemVersion::Unknown);
+    }
+}

@@ -51,7 +51,7 @@ fn get_os() -> Type {
 
 
 #[cfg(test)]
-mod tests {
+mod freebsd_tests {
     use super::*;
     use pretty_assertions::assert_eq;
 

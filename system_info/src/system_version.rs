@@ -6,11 +6,28 @@ use serde::{Deserialize, Serialize};
 /// Operating system version.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+//The new variant should be called New and should contain three u64 fields: major, minor, and patch.
+/// Represents a rolling release version of the system.
+/// 
+/// The `Rolling` variant contains an `Option<String>` which may hold
+/// additional information about the rolling release version.
+/// 
+/// # Examples
+/// 
+/// ```
+/// let version = Rolling(Some(String::from("2023.10")));
+/// let no_version = Rolling(None);
+/// ```    
 pub enum SystemVersion {
+    /// Represents an unknown version of the system.
     Unknown,
+    /// Represents a semantic version of the system with major, minor, and patch numbers.
     Semantic(u64, u64, u64),
+    /// Represents a rolling release version of the system with an optional codename.
     Rolling(Option<String>),
+    /// Represents a custom version of the system as a string.
     Custom(String),
+    /// Represents a new version of the system with major, minor, and patch numbers.
     New(u64, u64, u64),
 }
 
@@ -73,7 +90,9 @@ impl Display for SystemVersion {
                 }
             }
             SystemVersion::Custom(ref version) => write!(f, "{}", version),
-            SystemVersion::New(_, _, _) => todo!(),
+            SystemVersion::New(major, minor, patch) => {
+                write!(f, "{}.{}.{}", major, minor, patch)
+            }
         }
     }
 }

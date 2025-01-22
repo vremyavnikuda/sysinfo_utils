@@ -10,10 +10,10 @@ fn main() {
     println!("OS information: {info}");
 
     // Print information separately:
-    println!("Type: {}", info.os_type());
+    println!("Type: {}", info.system_type());
     println!("Version: {}", info.version());
     println!("Edition: {:?}", info.edition());
     println!("Codename: {:?}", info.codename());
-    println!("Bitness: {}", info.bitness());
+    println!("BitDepth: {}", info.bit_depth());
     println!("Architecture: {:?}", info.architecture());
 }
