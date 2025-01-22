@@ -1,6 +1,6 @@
 use log::trace;
-
 use crate::{bit_depth, system_os::Type, Info, SystemVersion};
+use crate::system_uname::uname;
 
 pub fn current_platform() -> Info{
 	trace!("dragonfly::current_platform() is called");

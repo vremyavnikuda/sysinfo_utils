@@ -86,6 +86,25 @@ mod system_os;
     target_os = "openbsd"
 ))]
 
+pub use crate::{BitDepth::*, info::Info, os_type::Type, version::Version};
+
+#[cfg(not(any(
+    target_os = "aix",
+    target_os = "android",
+    target_os = "dragonfly",
+    target_os = "emscripten",
+    target_os = "freebsd",
+    target_os = "illumos",
+    target_os = "linux",
+    target_os = "macos",
+    target_os = "netbsd",
+    target_os = "openbsd",
+    target_os = "redox",
+    target_os = "windows"
+)))]
+#[path = "unknown/mod.rs"]
+mod imp;
+
 mod system_uname;
 mod system_version;
 mod android;
@@ -100,6 +119,26 @@ pub use crate::{
     system_matcher::SystemMatcher,
     system_version::SystemVersion,
 };
+/// Returns information about the current operating system (type, version, edition, etc.).
+///
+/// # Examples
+///
+/// ```
+/// use system_info;
+///
+/// let info = system_info::get();
+///
+/// // Print full information:
+/// println!("OS information: {info}");
+///
+/// // Print information separately:
+/// println!("Type: {}", info.os_type());
+/// println!("Version: {}", info.version());
+/// println!("Edition: {:?}", info.edition());
+/// println!("Codename: {:?}", info.codename());
+/// println!("BitDepth: {}", info.bit_depth());
+/// println!("Architecture: {:?}", info.architecture());
+/// ```
 pub fn get() -> Info{
     imp::current_platform()
 }

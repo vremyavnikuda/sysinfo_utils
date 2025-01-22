@@ -15,9 +15,14 @@ use std::process::Output;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
+
+/// The bit depth of the system.
 pub enum BitDepth {
+    /// Unknown bitness (unable to determine).
     Unknown,
+    /// 32-bit system.
     X32,
+    /// 64-bit system.
     X64,
 }
 
@@ -75,13 +80,13 @@ pub fn get() -> BitDepth {
         .arg("hw.machine_arch")
         .output()
     {
-        Ok(Output { stdout, .. }) if stdout == b"amd64\n" => Bitness::X64,
-        Ok(Output { stdout, .. }) if stdout == b"x86_64\n" => Bitness::X64,
-        Ok(Output { stdout, .. }) if stdout == b"i386\n" => Bitness::X32,
-        Ok(Output { stdout, .. }) if stdout == b"aarch64\n" => Bitness::X64,
-        Ok(Output { stdout, .. }) if stdout == b"earmv7hf\n" => Bitness::X32,
-        Ok(Output { stdout, .. }) if stdout == b"sparc64\n" => Bitness::X64,
-        _ => Bitness::Unknown,
+        Ok(Output { stdout, .. }) if stdout == b"amd64\n" => BitDepth::X64,
+        Ok(Output { stdout, .. }) if stdout == b"x86_64\n" => BitDepth::X64,
+        Ok(Output { stdout, .. }) if stdout == b"i386\n" => BitDepth::X32,
+        Ok(Output { stdout, .. }) if stdout == b"aarch64\n" => BitDepth::X64,
+        Ok(Output { stdout, .. }) if stdout == b"earmv7hf\n" => BitDepth::X32,
+        Ok(Output { stdout, .. }) if stdout == b"sparc64\n" => BitDepth::X64,
+        _ => BitDepth::Unknown,
     }
 }
 
@@ -96,9 +101,9 @@ pub fn get() -> BitDepth {
 #[cfg(target_os = "illumos")]
 pub fn get() -> BitDepth {
     match Command::new("isainfo").arg("-b").output() {
-        Ok(Output { stdout, .. }) if stdout == b"64\n" => Bitness::X64,
-        Ok(Output { stdout, .. }) if stdout == b"32\n" => Bitness::X32,
-        _ => Bitness::Unknown,
+        Ok(Output { stdout, .. }) if stdout == b"64\n" => BitDepth::X64,
+        Ok(Output { stdout, .. }) if stdout == b"32\n" => BitDepth::X32,
+        _ => BitDepth::Unknown,
     }
 }
 
@@ -113,9 +118,9 @@ pub fn get() -> BitDepth {
 #[cfg(target_os = "aix")]
 pub fn get() -> BitDepth {
     match Command::new("prtconf").arg("-c").output() {
-        Ok(Output { stdout, .. }) if stdout == b"CPU :64-bit\n" => Bitness::X64,
-        Ok(Output { stdout, .. }) if stdout == b"CPU :32-bit\n" => Bitness::X32,
-        _ => Bitness::Unknown,
+        Ok(Output { stdout, .. }) if stdout == b"CPU :64-bit\n" => BitDepth::X64,
+        Ok(Output { stdout, .. }) if stdout == b"CPU :32-bit\n" => BitDepth::X32,
+        _ => BitDepth::Unknown,
     }
 }
 
@@ -159,8 +164,8 @@ mod tests {
             (BitDepth::X64, "64-bit"),
         ];
 
-        for (bitness, expected) in &data {
-            assert_eq!(&bitness.to_string(), expected);
+        for (bit_depth, expected) in &data {
+            assert_eq!(&bit_depth.to_string(), expected);
         }
     }
 }

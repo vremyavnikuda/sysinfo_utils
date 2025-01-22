@@ -3,15 +3,15 @@ use log::{debug, trace};
 use std::process::Command;
 
 pub fn get() -> Option<Info> {
-    let _release = retrieve()?;
-    let version = match _release.version.as_deref() {
+    let release = retrieve()?;
+    let version = match release.version.as_deref() {
         Some("rolling") => SystemVersion::Rolling(None),
         Some(version) => SystemVersion::from_string(version.to_owned()),
         None => SystemVersion::Unknown,
     };
 
 
-    let system_type = match _release.distributor_id.as_ref().map(String::as_ref){
+    let system_type = match release.distributor_id.as_ref().map(String::as_ref){
         Some("Alpaquita") => Type::Alpaquita,
         Some("Amazon") | Some("AmazonAMI") => Type::Amazon,
         Some("Arch") => Type::Arch,
@@ -87,7 +87,7 @@ fn parse(output: &str) -> LsbRelease {
     .find(output)
     .filter(|c| !c.is_empty());
 
-    trace!("Parsed lsb_release output: {:?} version",
+    trace!("Parsed lsb_release output: {:?} {:?}",
         distributor_id,
         version,
     );

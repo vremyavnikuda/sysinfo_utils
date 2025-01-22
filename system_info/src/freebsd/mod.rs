@@ -1,8 +1,6 @@
 use std::process::Command;
-
 use log::{error, trace};
-
-use crate::{bit_depth, system_os::Type, Info, SystemVersion};
+use crate::{bit_depth, system_os::Type, system_uname::uname, Info, SystemVersion};
 
 pub fn current_platform() -> Info {
     trace!("freebsd::current_platform is called");
