@@ -2,7 +2,7 @@ use std::{fs::File, io::Read};
 
 use log::{error, trace};
 
-use crate::{bit_depth, system_info::Info, system_os::Type, BitDepth, SystemVersion};
+use crate::{BitDepth, SystemVersion, bit_depth, system_info::Info, system_os::Type};
 
 const UNAME_FILE: &str = "sys:uname";
 

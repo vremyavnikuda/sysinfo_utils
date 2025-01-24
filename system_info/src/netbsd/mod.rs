@@ -1,6 +1,8 @@
 use log::trace;
 
-use crate::{architecture, bit_depth, system_info::Info, system_os::Type, system_uname::uname, SystemVersion};
+use crate::{
+    SystemVersion, architecture, bit_depth, system_info::Info, system_os::Type, system_uname::uname,
+};
 
 pub fn current_platform() -> Info {
     trace!("netbsd::current_platform is called");
@@ -13,7 +15,7 @@ pub fn current_platform() -> Info {
         system_type: Type::NetBSD,
         version,
         bit_depth: bit_depth::get(),
-        architecture: architecture ::get(),
+        architecture: architecture::get(),
         ..Default::default()
     };
 

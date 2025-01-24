@@ -2,7 +2,6 @@ use log::trace;
 
 use crate::system_info::Info;
 
-
 pub fn current_platform() -> Info {
     trace!("unknown::current_platform is called");
     Info::unknown()

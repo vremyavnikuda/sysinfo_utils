@@ -108,10 +108,12 @@ mod system_os;
     target_os = "netbsd",
     target_os = "openbsd"
 ))]
-mod uname;
+mod system_uname;
 mod system_version;
 
-pub use crate::{bit_depth::BitDepth, system_info::Info, system_os::Type, system_version::SystemVersion};
+pub use crate::{
+    bit_depth::BitDepth, system_info::Info, system_os::Type, system_version::SystemVersion,
+};
 
 /// Returns information about the current operating system (type, version, edition, etc.).
 ///

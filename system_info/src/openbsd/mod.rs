@@ -1,7 +1,8 @@
 use log::{error, trace};
 
-use crate::{architecture, bit_depth, system_info::Info, system_os::Type, system_uname::uname, SystemVersion};
-
+use crate::{
+    SystemVersion, architecture, bit_depth, system_info::Info, system_os::Type, system_uname::uname,
+};
 
 pub fn current_platform() -> Info {
     trace!("openbsd::current_platform is called");

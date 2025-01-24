@@ -70,7 +70,7 @@ struct ReleaseInfo<'a> {
     path: &'a str,
 
     type_var: for<'b> fn(&'b str) -> Option<Type>,
-    
+
     version: for<'b> fn(&'b str) -> Option<SystemVersion>,
 }
 
@@ -115,12 +115,12 @@ static DISTRIBUTIONS: [ReleaseInfo; 6] = [
                     "nobara" => Some(Type::Nobara),
                     "Uos" => Some(Type::Uos),
                     "opencloudos" => Some(Type::OpenCloudOS),
-                    "openEuler" => Some(Type::OpenEuler),
+                    "openEuler" => Some(Type::openEuler),
                     "ol" => Some(Type::OracleLinux),
-                    "opensuse" => Some(Type::OpenSUSE),
-                    "opensuse-leap" => Some(Type::OpenSUSE),
-                    "opensuse-microos" => Some(Type::OpenSUSE),
-                    "opensuse-tumbleweed" => Some(Type::OpenSUSE),
+                    "opensuse" => Some(Type::openSUSE),
+                    "opensuse-leap" => Some(Type::openSUSE),
+                    "opensuse-microos" => Some(Type::openSUSE),
+                    "opensuse-tumbleweed" => Some(Type::openSUSE),
                     //"rancheros" => RancherOS
                     //"raspbian" => Raspbian
                     // note XBian also uses "raspbian"
@@ -232,11 +232,15 @@ mod system_file_release_test {
             },
         }];
 
-        let result = retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
+        let result =
+            retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
         assert!(result.is_some());
         let info = result.unwrap();
         assert_eq!(info.system_type, Type::Ubuntu);
-        assert_eq!(info.version, SystemVersion::from_string("20.04".to_string()));
+        assert_eq!(
+            info.version,
+            SystemVersion::from_string("20.04".to_string())
+        );
     }
 
     #[test]
@@ -249,7 +253,8 @@ mod system_file_release_test {
             version: |_| Some(SystemVersion::from_string("20.04".to_string())),
         }];
 
-        let result = retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
+        let result =
+            retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
         assert!(result.is_none());
     }
 
@@ -277,7 +282,8 @@ mod system_file_release_test {
             },
         }];
 
-        let result = retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
+        let result =
+            retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
         assert!(result.is_none());
     }
 
@@ -305,7 +311,8 @@ mod system_file_release_test {
             },
         }];
 
-        let result = retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
+        let result =
+            retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
         assert!(result.is_some());
         let info = result.unwrap();
         assert_eq!(info.system_type, Type::Ubuntu);
