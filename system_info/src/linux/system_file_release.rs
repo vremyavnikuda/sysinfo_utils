@@ -47,16 +47,16 @@ fn retrieve_release_info(distributions: &[ReleaseInfo], root: &str) -> Option<In
             continue;
         }
 
-        let os_type = (release_info.type_var)(&file_content);
+        let system_type = (release_info.type_var)(&file_content);
 
-        if os_type.is_none() {
+        if system_type.is_none() {
             continue;
         }
 
         let version = (release_info.version)(&file_content);
 
         return Some(Info {
-            system_type: os_type.unwrap(),
+            system_type: system_type.unwrap(),
             version: version.unwrap_or(SystemVersion::Unknown),
             bit_depth: BitDepth::Unknown,
             ..Default::default()

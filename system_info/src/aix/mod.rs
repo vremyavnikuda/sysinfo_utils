@@ -49,12 +49,12 @@ fn get_system_os() -> Type {
     }
 }
 #[cfg(test)]
-mod tests {
+mod aix_tests {
     use super::*;
 
     #[test]
-    fn os_type() {
+    fn system_type() {
         let version = current_platform();
-        assert_eq!(Type::AIX, version.os_type());
+        assert_eq!(Type::AIX, version.system_type());
     }
 }
