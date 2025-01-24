@@ -1,6 +1,6 @@
-use std::process::Command;
+use crate::{Info, SystemVersion, bit_depth, system_os::Type, system_uname::uname};
 use log::{error, trace};
-use crate::{bit_depth, system_os::Type, system_uname::uname, Info, SystemVersion};
+use std::process::Command;
 
 /// Возвращает информацию о текущей платформе, включая тип системы, версию и разрядность.
 ///
@@ -70,8 +70,8 @@ fn get_os() -> Type {
 #[cfg(test)]
 mod freebsd_tests {
     use super::*;
-    use pretty_assertions::assert_eq;
     use crate::system_os::Type;
+    use pretty_assertions::assert_eq;
 
     /// Проверяет, что текущая платформа правильно определяется как FreeBSD.
     #[test]

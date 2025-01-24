@@ -1,13 +1,15 @@
 use log::trace;
 
-use crate::{bit_depth, system_info::Info, system_os::Type, system_uname::uname, SystemVersion};
+use crate::{SystemVersion, bit_depth, system_info::Info, system_os::Type, system_uname::uname};
 
-pub fn current_platform() -> Info{
+pub fn current_platform() -> Info {
     trace!("illumos::current_platform() is called");
 
-    let version  = uname("-r").map(SystemVersion::from_string).unwrap_or_else(|| SystemVersion::Unknown);
+    let version = uname("-r")
+        .map(SystemVersion::from_string)
+        .unwrap_or_else(|| SystemVersion::Unknown);
 
-    let info  = Info{
+    let info = Info {
         system_type: get_os(),
         version,
         bit_depth: bit_depth::get(),
@@ -18,8 +20,8 @@ pub fn current_platform() -> Info{
     info
 }
 
-fn get_os() -> Type{
-    match uname("-o").as_deref(){
+fn get_os() -> Type {
+    match uname("-o").as_deref() {
         Some("illumos") => Type::Illumos,
         _ => Type::Unknown,
     }
@@ -31,7 +33,7 @@ mod illumos_tests {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn os_type(){
+    fn os_type() {
         let version = current_platform();
         assert_eq!(Type::Illumos, version.system_type());
     }

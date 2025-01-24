@@ -106,15 +106,14 @@ impl SystemMatcher {
     }
 }
 
-
 /// Concatenates the given `key` with an equals sign (`=`).
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `key` - A string slice that holds the key to be concatenated.
-/// 
+///
 /// # Returns
-/// 
+///
 /// A new `String` that is the result of concatenating the `key` with an equals sign.
 fn find_by_key<'a>(string: &'a str, key: &str) -> Option<&'a str> {
     let key = [key, "="].concat();
@@ -132,7 +131,7 @@ fn is_valid_version(word: &str) -> bool {
 
 /// Finds the position of the first whitespace character in the given string.
 /// If no whitespace is found, returns the length of the string.
-/// 
+///
 /// # Parameters
 /// - `string`: The input string to search for whitespace.
 ///
@@ -141,7 +140,7 @@ fn is_valid_version(word: &str) -> bool {
 fn find_to_prefixed_word<'a>(string: &'a str, prefix: &str) -> Option<&'a str> {
     if let Some(prefix_start) = string.find(prefix) {
         let string = &string[prefix_start + prefix.len()..].trim_start();
-        
+
         let word_end = string
             .find(|c: char| c.is_whitespace())
             .unwrap_or(string.len());

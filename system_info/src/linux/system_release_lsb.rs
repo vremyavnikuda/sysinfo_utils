@@ -1,4 +1,4 @@
-use crate::{system_matcher::SystemMatcher, system_os::Type, Info, SystemVersion};
+use crate::{Info, SystemVersion, system_matcher::SystemMatcher, system_os::Type};
 use log::{debug, trace};
 use std::process::Command;
 
@@ -10,8 +10,7 @@ pub fn get() -> Option<Info> {
         None => SystemVersion::Unknown,
     };
 
-
-    let system_type = match release.distributor_id.as_ref().map(String::as_ref){
+    let system_type = match release.distributor_id.as_ref().map(String::as_ref) {
         Some("Alpaquita") => Type::Alpaquita,
         Some("Amazon") | Some("AmazonAMI") => Type::Amazon,
         Some("Arch") => Type::Arch,
@@ -32,8 +31,8 @@ pub fn get() -> Option<Info> {
         Some("NobaraLinux") => Type::Nobara,
         Some("Uos") => Type::Uos,
         Some("OpenCloudOS") => Type::OpenCloudOS,
-        Some("openEuler") => Type::OpenEuler,
-        Some("openSUSE") => Type::OpenSUSE,
+        Some("openEuler") => Type::openEuler,
+        Some("openSUSE") => Type::openSUSE,
         Some("OracleServer") => Type::OracleLinux,
         Some("Pop") => Type::Pop,
         Some("Raspbian") => Type::Raspbian,
@@ -46,21 +45,21 @@ pub fn get() -> Option<Info> {
         _ => Type::Linux,
     };
 
-    Some(Info{
+    Some(Info {
         system_type,
         version,
         ..Default::default()
     })
 }
 
-fn retrieve() -> Option<LsbRelease>{
-    match Command::new ("system_lsb_release").arg("-a").output(){
-        Ok(output)=>{
-            trace!("system_lsb_release command returned: {:?}",output);
+fn retrieve() -> Option<LsbRelease> {
+    match Command::new("system_lsb_release").arg("-a").output() {
+        Ok(output) => {
+            trace!("system_lsb_release command returned: {:?}", output);
             Some(parse(&String::from_utf8_lossy(&output.stdout)))
         }
-        Err(error)=>{
-            debug!("Failed to execute system_lsb_release command: {:?}",error);
+        Err(error) => {
+            debug!("Failed to execute system_lsb_release command: {:?}", error);
             None
         }
     }
@@ -87,9 +86,9 @@ fn parse(output: &str) -> LsbRelease {
     .find(output)
     .filter(|c| !c.is_empty());
 
-    trace!("Parsed lsb_release output: {:?} {:?}",
-        distributor_id,
-        version,
+    trace!(
+        "Parsed lsb_release output: {:?} {:?}",
+        distributor_id, version,
     );
 
     LsbRelease {
@@ -101,8 +100,8 @@ fn parse(output: &str) -> LsbRelease {
 
 #[cfg(test)]
 mod system_release_lsb_tests {
-    use std::os::unix::prelude::ExitStatusExt;
     use super::*;
+    use std::os::unix::prelude::ExitStatusExt;
     use std::process::Output;
 
     #[test]

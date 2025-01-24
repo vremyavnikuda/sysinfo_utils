@@ -9,8 +9,7 @@ use std::fmt::Display;
     target_os = "netbsd",
     target_os = "openbsd"
 ))]
-use std::process::Command;
-use std::process::Output;
+use std::process::{Command, Output};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -107,6 +106,18 @@ pub fn get() -> BitDepth {
     }
 }
 
+#[cfg(target_os = "openbsd")]
+pub fn get() -> BitDepth {
+    match &Command::new("sysctl").arg("-n").arg("hw.machine").output() {
+        Ok(Output { stdout, .. }) if stdout == b"amd64\n" => BitDepth::X64,
+        Ok(Output { stdout, .. }) if stdout == b"x86_64\n" => BitDepth::X64,
+        Ok(Output { stdout, .. }) if stdout == b"i386\n" => BitDepth::X32,
+        Ok(Output { stdout, .. }) if stdout == b"aarch64\n" => BitDepth::X64,
+        Ok(Output { stdout, .. }) if stdout == b"earmv7hf\n" => BitDepth::X32,
+        Ok(Output { stdout, .. }) if stdout == b"sparc64\n" => BitDepth::X64,
+        _ => BitDepth::Unknown,
+    }
+}
 /// Returns the bit depth of the system as a `BitDepth`.
 ///
 /// The bit depth is determined by running the `prtconf -c` command and
@@ -137,6 +148,7 @@ pub fn get() -> BitDepth {
     )
 ))]
 
+//FIXME: failures : bit_depth::bit_depth_tests::display
 mod bit_depth_tests {
     use super::*;
     use pretty_assertions::assert_ne;

@@ -16,7 +16,7 @@ use windows_sys::Win32::{
     Foundation::{ERROR_SUCCESS, FARPROC, NTSTATUS, STATUS_SUCCESS},
     System::{
         LibraryLoader::{GetModuleHandleA, GetProcAddress},
-        Registry::{RegOpenKeyExW, RegQueryValueExW, HKEY_LOCAL_MACHINE, KEY_READ, REG_SZ},
+        Registry::{HKEY_LOCAL_MACHINE, KEY_READ, REG_SZ, RegOpenKeyExW, RegQueryValueExW},
         SystemInformation::{
             GetNativeSystemInfo, GetSystemInfo, PROCESSOR_ARCHITECTURE_AMD64,
             PROCESSOR_ARCHITECTURE_ARM, PROCESSOR_ARCHITECTURE_IA64, PROCESSOR_ARCHITECTURE_INTEL,
@@ -27,8 +27,7 @@ use windows_sys::Win32::{
     UI::WindowsAndMessaging::{GetSystemMetrics, SM_SERVERR2},
 };
 
-use crate::{system_info::Info, system_os::Type, SystemVersion};
-
+use crate::{SystemVersion, system_info::Info, system_os::Type};
 
 #[cfg(target_arch = "x86")]
 type OSVERSIONINFOEX = windows_sys::Win32::System::SystemInformation::OSVERSIONINFOEXA;

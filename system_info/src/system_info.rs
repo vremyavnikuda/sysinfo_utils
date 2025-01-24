@@ -5,22 +5,26 @@ use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// Contains comprehensive information about an operating system.
+///
+/// Provides details such as system type, version, edition, codename,
+/// bit depth, and architecture.
 pub struct Info {
     /// The type of the operating system.
     pub(crate) system_type: Type,
-    
+
     /// The version of the operating system.
     pub(crate) version: SystemVersion,
-    
+
     /// The edition of the operating system, if known.
     pub(crate) edition: Option<String>,
-    
+
     /// The codename of the operating system, if known.
     pub(crate) codename: Option<String>,
-    
+
     /// The bit depth of the operating system.
     pub(crate) bit_depth: BitDepth,
-    
+
     /// The architecture of the operating system, if known.
     pub(crate) architecture: Option<String>,
 }
@@ -48,6 +52,15 @@ impl Info {
         }
     }
 
+    /// Creates a new instance with the specified system type, using default values for other fields.
+    ///
+    /// # Arguments
+    ///
+    /// * `system_type` - The type of system to be set
+    ///
+    /// # Returns
+    ///
+    /// A new instance of the struct with the given system type
     pub fn with_type(system_type: Type) -> Self {
         Self {
             system_type,

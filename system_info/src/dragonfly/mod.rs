@@ -1,31 +1,31 @@
-use log::trace;
-use crate::{bit_depth, system_os::Type, Info, SystemVersion};
 use crate::system_uname::uname;
+use crate::{Info, SystemVersion, bit_depth, system_os::Type};
+use log::trace;
 
-pub fn current_platform() -> Info{
-	trace!("dragonfly::current_platform() is called");
+pub fn current_platform() -> Info {
+    trace!("dragonfly::current_platform() is called");
 
-	let version = uname("-r")
-		.map(SystemVersion::from_string)
-		.unwrap_or_else(|| SystemVersion::Unknown);
+    let version = uname("-r")
+        .map(SystemVersion::from_string)
+        .unwrap_or_else(|| SystemVersion::Unknown);
 
-	let info = Info{
-		system_type: Type::DragonFly,
-		version,
-		bit_depth: bit_depth::get(),
-		..Default::default()
-	};
+    let info = Info {
+        system_type: Type::DragonFly,
+        version,
+        bit_depth: bit_depth::get(),
+        ..Default::default()
+    };
 
-	trace!("Returning {:?}", info);
-	info
+    trace!("Returning {:?}", info);
+    info
 }
 
 #[cfg(test)]
-mod tests{
-	use super::*;
-	use pretty_assertions::assert_eq;
-	#[test]
-	fn system_type(){
-		assert_eq!(current_platform().system_type(), Type::DragonFly);
-	}
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+    #[test]
+    fn system_type() {
+        assert_eq!(current_platform().system_type(), Type::DragonFly);
+    }
 }

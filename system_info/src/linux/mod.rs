@@ -1,7 +1,7 @@
 mod system_file_release;
 mod system_release_lsb;
 
-use crate::{architecture, bit_depth, system_os::Type, Info};
+use crate::{Info, architecture, bit_depth, system_os::Type};
 use log::trace;
 
 //TODO: Implement the `current_platform` function for the Linux platform.
@@ -48,8 +48,8 @@ mod tests {
             | Type::Nobara
             | Type::Uos
             | Type::OpenCloudOS
-            | Type::OpenEuler
-            | Type::OpenSUSE
+            | Type::openEuler
+            | Type::openSUSE
             | Type::OracleLinux
             | Type::Pop
             | Type::Raspbian

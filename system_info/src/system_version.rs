@@ -8,12 +8,12 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 //The new variant should be called New and should contain three u64 fields: major, minor, and patch.
 /// Represents a rolling release version of the system.
-/// 
+///
 /// The `Rolling` variant contains an `Option<String>` which may hold
 /// additional information about the rolling release version.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```
 /// let version = Rolling(Some(String::from("2023.10")));
 /// let no_version = Rolling(None);
