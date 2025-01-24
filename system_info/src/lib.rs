@@ -120,15 +120,15 @@ pub use crate::{
 /// # Examples
 ///
 /// ```
-/// use os_info;
+/// use system_info;
 ///
-/// let info = os_info::get();
+/// let info = system_info::get();
 ///
 /// // Print full information:
 /// println!("OS information: {info}");
 ///
 /// // Print information separately:
-/// println!("Type: {}", info.os_type());
+/// println!("Type: {}", info.system_type());
 /// println!("Version: {}", info.version());
 /// println!("Edition: {:?}", info.edition());
 /// println!("Codename: {:?}", info.codename());

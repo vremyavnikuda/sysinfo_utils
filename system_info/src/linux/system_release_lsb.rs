@@ -48,6 +48,7 @@ pub fn get() -> Option<Info> {
     Some(Info {
         system_type,
         version,
+        codename: release.codename,
         ..Default::default()
     })
 }
