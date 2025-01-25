@@ -1,9 +1,8 @@
 [workspace]
-
 resolver = "3"
 members = [
-    "system_info",
     "system_cli",
+    "system_info",
 ]
 
 [workspace.dependencies]

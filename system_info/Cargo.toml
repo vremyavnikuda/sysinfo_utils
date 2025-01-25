@@ -1,12 +1,13 @@
 [package]
 name = "system_info"
+version = "0.0.1"
 authors = ["Andrew Nevsky <hopperplayer0@gmail.com>"]
 description = "System detect information"
 readme = "README.MD"
-keywords = ["system","system_os","system_version","system_info"]
+keywords = ["system", "system_os", "system_version", "system_info"]
 categories = ["system"]
-version = "0.0.1"
 edition = "2024"
+rust-version = "1.85"
 
 include = [
     "Cargo.toml",
@@ -15,10 +16,7 @@ include = [
 ]
 
 [features]
-default= ["serde"]
-
-[workspace.dependencies]
-log = "0.4"
+default = ["serde"]
 
 [dependencies]
 log.workspace = true
@@ -41,4 +39,3 @@ windows-sys = { version = "0.52", features = [
 [dev-dependencies]
 pretty_assertions = "1"
 doc-comment = "0.3"
-
