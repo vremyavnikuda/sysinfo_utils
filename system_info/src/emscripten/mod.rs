@@ -11,13 +11,13 @@ pub fn current_platform() -> Info {
 }
 
 #[cfg(test)]
-mod test {
+mod emscripten_test {
     use crate::system_os::Type;
 
     use super::*;
     use pretty_assertions::assert_eq;
     #[test]
-    fn os_type() {
+    fn system_type() {
         let version = current_platform();
         assert_eq!(Type::Emscripten, version.system_type());
     }

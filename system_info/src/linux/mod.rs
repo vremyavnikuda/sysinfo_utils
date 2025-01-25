@@ -19,11 +19,11 @@ pub fn current_platform() -> Info {
 }
 
 #[cfg(test)]
-mod tests {
+mod linux_tests {
     use super::*;
 
     #[test]
-    fn os_type() {
+    fn system_type() {
         let version = current_platform();
         match version.system_type() {
             Type::AlmaLinux
@@ -62,8 +62,8 @@ mod tests {
             | Type::Ultramarine
             | Type::Void
             | Type::Mint => (),
-            os_type => {
-                panic!("Unexpected OS type: {}", os_type);
+            system_type => {
+                panic!("Unexpected OS type: {}", system_type);
             }
         }
     }

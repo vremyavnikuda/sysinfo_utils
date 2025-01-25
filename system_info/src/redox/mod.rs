@@ -40,12 +40,12 @@ fn get_version() -> Option<String> {
 }
 
 #[cfg(test)]
-mod tests {
+mod redox_tests {
     use super::*;
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn os_type() {
+    fn system_type() {
         let version = current_platform();
         assert_eq!(Type::Redox, version.system_type());
     }

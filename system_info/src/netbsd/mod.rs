@@ -24,12 +24,12 @@ pub fn current_platform() -> Info {
 }
 
 #[cfg(test)]
-mod tests {
+mod netbsd_tests {
     use super::*;
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn os_type() {
+    fn system_type() {
         let version = current_platform();
         assert_eq!(Type::NetBSD, version.system_type());
     }
