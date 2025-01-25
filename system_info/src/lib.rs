@@ -16,12 +16,8 @@
 //! - `system_uname`: Uname system call wrapper.
 //! - `system_version`: System version details.
 
-#![deny(
-    missing_debug_implementations,
-    missing_docs,
-    unsafe_code,
-    missing_doc_code_examples
-)]
+#![deny(missing_debug_implementations, missing_docs, unsafe_code)]
+#![feature(rustdoc_missing_doc_code_examples)]
 
 #[cfg(target_os = "aix")]
 #[path = "aix/mod.rs"]
@@ -132,7 +128,7 @@ pub use crate::{
 /// println!("Version: {}", info.version());
 /// println!("Edition: {:?}", info.edition());
 /// println!("Codename: {:?}", info.codename());
-/// println!("Bitness: {}", info.bitness());
+/// println!("BitDepth: {}", info.bit_depth());
 /// println!("Architecture: {:?}", info.architecture());
 /// ```
 pub fn get() -> Info {

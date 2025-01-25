@@ -25,14 +25,6 @@
 ///     - Removes surrounding quotes from the value, if present.
 ///     - Example: For the input string `"key=\"value\""`, it will return `"value"`.
 ///
-/// # Example Usage
-///
-/// ```rust
-/// let matcher = SystemMatcher::KeyValue { key: "ID" };
-/// let result = matcher.find("ID=ubuntu");
-/// assert_eq!(result, Some("ubuntu".to_string()));
-/// ```
-//#[derive(Debug, Clone)]
 pub enum SystemMatcher {
     /// Trims leading and trailing whitespace from the string.
     AllTrimmed,
@@ -85,13 +77,6 @@ impl SystemMatcher {
     /// - **PrefixedVersion**: Finds the version following the specified prefix, skipping invalid formats.
     /// - **KeyValue**: Extracts the value associated with a key in the `key=value` format.
     ///
-    /// # Example Usage
-    ///
-    /// ```rust
-    /// let matcher = SystemMatcher::KeyValue { key: "ID" };
-    /// let result = matcher.find("ID=ubuntu");
-    /// assert_eq!(result, Some("ubuntu".to_string()));
-    /// ```
     pub fn find(&self, string: &str) -> Option<String> {
         match *self {
             Self::AllTrimmed => Some(string.trim().to_string()),
@@ -154,7 +139,7 @@ fn find_to_prefixed_word<'a>(string: &'a str, prefix: &str) -> Option<&'a str> {
 
 #[cfg(test)]
 mod system_matcher_tests {
-    use super::*;
+    use super::SystemMatcher;
     use pretty_assertions::assert_eq;
 
     #[test]
