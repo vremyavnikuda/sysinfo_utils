@@ -15,7 +15,7 @@
 //! # Platform Support
 //! - Linux: Full support
 //! - Windows: Partial NVIDIA support
-//FIXME: обратить внимание на поддержку Mac OS and Windows
+// FIXME: обратить внимание на поддержку Mac OS and Windows
 //! - macOS: Not currently supported
 //!
 //! # Examples
@@ -193,7 +193,7 @@ pub struct GpuManager {
     /// Index of currently active GPU
     pub active_gpu: usize,
 }
-
+//#2
 impl GpuManager {
     /// Creates new GpuManager with automatic GPU detection
     ///
@@ -224,11 +224,14 @@ impl GpuManager {
     /// # Platform Notes
     /// - Requires root permissions for some sysfs paths
     /// - NVIDIA detection depends on `nvidia-smi` availability
-    /// 
-    //FIXME: необходимо убериться что команда nvidia-smi доступна в системе
-    // FIXME: необходимо убедиться что sysfs доступен для AMD и Intel
-    // FIXME: необходимо убедиться что sysfs корректно определяет производителя GPU
-
+    ///
+    /// # Panics
+    /// May panic if system calls fail (platform-dependent)
+    ///
+    // FIXME - detect_gpus()
+    // FIXME - Проверить доступность `nvidia-smi` в системе
+    // FIXME - Убедиться, что sysfs доступен для AMD и Intel
+    // FIXME - Убедиться, что sysfs корректно определяет производителя GPU
     pub fn detect_gpus(&mut self) {
         self.gpus.clear();
 
@@ -246,6 +249,108 @@ impl GpuManager {
             self.parse_intel_info();
         }
     }
+
+    /*DEV: Взять в работу
+        impl GpuManager {
+        /// Detects available GPUs using vendor-specific methods
+        ///
+        /// # Implementation Details
+        /// - NVIDIA: Uses `nvidia-smi` CLI tool
+        /// - AMD: Parses sysfs files
+        /// - Intel: Checks specific sysfs paths
+        ///
+        /// # Platform Notes
+        /// - Requires root permissions for some sysfs paths
+        /// - NVIDIA detection depends on `nvidia-smi` availability
+        ///
+        /// # Errors
+        /// Returns `io::Error` if:
+        /// - `nvidia-smi` command fails
+        /// - Sysfs paths are inaccessible
+        /// - Parsing fails
+        ///
+        /// # FIXME
+        /// - Проверить доступность `nvidia-smi` в системе
+        /// - Убедиться, что sysfs доступен для AMD и Intel
+        /// - Убедиться, что sysfs корректно определяет производителя GPU
+        pub fn detect_gpus(&mut self) -> io::Result<()> {
+            self.gpus.clear();
+
+            // NVIDIA Detection
+            self.detect_nvidia_gpus()?;
+
+            // AMD Detection
+            self.detect_amd_gpus()?;
+
+            // Intel Detection
+            self.detect_intel_gpus()?;
+
+            Ok(())
+        }
+
+        /// Detects NVIDIA GPUs using `nvidia-smi`
+        fn detect_nvidia_gpus(&mut self) -> io::Result<()> {
+            // Проверка доступности `nvidia-smi`
+            if !Self::is_nvidia_smi_available() {
+                return Ok(()); // Пропустить, если `nvidia-smi` недоступен
+            }
+
+            // Выполнение команды `nvidia-smi`
+            let output = Command::new("nvidia-smi")
+                .arg("--query-gpu=name,temperature.gpu,utilization.gpu,clocks.current.graphics,clocks.max.graphics,power.draw,power.max_limit")
+                .arg("--format=csv,noheader,nounits")
+                .output()?;
+
+            if output.status.success() {
+                self.parse_nvidia_info(&String::from_utf8_lossy(&output.stdout));
+            }
+
+            Ok(())
+        }
+
+        /// Проверяет доступность `nvidia-smi` в системе
+        fn is_nvidia_smi_available() -> bool {
+            Command::new("nvidia-smi")
+                .arg("--help")
+                .output()
+                .map(|output| output.status.success())
+                .unwrap_or(false)
+        }
+
+        /// Detects AMD GPUs using sysfs
+        fn detect_amd_gpus(&mut self) -> io::Result<()> {
+            let vendor_path = Path::new("/sys/class/drm/card0/device/vendor");
+
+            if vendor_path.exists() {
+                let vendor_content = std::fs::read_to_string(vendor_path)?;
+
+                // Проверка, что это AMD GPU
+                if vendor_content.contains("AMD") {
+                    self.parse_amd_info();
+                }
+            }
+
+            Ok(())
+        }
+
+        /// Detects Intel GPUs using sysfs
+        fn detect_intel_gpus(&mut self) -> io::Result<()> {
+            let intel_info_path = Path::new("/sys/class/drm/card0/device/intel_info");
+
+            if intel_info_path.exists() {
+                let intel_info_content = std::fs::read_to_string(intel_info_path)?;
+
+                // Проверка, что это Intel GPU
+                if intel_info_content.contains("Intel") {
+                    self.parse_intel_info();
+                }
+            }
+
+            Ok(())
+        }
+    }
+    
+    */
 
     /// Switches active GPU
     ///
