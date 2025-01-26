@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = [
+members = [ "gpu_info",
     "system_cli",
     "system_info",
 ]

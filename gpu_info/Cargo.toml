@@ -1,0 +1,30 @@
+[package]
+name = "gpu_info"
+version = "0.0.1"
+authors = ["Andrew Nevsky <hopperplayer0@gmail.com>"]
+description = "A simple library to get GPU information"
+readme = "README.md"
+license = "MIT"
+categories = ["system-programming", "system", "hardware", "gpu"]
+keywords = ["gpu", "nvidia", "info", "information", "amd"]
+edition = "2024"
+rust-version = "1.85.0"
+
+include = [
+    "src/**/*",
+    "Cargo.toml",
+    "README.md",
+]
+[features]
+default = ["serde"]
+
+[dependencies]
+log.workspace true
+serde = {version = "1.0.217" , optional = true , features = ["derive"]}
+serde_derive = "1.0"
+tempfile = "3.15.0"
+
+
+[dev-dependencies]
+pretty_assertions = "1.0"
+doc-comment = "0.3"

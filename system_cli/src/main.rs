@@ -13,10 +13,10 @@ struct Options {
     /// Show OS version.
     #[clap(short = 'v', long)]
     system_version: bool,
-    /// Show OS bitness.
+    /// Show OS bit_depth.
     #[clap(short, long)]
-    bitness: bool,
-    /// Show OS arch.
+    bit_depth: bool,
+    /// Show OS architecture.
     #[clap(short = 'A', long = "Arch")]
     architecture: bool,
 }
@@ -29,14 +29,14 @@ fn main() {
     let info = system_info::get();
 
     if options.all
-        || !(options.system_type || options.system_version || options.bitness || options.architecture)
+        || !(options.system_type || options.system_version || options.bit_depth || options.architecture)
     {
-        if options.system_type || options.system_version || options.bitness || options.architecture {
+        if options.system_type || options.system_version || options.bit_depth || options.architecture {
             warn!("--all supersedes all other options");
         }
 
         println!(
-            "OS information:\nType: {}\nVersion: {}\nBitness: {} \narchitecture:{}",
+            "OS information:\nType: {}\nVersion: {}\nBitDepth: {} \nArchitecture: {}",
             info.system_type(),
             info.version(),
             info.bit_depth(),
@@ -44,19 +44,19 @@ fn main() {
         );
     } else {
         if options.system_type {
-            println!("OS type: {}", info.system_type());
+            println!("OS Type: {}", info.system_type());
         }
 
         if options.system_version {
-            println!("OS version: {}", info.version());
+            println!("OS Version: {}", info.version());
         }
 
-        if options.bitness {
-            println!("OS bitness: {}", info.bit_depth());
+        if options.bit_depth {
+            println!("OS BitDepth: {}", info.bit_depth());
         }
 
         if options.architecture {
-            println!("OS architecture: {}", info.architecture().unwrap());
+            println!("OS Architecture: {}", info.architecture().unwrap());
         }
     }
 }
