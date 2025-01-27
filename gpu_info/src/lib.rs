@@ -10,6 +10,7 @@
 //! ## Examples
 //!
 //! ```rust
+//! use gpu_info::gpu_info::GpuInfo;
 //! use gpu_info::gpu_info::GpuManager;
 //!
 //! fn main() {

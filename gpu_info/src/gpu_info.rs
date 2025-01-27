@@ -21,7 +21,7 @@
 //! # Examples
 //! ## Basic Usage
 //! ```rust
-//! use gpu_info::{GpuManager, GpuInfo};
+//! use gpu_info::gpu_info::GpuManager;
 //!
 //! let mut manager = GpuManager::new();
 //! manager.refresh();
@@ -34,7 +34,9 @@
 //!
 //! ## Waybar Integration
 //! ```rust,no_run
-//! let manager = GpuManager::new();
+//! use gpu_info::gpu_info::GpuManager;
+//! 
+//! let mut  manager = GpuManager::new();
 //! println!("{}", manager.generate_waybar_json());
 //! ```
 use std::{path::Path, process::Command};
@@ -67,7 +69,8 @@ impl Default for GpuVendor {
 ///
 /// # Examples
 /// ```
-/// use gpu_info::{GpuInfo, GpuVendor};
+/// use gpu_info::gpu_info::GpuInfo;
+/// use gpu_info::gpu_info::GpuVendor;
 ///
 /// let gpu = GpuInfo {
 ///     name: "RTX 4090".into(),
@@ -177,7 +180,7 @@ impl GpuInfo {
 ///
 /// # Example
 /// ```
-/// use gpu_info::GpuManager;
+/// use gpu_info::gpu_info::GpuManager;
 ///
 /// let mut manager = GpuManager::new();
 /// manager.refresh();
@@ -202,6 +205,8 @@ impl GpuManager {
     ///
     /// # Examples
     /// ```
+    /// use gpu_info::gpu_info::GpuManager;
+    /// 
     /// let manager = GpuManager::new();
     /// assert!(!manager.gpus.is_empty());
     /// ```
@@ -362,7 +367,9 @@ impl GpuManager {
     ///
     /// # Example
     /// ```
-    /// let mut manager = gpu_info::GpuManager::new();
+    /// use gpu_info::gpu_info::GpuManager;
+    /// 
+    /// let mut manager = GpuManager::new();
     /// assert!(manager.switch_gpu(0).is_ok());
     /// ```
     // FIXME: пока что просто меняет индекс активного GPU (нуждается в доработке)

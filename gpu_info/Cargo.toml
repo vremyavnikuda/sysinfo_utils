@@ -6,7 +6,7 @@ description = "A simple library to get GPU information"
 readme = "README.md"
 license = "MIT"
 categories = ["system-programming", "system", "hardware", "gpu"]
-keywords = ["gpu", "nvidia", "info", "information", "amd"]
+keywords = ["gpu", "nvidia", "info", "information", "amd", "gpu_info"]
 edition = "2024"
 rust-version = "1.85.0"
 
