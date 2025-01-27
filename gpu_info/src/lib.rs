@@ -1,24 +1,23 @@
-#![deny(missing_debug_implementations, missing_docs, unsafe_code)]
 #![feature(rustdoc_missing_doc_code_examples)]
+#![deny(missing_debug_implementations, missing_docs, unsafe_code)]
 
 //! `gpu_info` crate provides functionality to detect and manage GPU information.
 //!
 //! ## Modules
 //!
-//! - [gpu_info](gpu_info): Contains structures and functions to detect and manage GPU information.
+//! - [manager]: Contains structures and functions to detect and manage GPU information.
 //!
 //! ## Examples
 //!
 //! ```rust
-//! use gpu_info::gpu_info::GpuInfo;
-//! use gpu_info::gpu_info::GpuManager;
+//! use gpu_info::{GpuManager, GpuInfo, GpuVendor};
 //!
-//! fn main() {
-//!     let mut manager = GpuManager::new();
-//!     manager.detect_gpus();
-//!     for gpu in manager.gpus {
-//!         println!("Detected GPU: {}", gpu.name);
-//!     }
+//! let mut manager = GpuManager::new();
+//! manager.refresh();
+//!
+//! for (idx, gpu) in manager.gpus.iter().enumerate() {
+//!     println!("GPU {}: {}", idx, gpu.get_name());
+//!     println!("Temperature: {}", gpu.get_temperature()); // Теперь выведет иконку
 //! }
 //! ```
 
@@ -34,4 +33,10 @@
 /// ## Enums
 ///
 /// - `GpuVendor`: Enum representing different GPU vendors (Nvidia, AMD, Intel).
-pub mod gpu_info;
+pub mod mode;
+
+use mode::{gpu, manager, vendor};
+// Re-export main types to the crate root
+pub use gpu::GpuInfo;
+pub use manager::GpuManager;
+pub use vendor::GpuVendor;

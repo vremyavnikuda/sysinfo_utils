@@ -1,4 +1,4 @@
-use gpu_info::gpu_info::GpuManager;
+use gpu_info::GpuManager;
 
 //TODO: рассмотреть возможность разделения на подбиблиотеки (NVIDIA, AMD, Intel)
 fn main() {
