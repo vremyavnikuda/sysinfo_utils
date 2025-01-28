@@ -290,6 +290,7 @@ impl GpuManager {
     // TODO: Требует обработки ошибок
     // TODO: Требует доработки для других платформ( Windows, macOS)
     // TODO: Требуется документация
+    /// [upd_amd_info](Self::update_amd_info)
     fn update_amd_info(gpu: &mut GpuInfo) {
         if let Ok(temp) =
             std::fs::read_to_string("/sys/class/drm/card0/device/hwmon/hwmon0/temp1_input")

@@ -553,6 +553,7 @@ dependencies = [
  "assert_cmd",
  "clap",
  "env_logger",
+ "gpu_info",
  "log",
  "predicates",
  "system_info",

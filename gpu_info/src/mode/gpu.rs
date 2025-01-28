@@ -2,8 +2,8 @@
 //!
 //! Provides cross-platform GPU monitoring capabilities through vendor-specific interfaces:
 //! - NVIDIA GPUs via `nvidia-smi`
-//! - AMD GPUs via sass interface
-//! - Intel integrated graphics via sysfs.
+//! — AMD GPUs via sass interface
+//! — Intel integrated graphics via sysfs.
 //!
 //! # Features
 //! — Real-time metrics collection
@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// # Examples
 /// ```
-/// use mode::gpu::GpuVendor;
+/// use gpu_info::mode::gpu::GpuVendor;
 /// use gpu_info::GpuInfo;
 ///
 /// let gpu = GpuInfo {
