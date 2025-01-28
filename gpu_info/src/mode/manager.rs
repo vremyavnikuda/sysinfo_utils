@@ -263,7 +263,7 @@ impl GpuManager {
     // (Internal) Updates NVIDIA GPU metrics
     ///
     /// # Data Sources
-    /// - temperature.gpu
+/// - temperature.gpu
     /// - utilization.gpu
     /// - clocks.current.graphics
     /// - power.draw
