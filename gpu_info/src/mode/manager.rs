@@ -6,14 +6,14 @@ use serde_json;
 use std::{path::Path, process::Command};
 use sysinfo::System;
 
-/// Central controller for GPU detection and management
+/// A central controller for GPU detection and management
 ///
 /// Handles GPU detection, status monitoring, and system integration.
 ///
 /// # Lifecycle
 /// 1. Initialize with `new()`
 /// 2. Detect GPUs with `detect_gpus()`
-/// 3. Refresh metrics with `refresh()`
+/// 3. Refresh metrics with `refresh()`.
 ///
 /// # Example
 /// ```
@@ -51,13 +51,13 @@ impl GpuManager {
     /// Detects available GPUs using vendor-specific methods
     ///
     /// # Implementation Details
-    /// - NVIDIA: Uses `nvidia-smi` CLI tool
-    /// - AMD: Parses sysfs files
-    /// - Intel: Checks specific sysfs paths
+    /// — NVIDIA: Uses `nvidia-smi` CLI tool
+    /// — AMD: Parses sysfs files
+    /// — Intel: Checks specific sysfs paths.
     ///
     /// # Platform Notes
-    /// - Requires root permissions for some sysfs paths
-    /// - NVIDIA detection depends on `nvidia-smi` availability
+    /// — Requires root permissions for some sysfs paths
+    /// — NVIDIA detection depends on `nvidia-smi` availability.
     ///
     /// # Panics
     /// May panic if system calls fail (platform-dependent)
@@ -87,10 +87,10 @@ impl GpuManager {
     /// Switches active GPU
     ///
     /// # Arguments
-    /// * `index` - Zero-based GPU index
+    /// * `index` — Zero-based GPU index
     ///
     /// # Errors
-    /// Returns `Err(String)` if index is out of bounds
+    /// Returns `Err (String)` if index is out of bounds.
     ///
     /// # Example
     /// ```
@@ -113,8 +113,8 @@ impl GpuManager {
     /// Updates metrics for all detected GPUs
     ///
     /// # Refresh Rate
-    /// - NVIDIA: Real-time (~1 sec latency)
-    /// - AMD/Intel: Depends on sysfs update frequency
+    /// — NVIDIA: Real-time (~1 sec latency)
+    /// — AMD/Intel: Depends on sysfs update frequency.
     ///
     /// # Platform Notes
     /// May block on system calls during execution
@@ -161,7 +161,7 @@ impl GpuManager {
     /// Checks NVIDIA power management state
     ///
     /// # Returns
-    /// `true` if any NVIDIA processes are running
+    /// `true` if any NVIDIA processes are running.
     ///
     /// # Platform Support
     /// Linux-only detection
@@ -186,7 +186,7 @@ impl GpuManager {
     ///
     /// # Input Format
     /// CSV output from `nvidia-smi`:
-    /// `name,temp,utilization,clock,clock_max,power,power_max`
+    /// `name, temp, utilization, clock,clock_max, power,power_max`.
     fn parse_nvidia_info(&mut self, data: &str) {
         for line in data.lines() {
             let parts: Vec<&str> = line.split(',').collect();
@@ -215,7 +215,7 @@ impl GpuManager {
         }
     }
 
-    /// (Internal) Checks if an AMD GPU is present and adds it to the list
+    /// (Internal) Checks if an AMD GPU is present and adds it to the list.
     // TODO: Требует интеграционного тестирования с реальными процессами
     // TODO: Требует обработки ошибок
     // TODO: Требует доработки для других платформ( Windows, macOS)
@@ -267,7 +267,7 @@ impl GpuManager {
     /// - utilization.gpu
     /// - clocks.current.graphics
     /// - power.draw
-    fn update_nvidia_info(gpu: &mut GpuInfo) {
+    pub(crate) fn update_nvidia_info(gpu: &mut GpuInfo) {
         if let Ok(output) = Command::new("nvidia-smi")
             .arg("--query-gpu=temperature.gpu,utilization.gpu,clocks.current.graphics,power.draw")
             .arg("--format=csv,noheader,nounits")

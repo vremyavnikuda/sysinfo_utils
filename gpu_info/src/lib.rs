@@ -40,3 +40,4 @@ use mode::{gpu, manager, vendor};
 pub use gpu::GpuInfo;
 pub use manager::GpuManager;
 pub use vendor::GpuVendor;
+pub(crate) mod test;

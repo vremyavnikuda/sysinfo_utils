@@ -90,6 +90,113 @@ impl GpuInfo {
     pub fn get_name(&self) -> &str {
         &self.name
     }
+    /// Returns a reference to the GPU vendor enumeration
+    ///
+    /// # Returns
+    /// - Reference to the `GpuVendor` enum representing the GPU's manufacturer
+    ///
+    /// # Examples
+    /// ```
+    /// use gpu_info::mode::gpu::{GpuVendor, GpuInfo};
+    ///
+    /// let gpu = GpuInfo {
+    ///     vendor: GpuVendor::Nvidia,
+    ///     ..Default::default()
+    /// };
+    ///
+    /// assert!(matches!(gpu.verndor(), GpuVendor::Nvidia));
+    /// ```
+    pub fn verndor(&self) -> &GpuVendor {
+        &self.vendor
+    }
+    /// Returns the current temperature of the GPU in Celsius
+    ///
+    /// # Returns
+    /// - `Option<f32>`: The temperature in Celsius if available, otherwise `None`.
+    ///
+    /// # Examples
+    /// ```
+    /// use gpu_info::GpuInfo;
+    /// let gpu = GpuInfo {
+    ///     temperature: Some(70.0),
+    ///     ..Default::default()
+    /// };
+    /// assert_eq!(gpu.temperature(), Some(70.0));
+    /// ```
+
+    pub fn temperature(&self) -> Option<f32> {
+        self.temperature
+    }
+
+    /// Returns the current GPU utilization percentage
+    ///
+    /// # Returns
+    /// - `Option<f32>`: The utilization percentage (0-100) if available, otherwise `None`.
+    ///
+    /// # Examples
+    /// ```
+    /// use gpu_info::GpuInfo;
+    /// let gpu = GpuInfo {
+    ///     utilization: Some(45.5),
+    ///     ..Default::default()
+    /// };
+    /// assert_eq!(gpu.utilization(), Some(45.5));
+    /// ```
+    pub fn utilization(&self) -> Option<f32> {
+        self.utilization
+    }
+
+    /// Returns the current clock speed of the GPU in MHz
+    ///
+    /// # Returns
+    /// - `Option<u64>`: The clock speed in MHz if available, otherwise `None`.
+    ///
+    /// # Examples
+    ///
+    pub fn clock_speed(&self) -> Option<u64> {
+        self.clock_speed
+    }
+
+    /// Returns the maximum clock speed of the GPU in MHz
+    ///
+    /// # Returns
+    /// - `Option<u64>`: The maximum clock speed in MHz if available, otherwise `None`.
+    ///
+    /// # Examples
+    /// ```
+    /// use gpu_info::GpuInfo;
+    /// let gpu = GpuInfo {
+    ///     max_clock_speed: Some(2000),
+    ///     ..Default::default()
+    /// };
+    /// assert_eq!(gpu.max_clock_speed(), Some(2000));
+    /// ```
+    pub fn max_clock_speed(&self) -> Option<u64> {
+        self.max_clock_speed
+    }
+
+    /// Returns the current power draw of the GPU in watts
+    ///
+    /// # Returns
+    /// - `Option<f32>`: The power draw in watts if available, otherwise `None`.
+    ///
+    /// # Examples
+    ///
+    pub fn power_usage(&self) -> Option<f32> {
+        self.power_usage
+    }
+
+    /// Returns the maximum power draw of the GPU in watts
+    ///
+    /// # Returns
+    /// - `Option<f32>`: The maximum power draw in watts if available, otherwise `None`.
+    ///
+    /// # Examples
+    ///
+    pub fn max_power_usage(&self) -> Option<f32> {
+        self.max_power_usage
+    }
+
 
     /// Returns reference to vendor classification
     pub fn get_vendor(&self) -> &GpuVendor {

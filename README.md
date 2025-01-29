@@ -4,6 +4,14 @@
 
 ### Overview
 This project is a library that can be used in your projects to determine the user's operating system , bit depth, and release date.
+## Supported GPUs 
+
+Right now, the following gpu vendor types can be returned:
+
+- Nvidia
+- AMD
+- Intel
+- Qualcomm (temporarily not supported)
 
 ## Supported operating systems
 
