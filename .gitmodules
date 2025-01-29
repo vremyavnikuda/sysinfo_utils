@@ -1,0 +1,6 @@
+[submodule "libs/gpu_info"]
+	path = libs/gpu_info
+	url = git@github.com:vremyavnikuda/gpu_info.git
+[submodule "gpu_info"]
+	path = gpu_info
+	url = git@github.com:vremyavnikuda/gpu_info.git
