@@ -272,7 +272,6 @@ name = "gpu_info"
 version = "0.0.1"
 dependencies = [
  "doc-comment",
- "log",
  "pretty_assertions",
  "serde",
  "serde_json",
