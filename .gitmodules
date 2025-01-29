@@ -7,3 +7,6 @@
 [submodule "system_info_lib"]
 	path = system_info_lib
 	url = git@github.com:vremyavnikuda/system_info_lib.git
+[submodule "system_cli"]
+	path = system_cli
+	url = git@github.com:vremyavnikuda/system_cli.git
