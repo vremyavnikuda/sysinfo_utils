@@ -220,6 +220,7 @@ impl GpuManager {
     // TODO: Требует обработки ошибок
     // TODO: Требует доработки для других платформ( Windows, macOS)
     // TODO: Требуется документация
+    // TODO: не работает определение метрик AMD GPU
     fn parse_amd_info(&mut self) {
         if let Ok(output) = std::fs::read_to_string("/sys/class/drm/card0/device/vendor") {
             if output.contains("AMD") {

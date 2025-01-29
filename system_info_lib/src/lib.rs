@@ -10,7 +10,7 @@
 //! - `architecture`: Handles system architecture information.
 //! - `bit_depth`: Manages bit depth details.
 //! - `imp`: Platform-specific implementations (e.g., AIX).
-//! - `system_info`: Core system information functionalities.
+//! - `system_info_lib`: Core system information functionalities.
 //! - `system_matcher`: Utilities for matching system properties.
 //! - `system_os`: Operating system-related information.
 //! - `system_uname`: Uname system call wrapper.

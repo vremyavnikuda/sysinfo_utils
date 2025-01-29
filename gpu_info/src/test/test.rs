@@ -69,8 +69,8 @@ mod gpu_info_tests {
 		let gpu = GpuInfo {
 			name: "Test GPU".to_string(),
 			vendor: GpuVendor::Nvidia,
-			temperature: Some(50.0),
-			utilization: Some(75.0),
+			temperature: Some(75.0),
+			utilization: Some(50.0),
 			clock_speed: Some(1500),
 			max_clock_speed: Some(2000),
 			power_usage: Some(100.0),

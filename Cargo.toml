@@ -2,7 +2,7 @@
 resolver = "2"
 members = [ "gpu_info",
     "system_cli",
-    "system_info",
+    "system_info_lib",
 ]
 
 [workspace.dependencies]

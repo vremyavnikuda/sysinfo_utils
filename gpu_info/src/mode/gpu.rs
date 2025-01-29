@@ -12,10 +12,10 @@
 //! — Power state monitoring
 //! — Vendor-specific data collection.
 // FIXME: Improve macOS and Windows support
-//! # Platform Support
-//! — Linux: Full support
-//! — Windows: Partial NVIDIA support
-//! — macOS: Not currently supported.
+// # Platform Support
+// — Linux: Full support
+// — Windows: Partial NVIDIA support
+// — macOS: Not currently supported.
 use serde::{Deserialize, Serialize};
 /// Primary structure representing GPU metrics and status
 ///
@@ -203,6 +203,14 @@ impl GpuInfo {
         &self.vendor
     }
 
+    /// Indicates if the GPU is currently active
+    ///
+    /// # Note
+    /// Activation state detection depends on vendor implementation
+    pub fn is_active(&self) -> bool {
+        self.is_active
+    }
+
     /// Formats temperature with icon and units
     ///
     /// # Returns
@@ -210,8 +218,8 @@ impl GpuInfo {
     /// - "N/A" if temperature unavailable
     pub fn get_temperature(&self) -> String {
         match self.temperature {
-            Some(temp) => format!(" Temperature: {}°C", temp),
-            None => " Temperature: N/A".to_string(),
+            Some(temp) => format!("Temperature: {}°C", temp),
+            None => "Temperature: N/A".to_string(),
         }
     }
 
@@ -222,8 +230,8 @@ impl GpuInfo {
     /// - "N/A" if utilization data unavailable
     pub fn get_utilization(&self) -> String {
         match self.utilization {
-            Some(util) => format!("󰾆 Utilization: {}%", util),
-            None => "󰾆 Utilization: N/A".to_string(),
+            Some(util) => format!("Utilization: {}%", util),
+            None => "Utilization: N/A".to_string(),
         }
     }
 
@@ -235,7 +243,10 @@ impl GpuInfo {
     pub fn get_clock_speed(&self) -> String {
         let current = self.clock_speed.unwrap_or(0);
         let max = self.max_clock_speed.unwrap_or(0);
-        format!(" Clock Speed: {}/{} MHz", current, max)
+        match (self.clock_speed,self.max_clock_speed){
+            (Some(_),Some(_))=> format!("Clock Speed: {}/{} MHz",current,max),
+            _ => "Clock Speed: N/A".to_string()
+        }
     }
 
     /// Formats power usage with icon and precision
@@ -247,14 +258,9 @@ impl GpuInfo {
     pub fn get_power_usage(&self) -> String {
         let current = self.power_usage.unwrap_or(0.0);
         let max = self.max_power_usage.unwrap_or(0.0);
-        format!("󱪉 Power Usage: {:.2}/{} W", current, max)
-    }
-
-    /// Indicates if the GPU is currently active
-    ///
-    /// # Note
-    /// Activation state detection depends on vendor implementation
-    pub fn is_active(&self) -> bool {
-        self.is_active
+        match (self.power_usage,self.max_power_usage){
+            (Some(_),Some(_))=> format!("Power Usage: {:.2}/{} W",current,max),
+            _ => "Power Usage: N/A".to_string()
+        }
     }
 }
