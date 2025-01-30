@@ -18,7 +18,6 @@ cargo add system_info
 ```toml
 [dependencies]
 system_info = "0.1"
-gpu_info = "0.1"
 clap = { version = "4", features = ["derive"] }
 log = "0.4"
 env_logger = "0.10"
@@ -84,7 +83,7 @@ system_info -u                 # Show GPU utilization
 system_info --utilization     # Show GPU utilization (long format)
 system_info -s                 # Show GPU power usage
 system_info --power          # Show GPU power usage (long format)
-system_info -a                 # Show GPU clock speed
+system_info -c                 # Show GPU clock speed
 system_info --clock          # Show GPU clock speed (long format)
 ```
 
