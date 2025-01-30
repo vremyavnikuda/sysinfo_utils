@@ -29,6 +29,9 @@ env_logger = "0.10"
 env_logger::init();
 ```
 #### Getting OS information
+
+[list](os.md) of supported operating systems
+
 ```rust
 env_logger::init();
 let info = system_info::get();
@@ -38,6 +41,7 @@ info.bit_depth();
 info.architecture();
 ```
 #### Getting GPU information
+[list](gpu.md) of supported GPUs
 ```rust
 env_logger::init();
 let mut manager = GpuManager::new();
