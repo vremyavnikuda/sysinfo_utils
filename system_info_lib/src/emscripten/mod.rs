@@ -1,0 +1,24 @@
+use log::trace;
+
+use crate::{Info, system_os::Type};
+
+pub fn current_platform() -> Info {
+    trace!("emscripten::current_platform() is called");
+
+    let info = Info::with_type(Type::Emscripten);
+    trace!("Returning system information: {:?}", info);
+    info
+}
+
+#[cfg(test)]
+mod emscripten_test {
+    use crate::system_os::Type;
+
+    use super::*;
+    use pretty_assertions::assert_eq;
+    #[test]
+    fn system_type() {
+        let version = current_platform();
+        assert_eq!(Type::Emscripten, version.system_type());
+    }
+}
