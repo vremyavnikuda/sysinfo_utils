@@ -65,7 +65,7 @@ mod gpu_info_tests {
     /// - `get_power_usage`: Ensures power usage is formatted correctly.
     /// - `is_active`: Verifies if the GPU is active.
     #[test]
-    fn _test_gpu_info_methods() {
+    fn test_gpu_info_methods() {
         let gpu = GpuInfo {
             name: "Test GPU".to_string(),
             vendor: GpuVendor::Nvidia,
@@ -80,10 +80,12 @@ mod gpu_info_tests {
 
         assert_eq!(gpu.name_gpu(), "Test GPU");
         assert!(matches!(gpu.vendor_gpu(), GpuVendor::Nvidia));
-        assert_eq!(gpu.temperature_gpu(), "Temperature: 75°C");
-        assert_eq!(gpu.utilization_gpu(), "Utilization: 50%");
-        assert_eq!(gpu.clock_speed_gpu(), "Clock Speed: 1500/2000 MHz");
-        assert_eq!(gpu.power_usage_gpu(), "Power Usage: 100.00/150 W");
+        assert_eq!(gpu.temperature_gpu(), Some(75.0));
+        assert_eq!(gpu.utilization_gpu(), Some(50.0));
+        assert_eq!(gpu.clock_speed_gpu(), Some(1500));
+        assert_eq!(gpu.max_clock_speed_gpu(), Some(2000));
+        assert_eq!(gpu.power_usage_gpu(), Some(100.0));
+        assert_eq!(gpu.max_power_usage_gpu(), Some(150.0));
         assert!(gpu.is_active_gpu());
     }
 
@@ -331,6 +333,7 @@ mod gpu_info_tests {
     #[test]
     fn test_metrics_update() {
         mock_command(true, "75,50,1500,100\n");
+
         let mut manager = GpuManager {
             gpus: vec![GpuInfo {
                 vendor: GpuVendor::Nvidia,
@@ -342,8 +345,8 @@ mod gpu_info_tests {
         manager.refresh();
         let gpu = &manager.gpus[0];
 
-        assert_eq!(gpu.temperature, Some(50.0));
-        assert_eq!(gpu.utilization, Some(75.0));
+        assert_eq!(gpu.temperature, Some(75.0));
+        assert_eq!(gpu.utilization, Some(50.0));
         assert_eq!(gpu.clock_speed, Some(1500));
         assert_eq!(gpu.power_usage, Some(100.0));
     }

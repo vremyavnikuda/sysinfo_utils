@@ -11,7 +11,7 @@
 //! — Waybar integration
 //! — Power state monitoring
 //! — Vendor-specific data collection.
-// TODO: Improve macOS and Windows support
+// TODO: проверить работоспособность windows и macos
 // # Platform Support
 // — Linux: Full support
 // — Windows: Partial NVIDIA support

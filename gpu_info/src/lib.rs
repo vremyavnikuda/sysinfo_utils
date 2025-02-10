@@ -17,7 +17,7 @@
 //!
 //! for (idx, gpu) in manager.gpus.iter().enumerate() {
 //!     println!("GPU {}: {}", idx, gpu.get_name());
-//!     println!("Temperature: {}", gpu.get_temperature()); // Теперь выведет иконку
+//!     println!("Temperature: {}", gpu.get_temperature());
 //! }
 //! ```
 
