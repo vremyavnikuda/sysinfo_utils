@@ -2,7 +2,7 @@ use std::process::Command;
 
 use log::{trace, warn};
 
-use crate::{SystemMatcher, SystemVersion, system_info::Info, system_os::Type};
+use crate::{system_info::Info, system_os::Type, SystemMatcher, SystemVersion};
 
 pub fn current_platform() -> Info {
     trace!("macos::current_platform() is called");

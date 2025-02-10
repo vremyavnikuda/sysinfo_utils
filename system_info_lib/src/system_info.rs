@@ -1,6 +1,6 @@
-use crate::SystemVersion;
 use crate::bit_depth::BitDepth;
 use crate::system_os::Type;
+use crate::SystemVersion;
 use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

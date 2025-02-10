@@ -1,7 +1,7 @@
 use log::{error, trace};
 
 use crate::{
-    SystemVersion, architecture, bit_depth, system_info::Info, system_os::Type, system_uname::uname,
+    architecture, bit_depth, system_info::Info, system_os::Type, system_uname::uname, SystemVersion,
 };
 
 pub fn current_platform() -> Info {

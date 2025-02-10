@@ -1,7 +1,7 @@
 mod system_file_release;
 mod system_release_lsb;
 
-use crate::{Info, architecture, bit_depth, system_os::Type};
+use crate::{architecture, bit_depth, system_os::Type, Info};
 use log::trace;
 
 //TODO: Implement the `current_platform` function for the Linux platform.

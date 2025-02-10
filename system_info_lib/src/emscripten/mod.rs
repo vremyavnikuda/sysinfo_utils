@@ -1,6 +1,6 @@
 use log::trace;
 
-use crate::{Info, system_os::Type};
+use crate::{system_os::Type, Info};
 
 pub fn current_platform() -> Info {
     trace!("emscripten::current_platform() is called");

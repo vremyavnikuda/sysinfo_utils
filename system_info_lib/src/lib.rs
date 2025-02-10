@@ -91,6 +91,7 @@ mod imp;
     target_os = "openbsd"
 ))]
 mod architecture;
+mod bit_depth;
 mod system_info;
 #[cfg(not(windows))]
 mod system_matcher;
@@ -105,7 +106,6 @@ mod system_os;
 ))]
 mod system_uname;
 mod system_version;
-mod bit_depth;
 
 pub use crate::{
     bit_depth::BitDepth, system_info::Info, system_os::Type, system_version::SystemVersion,

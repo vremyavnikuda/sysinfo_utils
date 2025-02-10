@@ -1,5 +1,5 @@
 use crate::system_uname::uname;
-use crate::{Info, SystemVersion, bit_depth, system_os::Type};
+use crate::{bit_depth, system_os::Type, Info, SystemVersion};
 use log::trace;
 
 pub fn current_platform() -> Info {

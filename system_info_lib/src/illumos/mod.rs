@@ -1,6 +1,6 @@
 use log::trace;
 
-use crate::{SystemVersion, bit_depth, system_info::Info, system_os::Type, system_uname::uname};
+use crate::{bit_depth, system_info::Info, system_os::Type, system_uname::uname, SystemVersion};
 
 pub fn current_platform() -> Info {
     trace!("illumos::current_platform() is called");

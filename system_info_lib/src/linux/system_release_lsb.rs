@@ -1,4 +1,4 @@
-use crate::{Info, SystemVersion, system_matcher::SystemMatcher, system_os::Type};
+use crate::{system_matcher::SystemMatcher, system_os::Type, Info, SystemVersion};
 use log::{debug, trace};
 use std::process::Command;
 
@@ -89,7 +89,8 @@ fn parse(output: &str) -> LsbRelease {
 
     trace!(
         "Parsed lsb_release output: {:?} {:?}",
-        distributor_id, version,
+        distributor_id,
+        version,
     );
 
     LsbRelease {

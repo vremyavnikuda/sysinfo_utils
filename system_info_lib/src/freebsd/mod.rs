@@ -1,4 +1,4 @@
-use crate::{Info, SystemVersion, bit_depth, system_os::Type, system_uname::uname};
+use crate::{bit_depth, system_os::Type, system_uname::uname, Info, SystemVersion};
 use log::{error, trace};
 use std::process::Command;
 

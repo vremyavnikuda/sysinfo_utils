@@ -3,7 +3,7 @@ use std::path::Path;
 use assert_cmd::Command;
 use predicates::prelude::*;
 
-const BIN_NAME: &str = env!("CARGO_BIN_EXE_os_info");
+const BIN_NAME: &str = env!("CARGO_BIN_EXE_system_info");
 
 #[test]
 fn path_is_correct() {
