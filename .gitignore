@@ -1,3 +1,4 @@
 /target
 /gpu_info/.vscode/launch.json
 /gpu_info/.vscode/tasks.json
+/.idea
