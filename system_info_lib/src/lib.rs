@@ -17,7 +17,6 @@
 //! - `system_version`: System version details.
 
 #![deny(missing_debug_implementations, missing_docs, unsafe_code)]
-#![feature(rustdoc_missing_doc_code_examples)]
 
 #[cfg(target_os = "aix")]
 #[path = "aix/mod.rs"]

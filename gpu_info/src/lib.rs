@@ -1,4 +1,3 @@
-#![feature(rustdoc_missing_doc_code_examples)]
 #![deny(missing_debug_implementations, missing_docs, unsafe_code)]
 
 //! `gpu_info` crate provides functionality to detect and manage GPU information.

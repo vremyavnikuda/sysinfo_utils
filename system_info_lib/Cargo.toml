@@ -10,7 +10,7 @@ keywords = ["system", "system_os", "system_version", "system_info"]
 categories = ["os"]
 license = "MIT"
 edition = "2021"
-rust-version = "1.85"
+rust-version = "1.56"
 
 include = [
     "Cargo.toml",

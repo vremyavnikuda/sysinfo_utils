@@ -10,7 +10,7 @@ license = "MIT"
 categories = ["command-line-interface", "filesystem"]
 keywords = ["gpu", "nvidia", "info", "information", "amd"]
 edition = "2021"
-rust-version = "1.85.0"
+rust-version = "1.56"
 
 include = ["src/**/*", "Cargo.toml", "README.md"]
 [features]
