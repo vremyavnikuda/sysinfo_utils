@@ -6,7 +6,6 @@ mod gpu_info_tests {
     use std::fs;
     use std::fs::File;
     use std::io::Write;
-    use std::path::Path;
     use std::process::{Command, ExitStatus};
     use tempfile::TempDir;
 
@@ -202,6 +201,7 @@ mod gpu_info_tests {
 
     // Реализация моков для системных команд
     mod mock_impl {
+        use std::os::windows::process::ExitStatusExt;
         use super::*;
         use std::{
             os::unix::process::ExitStatusExt,
@@ -230,7 +230,7 @@ mod gpu_info_tests {
 
             if let Some(mock) = mock {
                 Ok(Output {
-                    status: ExitStatus::from_raw(if mock.success { 0 } else { 1 }),
+                    status: std::process::ExitStatus::from_raw(if mock.success { 0 } else { 1 }),
                     stdout: mock.output.as_bytes().to_vec(),
                     stderr: vec![],
                 })
