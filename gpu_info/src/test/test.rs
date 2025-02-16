@@ -201,13 +201,13 @@ mod gpu_info_tests {
 
     // Реализация моков для системных команд
     mod mock_impl {
-        use std::{os::windows::process::ExitStatusExt, process::Output};
         use super::*;
         #[cfg(unix)]
         use std::{
             os::unix::process::ExitStatusExt,
             process::{Command, Output},
         };
+        use std::{os::windows::process::ExitStatusExt, process::Output};
 
         /// Mocks the execution of a system command by returning predefined output.
         ///
@@ -228,7 +228,6 @@ mod gpu_info_tests {
         ///   success status with empty output.
         pub fn _command_mock(_cmd: &mut Command) -> Result<Output, std::io::Error> {
             let mock = MOCK_COMMAND.with(|mc| mc.borrow_mut().take());
-
             if let Some(mock) = mock {
                 Ok(Output {
                     status: std::process::ExitStatus::from_raw(if mock.success { 0 } else { 1 }),
