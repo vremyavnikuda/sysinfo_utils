@@ -1,3 +1,5 @@
+// src/lib.rs
+
 #![deny(missing_debug_implementations, missing_docs, unsafe_code)]
 
 //! `gpu_info` crate provides functionality to detect and manage GPU information.
@@ -5,6 +7,10 @@
 //! ## Modules
 //!
 //! - [manager]: Contains structures and functions to detect and manage GPU information.
+//! - [amd]: Contains functionality specific to AMD GPUs.
+//! - [intel]: Contains functionality specific to Intel GPUs.
+//! - [nvidia]: Contains functionality specific to NVIDIA GPUs.
+//! - [qualcomm]: Contains functionality specific to Qualcomm GPUs.
 //!
 //! ## Examples
 //!
@@ -39,4 +45,17 @@ use mode::{gpu, manager, vendor};
 pub use gpu::GpuInfo;
 pub use manager::GpuManager;
 pub use vendor::GpuVendor;
+
+/// Contains functionality specific to AMD GPUs.
+pub mod amd;
+
+/// Contains functionality specific to Intel GPUs.
+pub mod intel;
+
+/// Contains functionality specific to NVIDIA GPUs.
+pub mod nvidia;
+
+/// Contains functionality specific to Qualcomm GPUs.
+pub mod qualcomm;
+
 pub(crate) mod test;

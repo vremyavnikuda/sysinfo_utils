@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod gpu_info_tests {
     use crate::mode::gpu::GpuVendor;
+    use crate::nvidia::{update_nvidia_info};
     use crate::{GpuInfo, GpuManager};
     use std::cell::RefCell;
     use std::fs;
@@ -100,17 +101,17 @@ mod gpu_info_tests {
         assert_eq!(manager.active_gpu, 0);
     }
 
-    /// Tests that `GpuManager` can parse a line of NVIDIA GPU information
+    /// Tests that `GpuManager` can parse a line of nvidia GPU information
     /// produced by `nvidia-smi` and create a `GpuInfo` instance from it.
     ///
     /// # Assertions
     ///
     /// - The `GpuManager` instance is not empty after calling `detect_gpus()`.
-    /// - The first GPU in the list is an NVIDIA GPU.
-    /// - The name of the first GPU starts with either "NVIDIA", "AMD", or "INTEL".
+    /// - The first GPU in the list is an nvidia GPU.
+    /// - The name of the first GPU starts with either "nvidia", "amd", or "intel".
     #[test]
     fn _test_nvidia_parsing() {
-        mock_command(true, "NVIDIA GPU,75,50,1500,2000,100,150\n");
+        mock_command(true, "nvidia GPU,75,50,1500,2000,100,150\n");
 
         let mut manager = GpuManager::new();
         manager.detect_gpus();
@@ -118,9 +119,9 @@ mod gpu_info_tests {
         assert!(!manager.gpus.is_empty());
         let gpu = &manager.gpus[0];
         assert!(
-            gpu.name.starts_with("NVIDIA")
-                || gpu.name.starts_with("AMD")
-                || gpu.name.starts_with("INTEL")
+            gpu.name.starts_with("nvidia")
+                || gpu.name.starts_with("amd")
+                || gpu.name.starts_with("intel")
         );
         assert!(matches!(gpu.vendor, GpuVendor::Nvidia));
     }
@@ -260,21 +261,21 @@ mod gpu_info_tests {
         /// * `gpu` - A mutable reference to a `GpuInfo` that is being updated.
         fn _test_update_nvidia_info(gpu: &mut GpuInfo) {
             mock_impl::_command_mock(&mut Command::new("nvidia-smi")).unwrap();
-            GpuManager::update_nvidia_info(gpu)
+            update_nvidia_info(gpu);
         }
     }
 
-    /// Tests the detection of an AMD GPU by mocking the sysfs vendor file.
+    /// Tests the detection of an amd GPU by mocking the sysfs vendor file.
     ///
     /// This test creates a temporary directory structure mimicking the sysfs paths
-    /// used by AMD GPUs. It writes a mock vendor ID into the vendor file and then
-    /// invokes the `detect_gpus` method of `GpuManager` to ensure that an AMD GPU
+    /// used by amd GPUs. It writes a mock vendor ID into the vendor file and then
+    /// invokes the `detect_gpus` method of `GpuManager` to ensure that an amd GPU
     /// is correctly detected and added to the manager's list of GPUs.
     ///
     /// # Assertions
     ///
     /// - The GPU list is not empty after detection.
-    /// - At least one of the detected GPUs matches the AMD vendor.
+    /// - At least one of the detected GPUs matches the amd vendor.
     #[test]
     fn test_amd_parsing() {
         let tmp_dir = TempDir::new().unwrap();
@@ -282,7 +283,7 @@ mod gpu_info_tests {
         fs::create_dir_all(&card_path).unwrap();
 
         let mut vendor_file = File::create(card_path.join("vendor")).unwrap();
-        writeln!(vendor_file, "0x1002").unwrap(); // PCI ID AMD
+        writeln!(vendor_file, "0x1002").unwrap(); // PCI ID amd
 
         let mut manager = GpuManager::new();
         manager.detect_gpus();
@@ -324,9 +325,9 @@ mod gpu_info_tests {
             .any(|g| matches!(g.vendor, GpuVendor::Intel)));
     }
 
-    /// Tests that metrics are correctly updated for an NVIDIA GPU.
+    /// Tests that metrics are correctly updated for an nvidia GPU.
     ///
-    /// This test creates a mock `GpuManager` with a single NVIDIA GPU and
+    /// This test creates a mock `GpuManager` with a single nvidia GPU and
     /// then invokes the `refresh` method to update the metrics. It asserts
     /// that the metrics are correctly updated based on the mock `nvidia-smi`
     /// output.
@@ -356,15 +357,15 @@ mod gpu_info_tests {
     /// This test ensures that the `detect_gpus` and `refresh` methods correctly
     /// handle errors when running the `nvidia-smi` command:
     ///
-    /// - When the command fails to execute, no NVIDIA GPUs should be detected.
-    /// - When the command produces invalid output, no NVIDIA GPUs should be
+    /// - When the command fails to execute, no nvidia GPUs should be detected.
+    /// - When the command produces invalid output, no nvidia GPUs should be
     ///   detected.
     ///
     /// # Assertions
     ///
-    /// - The `detect_gpus` method does not detect any NVIDIA GPUs if the command
+    /// - The `detect_gpus` method does not detect any nvidia GPUs if the command
     ///   fails to execute.
-    /// - The `detect_gpus` method does not detect any NVIDIA GPUs if the command
+    /// - The `detect_gpus` method does not detect any nvidia GPUs if the command
     ///   produces invalid output.
     #[test]
     fn test_error_handling() {
@@ -390,9 +391,9 @@ mod gpu_info_tests {
     ///
     /// # Assertions
     ///
-    /// - If the `nvidia-smi` command is available, at least one NVIDIA GPU
+    /// - If the `nvidia-smi` command is available, at least one nvidia GPU
     ///   should be detected.
-    /// - If the sysfs `vendor` file is available, at least one AMD or Intel GPU
+    /// - If the sysfs `vendor` file is available, at least one amd or Intel GPU
     ///   should be detected, depending on the contents of the `vendor` file.
     #[test]
     #[cfg(target_os = "linux")]
@@ -431,7 +432,7 @@ mod gpu_info_tests {
     /// # Assertions
     ///
     /// - The `GpuManager` contains at least one GPU
-    /// - The first GPU in the list is an NVIDIA GPU
+    /// - The first GPU in the list is an nvidia GPU
     #[test]
     fn test_get_vendor_nvidia() {
         let mut manager = GpuManager::new();
@@ -464,12 +465,12 @@ mod gpu_info_tests {
     /// This test ensures that the `GpuManager` correctly parses the `nvidia-smi`
     /// output even when some of the fields are missing (e.g. `utilization.gpu` or
     /// `clocks.max.graphics`). The test creates a mock `GpuManager` with a single
-    /// NVIDIA GPU and then invokes the `detect_gpus` method to detect the GPU.
+    /// nvidia GPU and then invokes the `detect_gpus` method to detect the GPU.
     /// It asserts that the `utilization`, `max_clock_speed`, and `max_power_usage`
     /// fields are correctly set to `None` for the detected GPU.
     #[test]
     fn test_partial_data_parsing() {
-        mock_command(true, "NVIDIA GPU,75,,1500,,100,\n");
+        mock_command(true, "nvidia GPU,75,,1500,,100,\n");
         let mut manager = GpuManager::new();
         manager.detect_gpus();
 

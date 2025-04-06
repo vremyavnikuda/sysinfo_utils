@@ -1,8 +1,8 @@
 //! GPU monitoring and management implementation
 //!
 //! Provides cross-platform GPU monitoring capabilities through vendor-specific interfaces:
-//! - NVIDIA GPUs via `nvidia-smi`
-//! — AMD GPUs via sass interface
+//! - nvidia GPUs via `nvidia-smi`
+//! — amd GPUs via sass interface
 //! — Intel integrated graphics via sysfs.
 //!
 //! # Features
@@ -14,7 +14,7 @@
 // TODO: проверить работоспособность windows и macos
 // # Platform Support
 // — Linux: Full support
-// — Windows: Partial NVIDIA support
+// — Windows: Partial nvidia support
 // — macOS: Not currently supported.
 use serde::{Deserialize, Serialize};
 /// Primary structure representing GPU metrics and status
@@ -43,9 +43,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 /// Enum representing different GPU vendors.
 pub enum GpuVendor {
-    /// NVIDIA Corporation devices
+    /// nvidia Corporation devices
     Nvidia,
-    /// Advanced Micro Devices (AMD) devices
+    /// Advanced Micro Devices (amd) devices
     AMD,
     /// Intel Corporation integrated graphics
     Intel,
@@ -65,7 +65,7 @@ impl Default for GpuVendor {
 /// # Examples
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct GpuInfo {
-    /// GPU model name (e.g., "NVIDIA GeForce RTX 4090")
+    /// GPU model name (e.g., "nvidia GeForce RTX 4090")
     pub name: String,
     /// Hardware vendor classification
     pub vendor: GpuVendor,

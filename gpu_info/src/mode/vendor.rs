@@ -10,10 +10,10 @@ use serde::{Deserialize, Serialize};
 #[non_exhaustive]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GpuVendor {
-    /// NVIDIA Corporation graphics processors
+    /// nvidia Corporation graphics processors
     Nvidia,
 
-    /// Advanced Micro Devices (AMD) graphics processors
+    /// Advanced Micro Devices (amd) graphics processors
     AMD,
 
     /// Intel Corporation integrated and discrete graphics
