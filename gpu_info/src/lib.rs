@@ -11,6 +11,7 @@
 //! - [intel]: Contains functionality specific to Intel GPUs.
 //! - [nvidia]: Contains functionality specific to NVIDIA GPUs.
 //! - [qualcomm]: Contains functionality specific to Qualcomm GPUs.
+//! - [unknown]: Contains functionality for unsupported GPU vendors.
 //!
 //! ## Examples
 //!
@@ -59,3 +60,6 @@ pub mod nvidia;
 pub mod qualcomm;
 
 pub(crate) mod test;
+
+/// Contains functionality for unsupported GPU vendors.
+pub mod UNKNOWN;

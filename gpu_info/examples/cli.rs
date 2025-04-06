@@ -1,6 +1,5 @@
 use gpu_info::GpuManager;
 
-//TODO: рассмотреть возможность разделения на подбиблиотеки (nvidia, amd, Intel)
 fn main() {
     let mut manager = GpuManager::new();
     manager.refresh();
