@@ -43,6 +43,6 @@ pub fn detect_qualcomm_gpus() -> Vec<GpuInfo> {
 /// Errors may occur during the update process if system calls fail or if the
 /// necessary data cannot be retrieved from the GPU.
 #[warn(dead_code)]
-pub fn update_qualcomm_info(gpu: &mut GpuInfo) {
+pub fn update_qualcomm_info(_gpu: &mut GpuInfo) {
 	// Implementation for updating Qualcomm GPU info
 }

@@ -1,6 +1,6 @@
 // src/lib.rs
-
-#![deny(missing_debug_implementations, missing_docs, unsafe_code)]
+//missing_docs
+#![deny(missing_debug_implementations)]
 
 //! `gpu_info` crate provides functionality to detect and manage GPU information.
 //!
@@ -60,6 +60,4 @@ pub mod nvidia;
 pub mod qualcomm;
 
 pub(crate) mod test;
-
-/// Contains functionality for unsupported GPU vendors.
-pub mod UNKNOWN;
+//pub mod UNKNOWN;

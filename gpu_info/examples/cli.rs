@@ -5,13 +5,12 @@ fn main() {
     manager.refresh();
 
     if let Some(gpu) = manager.gpus.first() {
-        println!(
-            "{}\n{}\n{}\n{}\n{}",
-            gpu.name_gpu(),
-            gpu.get_temperature_gpu(),
-            gpu.get_utilization_gpu(),
-            gpu.get_power_usage_gpu(),
-            gpu.get_clock_speed_gpu()
-        );
+        println!("{}", gpu.name_gpu());
+        println!("{}", gpu.get_temperature_gpu());
+        println!("{}", gpu.get_utilization_gpu());
+        println!("{}", gpu.get_power_usage_gpu());
+        println!("{}", gpu.get_clock_speed_gpu());
+    } else {
+        println!("No GPUs detected.");
     }
 }

@@ -16,3 +16,8 @@
 # Built Visual Studio Code Extensions
 *.vsix
 
+# NVML local test files
+gpu_info/nvml.def
+gpu_info/exports.txt
+gpu_info/nvml.exp
+gpu_info/nvml.lib

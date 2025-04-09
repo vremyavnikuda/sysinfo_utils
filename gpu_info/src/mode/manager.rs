@@ -4,12 +4,10 @@ use crate::amd::detect_amd_gpus;
 use crate::amd::update_amd_info;
 use crate::intel::detect_intel_gpus;
 use crate::intel::update_intel_info;
-use crate::nvidia::detect_nvidia_gpus;
-use crate::nvidia::update_nvidia_info;
+use crate::nvidia::{detect_nvidia_gpus, update_nvidia_info};
 use log::warn;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::{fs, process::Command};
 use sysinfo::System;
 
 /// A central controller for GPU detection and management
@@ -79,8 +77,6 @@ impl GpuManager {
         self.gpus.extend(detect_nvidia_gpus());
         self.gpus.extend(detect_amd_gpus());
         self.gpus.extend(detect_intel_gpus());
-        //TODO:121 #fn qualcomm_info(&mut self){}
-        //self.gpus.extend(detect_qualcomm_gpus());
     }
 
         //TODO:Qualcomm add
@@ -126,7 +122,6 @@ impl GpuManager {
                 GpuVendor::Nvidia => update_nvidia_info(gpu),
                 GpuVendor::AMD => update_amd_info(gpu),
                 GpuVendor::Intel => update_intel_info(gpu),
-                //GpuVendor::Qualcomm => update_qualcomm_info(gpu),
                 _ => {
                     warn!("Unknown vendor, skipping metrics refresh");
                 }
