@@ -85,26 +85,26 @@ fn main() {
             println!(
                 "GPU information:\n{}\n{}\n{}\n{}\n{}",
                 gpu_info.name_gpu(),
-                gpu_info.get_temperature_gpu(),
-                gpu_info.get_utilization_gpu(),
-                gpu_info.get_power_usage_gpu(),
-                gpu_info.get_clock_speed_gpu()
+                gpu_info.format_get_temperature_gpu(),
+                gpu_info.format_get_utilization_gpu(),
+                gpu_info.format_get_power_usage_gpu(),
+                gpu_info.format_get_clock_speed_gpu()
             );
         } else {
             if gpu_options.vendor {
                 println!("GPU Vendor: {:?}", gpu_info.vendor_gpu());
             }
             if gpu_options.temperature {
-                println!("GPU Temperature: {}", gpu_info.get_temperature_gpu());
+                println!("GPU Temperature: {}", gpu_info.format_get_temperature_gpu());
             }
             if gpu_options.utilization {
-                println!("GPU Utilization: {}", gpu_info.get_utilization_gpu());
+                println!("GPU Utilization: {}", gpu_info.format_get_utilization_gpu());
             }
             if gpu_options.power_usage {
-                println!("GPU Power Usage: {}", gpu_info.get_power_usage_gpu());
+                println!("GPU Power Usage: {}", gpu_info.format_get_power_usage_gpu());
             }
             if gpu_options.clock_speed {
-                println!("GPU Clock Speed: {}", gpu_info.get_clock_speed_gpu());
+                println!("GPU Clock Speed: {}", gpu_info.format_get_clock_speed_gpu());
             }
         }
     }

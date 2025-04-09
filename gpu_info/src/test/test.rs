@@ -82,11 +82,11 @@ mod gpu_info_tests {
         assert!(matches!(gpu.vendor_gpu(), GpuVendor::Nvidia));
         assert_eq!(gpu.temperature_gpu(), Some(75.0));
         assert_eq!(gpu.utilization_gpu(), Some(50.0));
-        assert_eq!(gpu.clock_speed_gpu(), Some(1500));
-        assert_eq!(gpu.max_clock_speed_gpu(), Some(2000));
-        assert_eq!(gpu.power_usage_gpu(), Some(100.0));
-        assert_eq!(gpu.max_power_usage_gpu(), Some(150.0));
-        assert!(gpu.is_active_gpu());
+        assert_eq!(gpu.format_clock_speed_gpu(), Some(1500));
+        assert_eq!(gpu.format_max_clock_speed_gpu(), Some(2000));
+        assert_eq!(gpu.format_power_usage_gpu(), Some(100.0));
+        assert_eq!(gpu.format_max_power_usage_gpu(), Some(150.0));
+        assert!(gpu.bool_is_active_gpu());
     }
 
     /// Tests that `GpuManager` can be successfully created and that it is

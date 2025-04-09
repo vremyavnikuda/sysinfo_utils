@@ -1,3 +1,4 @@
+//gpu_info/src/mode/manager.rs
 //! GPU management and detection implementation
 use crate::amd::detect_amd_gpus;
 use crate::amd::update_amd_info;

@@ -76,8 +76,7 @@ mod windows {
     fn check_nvml_status(code: i32, msg: &str) {
         if code != NVML_SUCCESS {
             error!("NVML error {} at '{}'", code, msg);
-        }
-        else {
+        } else {
             info!("NVML success at '{}'", msg);
         }
     }
