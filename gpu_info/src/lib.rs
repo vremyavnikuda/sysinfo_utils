@@ -1,6 +1,6 @@
 // src/lib.rs
 //missing_docs
-#![deny(missing_debug_implementations)]
+#![deny(missing_debug_implementations,missing_docs)]
 
 //! `gpu_info` crate provides functionality to detect and manage GPU information.
 //!

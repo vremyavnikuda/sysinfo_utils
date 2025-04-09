@@ -1,9 +1,9 @@
 //! GPU management and detection implementation
-use crate::mode::gpu::{GpuInfo, GpuVendor};
 use crate::amd::detect_amd_gpus;
 use crate::amd::update_amd_info;
 use crate::intel::detect_intel_gpus;
 use crate::intel::update_intel_info;
+use crate::mode::gpu::{GpuInfo, GpuVendor};
 use crate::nvidia::{detect_nvidia_gpus, update_nvidia_info};
 use log::warn;
 use serde::{Deserialize, Serialize};
@@ -79,7 +79,7 @@ impl GpuManager {
         self.gpus.extend(detect_intel_gpus());
     }
 
-        //TODO:Qualcomm add
+    //TODO:Qualcomm add
     //fn qualcomm_info(&mut self){}
     /// Switches active GPU
     ///

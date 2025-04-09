@@ -1,6 +1,6 @@
 // src/qualcomm/mod.rs
 
-use crate::mode::gpu::{GpuInfo};
+use crate::mode::gpu::GpuInfo;
 
 /// Detects available Qualcomm GPUs
 ///
@@ -18,8 +18,8 @@ use crate::mode::gpu::{GpuInfo};
 /// # Returns
 /// A vector of `GpuInfo` objects representing the detected Qualcomm GPUs.
 pub fn detect_qualcomm_gpus() -> Vec<GpuInfo> {
-	// Implementation for detecting Qualcomm GPUs
-	vec![]
+    // Implementation for detecting Qualcomm GPUs
+    vec![]
 }
 
 /// Updates metrics for a Qualcomm GPU
@@ -44,5 +44,5 @@ pub fn detect_qualcomm_gpus() -> Vec<GpuInfo> {
 /// necessary data cannot be retrieved from the GPU.
 #[warn(dead_code)]
 pub fn update_qualcomm_info(_gpu: &mut GpuInfo) {
-	// Implementation for updating Qualcomm GPU info
+    // Implementation for updating Qualcomm GPU info
 }

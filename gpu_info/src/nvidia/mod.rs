@@ -11,22 +11,33 @@ mod windows {
     const NVML_SUCCESS: i32 = 0;
     const NVML_TEMPERATURE_GPU: c_uint = 0;
     const NVML_CLOCK_GRAPHICS: c_uint = 0;
+    #[allow(dead_code)]
     const NVML_CLOCK_MEM: c_uint = 1;
-
+    #[allow(dead_code)]
     const NVML_DEVICE_GET_COUNT_MAX: usize = 64;
 
     #[repr(C)]
     #[allow(non_camel_case_types)]
-    struct nvmlDevice_st;
+    struct nvmlDevice_st {
+        _unused: [u8; 0],
+    }
+    #[allow(non_camel_case_types)]
+    #[allow(unsafe_code)]
     type nvmlDevice_t = *mut nvmlDevice_st;
 
     extern "C" {
         fn nvmlInit_v2() -> i32;
         fn nvmlShutdown() -> i32;
+        #[allow(unsafe_code)]
         fn nvmlDeviceGetCount_v2(count: *mut c_uint) -> i32;
+        #[allow(unsafe_code)]
         fn nvmlDeviceGetHandleByIndex_v2(index: c_uint, device: *mut nvmlDevice_t) -> i32;
         fn nvmlDeviceGetName(device: nvmlDevice_t, name: *mut c_char, length: c_uint) -> i32;
-        fn nvmlDeviceGetMaxClockInfo(device: nvmlDevice_t, clkType: c_uint, clockMHz: *mut c_uint) -> i32;
+        fn nvmlDeviceGetMaxClockInfo(
+            device: nvmlDevice_t,
+            clkType: c_uint,
+            clockMHz: *mut c_uint,
+        ) -> i32;
         fn nvmlDeviceGetPowerManagementLimit(device: nvmlDevice_t, limit: *mut c_uint) -> i32;
         fn nvmlDeviceGetTemperature(
             device: nvmlDevice_t,
@@ -53,11 +64,34 @@ mod windows {
         memory: c_uint,
     }
 
+    /// Checks the NVML status code and logs an error message if it indicates a failure.
+    ///
+    /// # Parameters
+    /// - `code`: The NVML status code to check.
+    /// - `msg`: A message indicating the context or operation being performed when the error occurred.
+    ///
+    /// This function logs an error using the `error!` macro if the status code is not `NVML_SUCCESS`.
+    /// The error message includes the status code and the provided context message.
+    #[allow(dead_code)]
     fn check_nvml_status(code: i32, msg: &str) {
         if code != NVML_SUCCESS {
             error!("NVML error {} at '{}'", code, msg);
         }
+        else {
+            info!("NVML success at '{}'", msg);
+        }
     }
+    /// Detects all nvidia GPUs on the system and parses their information using NVML API.
+    ///
+    /// The function initializes NVML, retrieves the number of available GPUs, and iterates
+    /// over them to retrieve their names and fill in the corresponding fields of the
+    /// returned `GpuInfo` instances.
+    ///
+    /// If any of the NVML functions fail, the function logs an error and skips the current
+    /// iteration.
+    ///
+    /// The function returns a vector of `GpuInfo` instances, one for each detected NVIDIA
+    /// GPU.
     pub fn detect_nvidia_gpus() -> Vec<GpuInfo> {
         let mut gpus = Vec::new();
 
@@ -110,6 +144,22 @@ mod windows {
         gpus
     }
 
+    /// Updates information about the given NVIDIA GPU using NVML API.
+    ///
+    /// Tries to find a matching NVML device by name (case-insensitive) and
+    /// updates the following fields of the given `GpuInfo` struct:
+    ///
+    /// - `temperature`: the current temperature of the GPU in degrees Celsius
+    /// - `utilization`: the current utilization of the GPU in percent
+    /// - `power_usage`: the current power usage of the GPU in watts
+    /// - `clock_speed`: the current clock speed of the GPU in Hz
+    /// - `max_clock_speed`: the maximum possible clock speed of the GPU in Hz
+    /// - `max_power_usage`: the maximum possible power usage of the GPU in watts
+    ///
+    /// If any of these values cannot be retrieved, they are set to `None`.
+    ///
+    /// Also sets `is_active` to `true` if any of the above values are retrieved
+    /// successfully.
     pub fn update_nvidia_info(gpu: &mut GpuInfo) {
         let mut count: c_uint = 0;
         let ret_count = unsafe { nvmlDeviceGetCount_v2(&mut count) };
@@ -118,7 +168,6 @@ mod windows {
             return;
         }
 
-        // Находим устройство по имени
         let gpu_name_lower = gpu.name.to_lowercase();
         let mut found_dev: Option<nvmlDevice_t> = None;
 
@@ -147,9 +196,10 @@ mod windows {
             }
         };
 
-        // Температура
+        //temperature
         let mut temp_val: c_uint = 0;
-        let ret_temp = unsafe { nvmlDeviceGetTemperature(dev, NVML_TEMPERATURE_GPU, &mut temp_val) };
+        let ret_temp =
+            unsafe { nvmlDeviceGetTemperature(dev, NVML_TEMPERATURE_GPU, &mut temp_val) };
         if ret_temp == NVML_SUCCESS {
             gpu.temperature = Some(temp_val as f32);
         } else {
@@ -157,27 +207,30 @@ mod windows {
             gpu.temperature = None;
         }
 
-        // Утилизация
+        //utilization
         let mut util_data = nvmlUtilization_t { gpu: 0, memory: 0 };
         let ret_util = unsafe { nvmlDeviceGetUtilizationRates(dev, &mut util_data) };
         if ret_util == NVML_SUCCESS {
             gpu.utilization = Some(util_data.gpu as f32);
         } else {
-            warn!("nvmlDeviceGetUtilizationRates failed with code {}", ret_util);
+            warn!(
+                "nvmlDeviceGetUtilizationRates failed with code {}",
+                ret_util
+            );
             gpu.utilization = None;
         }
 
-        // Потребление энергии
+        //power
         let mut mw: c_uint = 0;
         let ret_pow = unsafe { nvmlDeviceGetPowerUsage(dev, &mut mw) };
         if ret_pow == NVML_SUCCESS {
-            gpu.power_usage = Some((mw as f32) / 1000.0); // Конвертируем мВт в Вт
+            gpu.power_usage = Some((mw as f32) / 1000.0);
         } else {
             warn!("nvmlDeviceGetPowerUsage failed with code {}", ret_pow);
             gpu.power_usage = None;
         }
 
-        // Тактовая частота
+        //clock
         let mut clk_val: c_uint = 0;
         let ret_clk = unsafe { nvmlDeviceGetClockInfo(dev, NVML_CLOCK_GRAPHICS, &mut clk_val) };
         if ret_clk == NVML_SUCCESS {
@@ -187,9 +240,10 @@ mod windows {
             gpu.clock_speed = None;
         }
 
-        // Максимальная тактовая частота
+        //max clock
         let mut max_clk_val: c_uint = 0;
-        let ret_max_clk = unsafe { nvmlDeviceGetMaxClockInfo(dev, NVML_CLOCK_GRAPHICS, &mut max_clk_val) };
+        let ret_max_clk =
+            unsafe { nvmlDeviceGetMaxClockInfo(dev, NVML_CLOCK_GRAPHICS, &mut max_clk_val) };
         if ret_max_clk == NVML_SUCCESS {
             gpu.max_clock_speed = Some(max_clk_val as u64);
         } else {
@@ -197,15 +251,26 @@ mod windows {
             gpu.max_clock_speed = None;
         }
 
-        // Максимальное энергопотребление
+        //max power
         let mut max_power_val: c_uint = 0;
         let ret_max_pow = unsafe { nvmlDeviceGetPowerManagementLimit(dev, &mut max_power_val) };
         if ret_max_pow == NVML_SUCCESS {
-            gpu.max_power_usage = Some((max_power_val as f32) / 1000.0); // Конвертируем мВт в Вт
+            gpu.max_power_usage = Some((max_power_val as f32) / 1000.0);
         } else {
             warn!("nvmlDeviceGetPowerManagementLimit failed: {}", ret_max_pow);
             gpu.max_power_usage = None;
         }
+
+        /*
+        let mut mem_clk_val: c_uint = 0;
+        let ret_mem_clk = unsafe { nvmlDeviceGetClockInfo(dev, NVML_CLOCK_MEM, &mut mem_clk_val) };
+        if ret_mem_clk = NVML_SUCCESS {
+            gpu.memory_clock_speed = Some(mem_clk_val as u64);
+        } else {
+            warn!("nvmlDeviceGetClockInfo(Memory) failed: {}", ret_mem_clk);
+            gpu.memory_clock_speed = None;
+        }
+         */
 
         gpu.is_active = true;
     }
@@ -240,7 +305,7 @@ mod linux {
                         if vendor.trim() == "0x10de" {
                             let name = fs::read_to_string(path.join("device/model"))
                                 .unwrap_or_else(|_| "Unknown NVIDIA GPU".to_string());
-                            println!("Detected NVIDIA GPU: {}", name.trim()); // Отладочная информация
+                            println!("Detected NVIDIA GPU: {}", name.trim());
                             let temperature =
                                 fs::read_to_string(path.join("device/hwmon/hwmon0/temp1_input"))
                                     .ok()
