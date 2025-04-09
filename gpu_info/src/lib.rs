@@ -18,10 +18,10 @@
 //! ```rust
 //! use gpu_info::{GpuManager, GpuInfo, GpuVendor};
 //!
-//! let mut manager = GpuManager::new();
+//! let mut manager = GpuManager::init();
 //! manager.refresh();
 //!
-//! for (idx, gpu) in manager.gpus.iter().enumerate() {
+//! for (idx, gpu) in manager.gpu.iter().enumerate() {
 //!     println!("GPU {}: {}", idx, gpu.get_name());
 //!     println!("Temperature: {}", gpu.get_temperature());
 //! }

@@ -69,10 +69,10 @@ impl Default for GpuVendor {
 /// ```rust
 ///use log::error;
 ///use gpu_info::GpuManager;
-///let mut manager = GpuManager::new();
+///let mut manager = GpuManager::init();
 ///manager.refresh();
 ///
-///if let Some(gpu) = manager.gpus.first() {
+///if let Some(gpu) = manager.gpu.first() {
 ///    println!("{:?}",gpu.vendor_gpu());
 ///    println!("{}", gpu.name_gpu());
 ///    println!("{}", gpu.format_get_temperature_gpu());
@@ -114,10 +114,10 @@ impl GpuInfo {
     /// use gpu_info::GpuManager;
     /// use log::{error};
     ///
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
+    /// if let Some(gpu) = manager.gpu.first() {
     ///     println!("{:?}", gpu.name_gpu())
     /// }else{
     ///     error!("No get current GPU name");
@@ -136,10 +136,10 @@ impl GpuInfo {
     /// use gpu_info::GpuManager;
     /// use log::{error};
     ///
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
+    /// if let Some(gpu) = manager.gpu.first() {
     ///     println!("{:?}",gpu.vendor_gpu())
     /// } else {
     ///     error!("No GPUs detected");
@@ -158,10 +158,10 @@ impl GpuInfo {
     /// use gpu_info::GpuManager;
     /// use log::{error};
     ///
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
+    /// if let Some(gpu) = manager.gpu.first() {
     ///     println!("{:?}",gpu.temperature_gpu())
     /// } else {
     ///     error!("No GPUs detected");
@@ -180,10 +180,10 @@ impl GpuInfo {
     /// use gpu_info::GpuManager;
     /// use log::{error};
     ///
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
+    /// if let Some(gpu) = manager.gpu.first() {
     ///     println!("GPU Temperature: {}", gpu.format_get_temperature_gpu());
     /// } else {
     ///     error!("No GPUs detected");
@@ -209,10 +209,10 @@ impl GpuInfo {
     /// use log::warn;
     /// use gpu_info::GpuManager;
     ///
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
+    /// if let Some(gpu) = manager.gpu.first() {
     ///     println!("{}",gpu.format_clock_speed_gpu())
     /// } else {
     ///     warn!("No GPUs detected");
@@ -243,10 +243,10 @@ impl GpuInfo {
     /// ```
     /// use log::{error};
     /// use gpu_info::GpuManager;
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
+    /// if let Some(gpu) = manager.gpu.first() {
     ///     println!("{}",gpu.clock_speed_gpu())
     /// }else {
     ///     error!("No get current clock ");
@@ -271,10 +271,10 @@ impl GpuInfo {
     /// use gpu_info::GpuManager;
     /// use log::{error};
     ///
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
+    /// if let Some(gpu) = manager.gpu.first() {
     ///     println!("{}",gpu.max_clock_speed())
     /// } else {
     ///     error!("No GPUs detected");
@@ -302,10 +302,10 @@ impl GpuInfo {
     /// use log::{error};
     /// use gpu_info::GpuManager;
     ///
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
+    /// if let Some(gpu) = manager.gpu.first() {
     ///     println!("{:?}", gpu.max_clock_speed());
     /// }else {
     ///     error!("No get current max clock speed GPU");
@@ -331,10 +331,10 @@ impl GpuInfo {
     /// use gpu_info::GpuManager;
     /// use log::{error};
     ///
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
+    /// if let Some(gpu) = manager.gpu.first() {
     ///     println!("{}", gpu.format_get_power_usage_gpu());
     /// } else {
     ///     error!("No GPUs detected");
@@ -359,10 +359,10 @@ impl GpuInfo {
     /// # Examples
     /// ```
     /// use gpu_info::GpuManager;
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// let current_power = manager.gpus.first().power_usage_gpu();
+    /// let current_power = manager.gpu.first().power_usage_gpu();
     /// println!("{}", current_power);
     /// ```
     /// # Returns
@@ -385,10 +385,10 @@ impl GpuInfo {
     /// use log::error;
     /// use gpu_info::GpuManager;
     ///
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
+    /// if let Some(gpu) = manager.gpu.first() {
     ///     println!("Max power limit: {}", gpu.format_max_power_usage_gpu());
     /// } else {
     ///     error!("No GPUs detected");
@@ -415,10 +415,10 @@ impl GpuInfo {
     /// use log::error;
     /// use gpu_info::GpuManager;
     ///
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
+    /// if let Some(gpu) = manager.gpu.first() {
     ///     println!("{}", gpu.bool_is_active_gpu());
     /// }else {
     ///     error!("No GPUs detected");
@@ -447,10 +447,10 @@ impl GpuInfo {
     /// use log::error;
     /// use gpu_info::GpuManager;
     ///
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first(){
+    /// if let Some(gpu) = manager.gpu.first(){
     ///     println!("{}", gpu.format_is_active_gpu());
     /// }else{
     ///     error!("GPU is inactive");
@@ -473,10 +473,10 @@ impl GpuInfo {
     /// use gpu_info::GpuManager;
     /// use log::{error};
     ///
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     ///manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
+    /// if let Some(gpu) = manager.gpu.first() {
     ///     println!("GPU Utilization: {}", gpu.format_get_utilization_gpu());
     /// } else {
     ///     error!("No GPUs detected");
@@ -502,10 +502,10 @@ impl GpuInfo {
     ///```
     ///use log::{error, warn};
     /// use gpu_info::GpuManager;
-    /// let mut manager =  GpuManager::new();
+    /// let mut manager =  GpuManager::init();
     ///manager.refresh();
     ///
-    ///if let Some(gpu) = manager.gpus.first() {
+    ///if let Some(gpu) = manager.gpu.first() {
     ///    println!("{}",gpu.utilization_gpu());
     ///}else {
     ///    error!("No get current utilization of the GPU");
@@ -526,10 +526,10 @@ impl GpuInfo {
     /// use gpu_info::GpuManager;
     /// use log::{error};
     ///
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
+    /// if let Some(gpu) = manager.gpu.first() {
     ///     println!("Current clock speed: {}", gpu.format_get_clock_speed_gpu());
     /// } else {
     ///     error!("No GPUs detected");
@@ -562,10 +562,10 @@ impl GpuInfo {
     /// use gpu_info::{GpuManager, GpuInfo};
     /// use log::{error};
     ///
-    /// let mut manager = GpuManager::new();
+    /// let mut manager = GpuManager::init();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
+    /// if let Some(gpu) = manager.gpu.first() {
     ///     println!("{}", gpu.format_get_power_usage_gpu());
     /// } else {
     ///     error!("No GPUs detected");

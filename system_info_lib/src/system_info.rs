@@ -52,7 +52,7 @@ impl Info {
         }
     }
 
-    /// Creates a new instance with the specified system type, using default values for other fields.
+    /// Creates a init instance with the specified system type, using default values for other fields.
     ///
     /// # Arguments
     ///
@@ -60,7 +60,7 @@ impl Info {
     ///
     /// # Returns
     ///
-    /// A new instance of the struct with the given system type
+    /// A init instance of the struct with the given system type
     pub fn with_type(system_type: Type) -> Self {
         Self {
             system_type,
@@ -128,7 +128,7 @@ impl Info {
 }
 
 impl Default for Info {
-    /// Creates a new `Info` instance with all fields set to their unknown or default values.
+    /// Creates a init `Info` instance with all fields set to their unknown or default values.
     ///
     /// # Returns
     ///

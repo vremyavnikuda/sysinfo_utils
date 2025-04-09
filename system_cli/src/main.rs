@@ -62,10 +62,10 @@ fn main() {
 
     // gpu_info
     let gpu_options = GpuOptions::parse();
-    let mut manager = gpu_info::GpuManager::new();
+    let mut manager = gpu_info::GpuManager::init();
     manager.refresh();
 
-    if let Some(gpu_info) = manager.gpus.first() {
+    if let Some(gpu_info) = manager.gpu.first() {
         if gpu_options.all
             || !(gpu_options.vendor
                 || gpu_options.temperature

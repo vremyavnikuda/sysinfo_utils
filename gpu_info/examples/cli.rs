@@ -13,21 +13,17 @@ use gpu_info::GpuManager;
 ///
 /// If no GPUs are detected, a message is printed to the console.
 fn main() {
-    let mut manager = GpuManager::new();
+    let mut manager = GpuManager::init();
     manager.refresh();
 
-    if let Some(gpu) = manager.gpus.first() {
-        println!("{:?}", gpu.vendor_gpu());
-        println!("{}", gpu.name_gpu());
-        println!("{}", gpu.format_get_temperature_gpu());
-        println!("{}", gpu.format_get_utilization_gpu());
-        println!("{}", gpu.format_get_power_usage_gpu());
-        println!("{}", gpu.format_get_clock_speed_gpu());
-        println!("{}", gpu.utilization_gpu());
-        println!("{:?}", gpu.clock_speed_gpu());
-        println!("{}",gpu.format_is_active_gpu());
-        println!("{}",gpu.format_power_usage_gpu())
-    } else {
-        println!("No GPUs detected.");
-    }
+    println!("Vendor (not format): {:?}", manager.vendor_gpu());
+    println!("Name (not format): {}", manager.name_gpu());
+    println!("{}", manager.format_get_temperature_gpu());
+    println!("{}", manager.format_get_utilization_gpu());
+    println!("{}", manager.format_get_power_usage_gpu());
+    println!("{}", manager.format_get_clock_speed_gpu());
+    println!("Utilization (not format): {}", manager.utilization_gpu());
+    println!("Clock Speed (not format): {:?}", manager.clock_speed_gpu());
+    println!("Active: {}", manager.format_is_active_gpu());
+    println!("Power: {}", manager.format_power_usage_gpu());
 }

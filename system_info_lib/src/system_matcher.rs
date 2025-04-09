@@ -99,7 +99,7 @@ impl SystemMatcher {
 ///
 /// # Returns
 ///
-/// A new `String` that is the result of concatenating the `key` with an equals sign.
+/// A init `String` that is the result of concatenating the `key` with an equals sign.
 fn find_by_key<'a>(string: &'a str, key: &str) -> Option<&'a str> {
     let key = [key, "="].concat();
     for line in string.lines() {
