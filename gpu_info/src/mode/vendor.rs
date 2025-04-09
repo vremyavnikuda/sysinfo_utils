@@ -1,3 +1,4 @@
+//gpu_info/src/mode/vendor.rs
 //! Vendor-specific GPU implementations and utilities
 
 use serde::{Deserialize, Serialize};

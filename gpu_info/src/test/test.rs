@@ -1,3 +1,4 @@
+//gpu_info/src/test/test.rs
 #[cfg(test)]
 mod gpu_info_tests {
     use crate::mode::gpu::GpuVendor;
@@ -81,7 +82,7 @@ mod gpu_info_tests {
         assert_eq!(gpu.name_gpu(), "Test GPU");
         assert!(matches!(gpu.vendor_gpu(), GpuVendor::Nvidia));
         assert_eq!(gpu.temperature_gpu(), Some(75.0));
-        assert_eq!(gpu.utilization_gpu(), Some(50.0));
+        assert_eq!(gpu.utilization_gpu(), 50.0);
         assert_eq!(gpu.format_clock_speed_gpu(), Some(1500));
         assert_eq!(gpu.format_max_clock_speed_gpu(), Some(2000));
         assert_eq!(gpu.format_power_usage_gpu(), Some(100.0));

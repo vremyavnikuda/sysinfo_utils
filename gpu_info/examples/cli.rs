@@ -24,7 +24,9 @@ fn main() {
         println!("{}", gpu.format_get_power_usage_gpu());
         println!("{}", gpu.format_get_clock_speed_gpu());
         println!("{}", gpu.utilization_gpu());
-        println!("{:?}",gpu.clock_speed_gpu())
+        println!("{:?}", gpu.clock_speed_gpu());
+        println!("{}",gpu.format_is_active_gpu());
+        println!("{}",gpu.format_power_usage_gpu())
     } else {
         println!("No GPUs detected.");
     }

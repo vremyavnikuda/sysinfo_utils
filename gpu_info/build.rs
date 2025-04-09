@@ -1,3 +1,4 @@
+//gpu_info/build.rs
 fn main() {
     let project_path = std::env::var("CARGO_MANIFEST_DIR").unwrap();
     let lib_path = format!("{}/src/libs", project_path);

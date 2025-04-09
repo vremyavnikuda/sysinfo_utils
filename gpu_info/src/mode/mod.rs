@@ -1,3 +1,4 @@
+//gpu_info/src/mode/mod.rs
 //! Core module of the `gpu_info` library.
 //!
 //! Contains implementation of the GPU manager (`GpuManager`) and data models.

@@ -67,6 +67,7 @@ impl Default for GpuVendor {
 ///
 /// # Examples
 /// ```rust
+///use log::error;
 ///use gpu_info::GpuManager;
 ///let mut manager = GpuManager::new();
 ///manager.refresh();
@@ -79,7 +80,7 @@ impl Default for GpuVendor {
 ///    println!("{}", gpu.format_get_power_usage_gpu());
 ///    println!("{}", gpu.format_get_clock_speed_gpu());
 ///} else {
-///    println!("No GPUs detected.");
+///    error!("No GPUs detected.");
 ///}
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -111,7 +112,7 @@ impl GpuInfo {
     /// # Basic usage with detected GPU
     /// ```
     /// use gpu_info::GpuManager;
-    /// use log::warn;
+    /// use log::{error};
     ///
     /// let mut manager = GpuManager::new();
     /// manager.refresh();
@@ -119,7 +120,7 @@ impl GpuInfo {
     /// if let Some(gpu) = manager.gpus.first() {
     ///     println!("{:?}", gpu.name_gpu())
     /// }else{
-    ///     warn!("No get current GPU name");
+    ///     error!("No get current GPU name");
     /// }
     /// ```
     pub fn name_gpu(&self) -> &str {
@@ -133,7 +134,7 @@ impl GpuInfo {
     /// # Basic usage with detected GPU
     /// ```
     /// use gpu_info::GpuManager;
-    /// use log::warn;
+    /// use log::{error};
     ///
     /// let mut manager = GpuManager::new();
     /// manager.refresh();
@@ -141,7 +142,7 @@ impl GpuInfo {
     /// if let Some(gpu) = manager.gpus.first() {
     ///     println!("{:?}",gpu.vendor_gpu())
     /// } else {
-    ///     warn!("No GPUs detected");
+    ///     error!("No GPUs detected");
     /// }
     /// ```
     pub fn vendor_gpu(&self) -> &GpuVendor {
@@ -155,7 +156,7 @@ impl GpuInfo {
     /// # Examples
     /// ```
     /// use gpu_info::GpuManager;
-    /// use log::warn;
+    /// use log::{error};
     ///
     /// let mut manager = GpuManager::new();
     /// manager.refresh();
@@ -163,11 +164,40 @@ impl GpuInfo {
     /// if let Some(gpu) = manager.gpus.first() {
     ///     println!("{:?}",gpu.temperature_gpu())
     /// } else {
-    ///     warn!("No GPUs detected");
+    ///     error!("No GPUs detected");
     /// }
     /// ```
     pub fn temperature_gpu(&self) -> Option<f32> {
         self.temperature
+    }
+
+    /// Formats GPU temperature with appropriate units and precision
+    ///
+    /// # Examples
+    ///
+    /// ## Basic usage with detected GPU
+    /// ```
+    /// use gpu_info::GpuManager;
+    /// use log::{error};
+    ///
+    /// let mut manager = GpuManager::new();
+    /// manager.refresh();
+    ///
+    /// if let Some(gpu) = manager.gpus.first() {
+    ///     println!("GPU Temperature: {}", gpu.format_get_temperature_gpu());
+    /// } else {
+    ///     error!("No GPUs detected");
+    /// }
+    /// ```
+    /// # Returns
+    /// Formatted string representing GPU temperature in one of these formats:
+    /// - "Temperature: XX°C" when data is available (shows decimal places if present)
+    /// - "Temperature: N/A" when temperature data is unavailable
+    pub fn format_get_temperature_gpu(&self) -> String {
+        match self.temperature {
+            Some(temp) => format!("Temperature: {}°C", temp),
+            None => "Temperature: N/A".to_string(),
+        }
     }
 
     /// Returns the current operating clock speed of the GPU in MHz
@@ -176,8 +206,8 @@ impl GpuInfo {
     ///
     /// ## Basic usage with detected GPU
     /// ```
-    /// use gpu_info::GpuManager;
     /// use log::warn;
+    /// use gpu_info::GpuManager;
     ///
     /// let mut manager = GpuManager::new();
     /// manager.refresh();
@@ -211,14 +241,16 @@ impl GpuInfo {
     ///
     /// # Examples
     /// ```
-    /// use log::warn;
+    /// use log::{error};
     /// use gpu_info::GpuManager;
     /// let mut manager = GpuManager::new();
     /// manager.refresh();
     ///
     /// if let Some(gpu) = manager.gpus.first() {
     ///     println!("{}",gpu.clock_speed_gpu())
-    /// }else { warn!("No get current clock "); }
+    /// }else {
+    ///     error!("No get current clock ");
+    /// }
     /// ```
     /// # Notes
     /// Represents real-time clock speed measurement
@@ -237,7 +269,7 @@ impl GpuInfo {
     /// ## Basic usage with detected GPU
     /// ```
     /// use gpu_info::GpuManager;
-    /// use log::warn;
+    /// use log::{error};
     ///
     /// let mut manager = GpuManager::new();
     /// manager.refresh();
@@ -245,7 +277,7 @@ impl GpuInfo {
     /// if let Some(gpu) = manager.gpus.first() {
     ///     println!("{}",gpu.max_clock_speed())
     /// } else {
-    ///     warn!("No GPUs detected");
+    ///     error!("No GPUs detected");
     /// }
     /// ```
     ///
@@ -263,6 +295,33 @@ impl GpuInfo {
         self.max_clock_speed
     }
 
+    /// Returns the maximum supported clock speed of the GPU in MHz.
+    ///
+    /// # Examples
+    /// ```
+    /// use log::{error};
+    /// use gpu_info::GpuManager;
+    ///
+    /// let mut manager = GpuManager::new();
+    /// manager.refresh();
+    ///
+    /// if let Some(gpu) = manager.gpus.first() {
+    ///     println!("{:?}", gpu.max_clock_speed());
+    /// }else {
+    ///     error!("No get current max clock speed GPU");
+    /// }
+    /// ```
+    /// # Returns
+    /// - `u64`: The maximum supported clock speed in MHz. If the information is unavailable, returns errors.
+    ///
+    /// # Notes
+    /// - Represents the manufacturer-specified maximum boost clock speed.
+    /// - The returned value is an unwrapped value from the `max_clock_speed` field.
+    /// - For accurate readings, ensure that you call `refresh()` to update the GPU information.
+    pub fn max_clock_speed(&self) -> u64 {
+        self.max_clock_speed.unwrap_or(0)
+    }
+
     /// Returns the current power consumption of the GPU in watts
     ///
     /// # Examples
@@ -270,7 +329,7 @@ impl GpuInfo {
     /// ## Basic usage with detected GPU
     /// ```
     /// use gpu_info::GpuManager;
-    /// use log::warn;
+    /// use log::{error};
     ///
     /// let mut manager = GpuManager::new();
     /// manager.refresh();
@@ -278,12 +337,12 @@ impl GpuInfo {
     /// if let Some(gpu) = manager.gpus.first() {
     ///     println!("{}", gpu.format_get_power_usage_gpu());
     /// } else {
-    ///     warn!("No GPUs detected");
+    ///     error!("No GPUs detected");
     /// }
     /// ```
     /// # Returns
-    /// - `Some(f32)`: The current power consumption in watts if monitoring is available
-    /// - `None`: If power monitoring is unsupported or unavailable
+    /// - Format `String``.2`: The current power consumption in watts if monitoring is available
+    /// - `N/A`: If power monitoring is unsupported or unavailable
     ///
     /// # Notes
     /// - Represents real-time power consumption, not the maximum capability
@@ -291,8 +350,30 @@ impl GpuInfo {
     ///   - Update frequency varies by vendor (typically 100ms-1s)
     ///   - Accuracy typically ±5% of actual power
     ///   - May show brief power spikes above TDP during load changes
-    pub fn format_power_usage_gpu(&self) -> Option<f32> {
+    pub fn format_power_usage_gpu(&self) -> String {
         self.power_usage
+            .map_or(String::from("N/A"), |v| format!("{:.2}", v))
+    }
+
+    /// Returns the current power consumption of the GPU in watts.
+    /// # Examples
+    /// ```
+    /// use gpu_info::GpuManager;
+    /// let mut manager = GpuManager::new();
+    /// manager.refresh();
+    ///
+    /// let current_power = manager.gpus.first().power_usage_gpu();
+    /// println!("{}", current_power);
+    /// ```
+    /// # Returns
+    /// - `f32`: The current power consumption in watts if available, otherwise returns 0.0.
+    ///
+    /// # Notes
+    /// - Represents real-time power consumption.
+    /// - For accurate readings, ensure the GPU information is refreshed `.refresh()`.
+
+    pub fn power_usage_gpu(&self) -> f32 {
+        self.power_usage.unwrap_or(0.00)
     }
 
     /// Returns the maximum power draw limit of the GPU in watts
@@ -301,8 +382,8 @@ impl GpuInfo {
     ///
     /// ## Basic usage with detected GPU
     /// ```
+    /// use log::error;
     /// use gpu_info::GpuManager;
-    /// use log::warn;
     ///
     /// let mut manager = GpuManager::new();
     /// manager.refresh();
@@ -310,7 +391,7 @@ impl GpuInfo {
     /// if let Some(gpu) = manager.gpus.first() {
     ///     println!("Max power limit: {}", gpu.format_max_power_usage_gpu());
     /// } else {
-    ///     warn!("No GPUs detected");
+    ///     error!("No GPUs detected");
     /// }
     /// ```
     /// # Returns
@@ -331,7 +412,7 @@ impl GpuInfo {
     ///
     /// ## Basic usage with detected GPU
     /// ```
-    /// use log::warn;
+    /// use log::error;
     /// use gpu_info::GpuManager;
     ///
     /// let mut manager = GpuManager::new();
@@ -340,7 +421,7 @@ impl GpuInfo {
     /// if let Some(gpu) = manager.gpus.first() {
     ///     println!("{}", gpu.bool_is_active_gpu());
     /// }else {
-    ///     warn!("No GPUs detected");
+    ///     error!("No GPUs detected");
     /// }
     /// manager.refresh();
     /// ```
@@ -359,51 +440,28 @@ impl GpuInfo {
         self.is_active
     }
 
-    /// Formats the GPU activation state as a boolean
-    /// # returns
-    /// TODO: документация
-    /// TODO: добавить примеры
-    /// TODO: реализовать как функцию в библиотеке
-    /// Возвращает форматированный результат в виде строки
-    /// # Examples
-    /// ```
-    /// if is_active == true {
-    ///     println!("GPU is active");
-    /// }else{
-    ///     println!("GPU is inactive");
-    /// }
-    /// ```
-    pub fn format_is_active_gpu(&self) -> bool {
-        self.is_active
-    }
-
-    /// Formats GPU temperature with appropriate units and precision
+    /// Formats the GPU activation state as a String
     ///
     /// # Examples
-    ///
-    /// ## Basic usage with detected GPU
     /// ```
+    /// use log::error;
     /// use gpu_info::GpuManager;
-    /// use log::warn;
     ///
     /// let mut manager = GpuManager::new();
     /// manager.refresh();
     ///
-    /// if let Some(gpu) = manager.gpus.first() {
-    ///     println!("GPU Temperature: {}", gpu.format_get_temperature_gpu());
-    /// } else {
-    ///     warn!("No GPUs detected");
+    /// if let Some(gpu) = manager.gpus.first(){
+    ///     println!("{}", gpu.format_is_active_gpu());
+    /// }else{
+    ///     error!("GPU is inactive");
     /// }
     /// ```
     /// # Returns
-    /// Formatted string representing GPU temperature in one of these formats:
-    /// - "Temperature: XX°C" when data is available (shows decimal places if present)
-    /// - "Temperature: N/A" when temperature data is unavailable
-    pub fn format_get_temperature_gpu(&self) -> String {
-        match self.temperature {
-            Some(temp) => format!("Temperature: {}°C", temp),
-            None => "Temperature: N/A".to_string(),
-        }
+    /// Returns the formatted result as a string
+    pub fn format_is_active_gpu(&self) -> String {
+        self.is_active
+            .then(|| "Active".to_string())
+            .unwrap_or_else(|| "Inactive".to_string())
     }
 
     /// Formats GPU utilization percentage with appropriate units and precision
@@ -413,7 +471,7 @@ impl GpuInfo {
     /// ## Basic usage with detected GPU
     /// ```
     /// use gpu_info::GpuManager;
-    /// use log::warn;
+    /// use log::{error};
     ///
     /// let mut manager = GpuManager::new();
     ///manager.refresh();
@@ -421,7 +479,7 @@ impl GpuInfo {
     /// if let Some(gpu) = manager.gpus.first() {
     ///     println!("GPU Utilization: {}", gpu.format_get_utilization_gpu());
     /// } else {
-    ///     warn!("No GPUs detected");
+    ///     error!("No GPUs detected");
     /// }
     /// ```
     /// # Returns
@@ -442,7 +500,7 @@ impl GpuInfo {
     ///
     /// # Examples
     ///```
-    ///use log::warn;
+    ///use log::{error, warn};
     /// use gpu_info::GpuManager;
     /// let mut manager =  GpuManager::new();
     ///manager.refresh();
@@ -450,7 +508,7 @@ impl GpuInfo {
     ///if let Some(gpu) = manager.gpus.first() {
     ///    println!("{}",gpu.utilization_gpu());
     ///}else {
-    ///    warn!("No get current utilization of the GPU");
+    ///    error!("No get current utilization of the GPU");
     ///}
     ///```
     /// ## Basic usage with detected GPU
@@ -466,7 +524,7 @@ impl GpuInfo {
     /// ## Example with detected GPU Current clock speed
     /// ```
     /// use gpu_info::GpuManager;
-    /// use log::warn;
+    /// use log::{error};
     ///
     /// let mut manager = GpuManager::new();
     /// manager.refresh();
@@ -474,7 +532,7 @@ impl GpuInfo {
     /// if let Some(gpu) = manager.gpus.first() {
     ///     println!("Current clock speed: {}", gpu.format_get_clock_speed_gpu());
     /// } else {
-    ///     warn!("No GPUs detected");
+    ///     error!("No GPUs detected");
     /// }
     /// ```
     /// # Returns
@@ -502,7 +560,7 @@ impl GpuInfo {
     /// Basic usage with detected GPU:
     /// ```
     /// use gpu_info::{GpuManager, GpuInfo};
-    /// use log::warn;
+    /// use log::{error};
     ///
     /// let mut manager = GpuManager::new();
     /// manager.refresh();
@@ -510,7 +568,7 @@ impl GpuInfo {
     /// if let Some(gpu) = manager.gpus.first() {
     ///     println!("{}", gpu.format_get_power_usage_gpu());
     /// } else {
-    ///     warn!("No GPUs detected");
+    ///     error!("No GPUs detected");
     /// }
     /// ```
     /// # Returns
