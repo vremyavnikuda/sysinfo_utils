@@ -1,3 +1,4 @@
+//examples/version.rs
 //! Prints OS information.
 //!
 //! Prints the full information as well as the components of `system_info_lib::Info`

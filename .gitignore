@@ -21,3 +21,9 @@ gpu_info/nvml.def
 gpu_info/exports.txt
 gpu_info/nvml.exp
 gpu_info/nvml.lib
+gpu_info/.vscode
+gpu_info/.idea
+system_info_lib/.idea
+system_info_lib/.vscode
+target
+.idea

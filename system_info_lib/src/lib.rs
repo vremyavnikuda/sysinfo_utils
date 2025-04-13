@@ -1,3 +1,4 @@
+//src/lib.rs
 //! # System Info Crate
 //!
 //! This crate provides functionality to retrieve and manage system information

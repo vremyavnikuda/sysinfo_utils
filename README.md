@@ -1,4 +1,4 @@
-# System Information Library
+# System Information Library Doc
 
 ### A Rust library for retrieving system and GPU information with a convenient command-line interface.
 
@@ -34,24 +34,40 @@ env_logger::init();
 ```rust
 env_logger::init();
 let info = system_info::get();
-info.system_type();
-info.version();
-info.bit_depth();
-info.architecture();
+"Type: {}", info.system_type()
+"Version: {}", info.version()
+"Edition: {:?}", info.edition()
+"Codename: {:?}", info.codename()
+"BitDepth: {}", info.bit_depth()
+"Architecture: {:?}", info.architecture()
 ```
 #### Getting GPU information
 [list](gpu.md) of supported GPUs
 ```rust
 env_logger::init();
-let mut manager = GpuManager::new();
-manager.refresh();
+// system_info_lib
+let _options = Options::parse();
+let info = system_info::get();
 
-gpu_info.vendor_gpu();
-gpu_info.name_gpu();
-gpu_info.get_temperature_gpu();
-gpu_info.get_utilization_gpu();
-gpu_info.get_power_usage_gpu();
-gpu_info.get_clock_speed_gpu();
+// gpu_info
+let _gpu_options = GpuOptions::parse();
+let gpu = gpu_info::get();
+
+"Vendor: {:?}", gpu.vendor()
+"Name: {:?}", gpu.name_gpu()
+"Utilization: {:?}", gpu.utilization()
+"Temperature: {:?}", gpu.temperature()
+"Clock Speed: {:?}", gpu.core_clock()
+"Power Usage: {:?}", gpu.power_usage()
+"Memory Usage: {:?}", gpu.memory_util()
+"Memory Total: {:?}", gpu.memory_total()
+"Is active: {:?}", gpu.active()
+"Type: {}", info.system_type()
+"Version: {}", info.version()
+"Edition: {:?}", info.edition()
+"Codename: {:?}", info.codename()
+"BitDepth: {}", info.bit_depth()
+"Architecture: {:?}", info.architecture()
 ```
 
 ## Usage
@@ -76,7 +92,7 @@ system_info --Arch            # Show OS architecture (long format)
 
 # Show specific GPU information
 system_info -v                 # Show GPU vendor
-system_info --name            # Show GPU vendor (long format)
+system_info --name_gpu            # Show GPU vendor (long format)
 system_info -t                 # Show GPU temperature
 system_info --temperature     # Show GPU temperature (long format)
 system_info -u                 # Show GPU utilization

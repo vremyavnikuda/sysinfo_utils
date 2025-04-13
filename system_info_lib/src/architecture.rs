@@ -1,3 +1,4 @@
+//src/architecture.rs
 use log::error;
 use std::process::Command;
 

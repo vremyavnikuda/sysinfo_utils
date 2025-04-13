@@ -1,3 +1,4 @@
+//src/system_info.rs
 use std::fmt::Display;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -123,7 +124,7 @@ impl Default for Type {
 impl Display for Type {
     /// Formats the OS type into a string.
     ///
-    /// The string is the name of the OS type, without any additional information.
+    /// The string is the name_gpu of the OS type, without any additional information.
     ///
     /// # Examples
     ///

@@ -1,3 +1,4 @@
+//src/macos/mod.rs
 use std::process::Command;
 
 use log::{trace, warn};

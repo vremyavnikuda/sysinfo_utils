@@ -1,3 +1,4 @@
+//src/bit_depth.rs
 use std::fmt::Display;
 #[cfg(any(
     target_os = "aix",

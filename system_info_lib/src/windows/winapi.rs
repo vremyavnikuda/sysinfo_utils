@@ -1,3 +1,4 @@
+//src/windows/winapi.rs
 // spell-checker:ignore dword, minwindef, ntdef, ntdll, ntstatus, osversioninfoex, osversioninfoexa
 // spell-checker:ignore osversioninfoexw, serverr, sysinfoapi, winnt, winuser, pbool, libloaderapi
 // spell-checker:ignore lpcstr, processthreadsapi, farproc, lstatus, wchar, lpbyte, hkey, winerror
@@ -281,11 +282,11 @@ fn edition(version_info: &OSVERSIONINFOEX) -> Option<String> {
 
 fn get_proc_address(module: &[u8], proc: &[u8]) -> Option<FARPROC> {
     assert!(
-        *module.last().expect("Empty module name") == 0,
+        *module.last().expect("Empty module name_gpu") == 0,
         "Module name should be zero-terminated"
     );
     assert!(
-        *proc.last().expect("Empty procedure name") == 0,
+        *proc.last().expect("Empty procedure name_gpu") == 0,
         "Procedure name should be zero-terminated"
     );
 
@@ -359,25 +360,25 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Empty module name")]
+    #[should_panic(expected = "Empty module name_gpu")]
     fn empty_module_name() {
         get_proc_address(b"", b"RtlGetVersion\0");
     }
 
     #[test]
-    #[should_panic(expected = "Module name should be zero-terminated")]
+    #[should_panic(expected = "Module name_gpu should be zero-terminated")]
     fn non_zero_terminated_module_name() {
         get_proc_address(b"ntdll", b"RtlGetVersion\0");
     }
 
     #[test]
-    #[should_panic(expected = "Empty procedure name")]
+    #[should_panic(expected = "Empty procedure name_gpu")]
     fn empty_proc_name() {
         get_proc_address(b"ntdll\0", b"");
     }
 
     #[test]
-    #[should_panic(expected = "Procedure name should be zero-terminated")]
+    #[should_panic(expected = "Procedure name_gpu should be zero-terminated")]
     fn non_zero_terminated_proc_name() {
         get_proc_address(b"ntdll\0", b"RtlGetVersion");
     }

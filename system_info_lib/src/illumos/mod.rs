@@ -1,3 +1,4 @@
+//src/illumos/mod.rs
 use log::trace;
 
 use crate::{bit_depth, system_info::Info, system_os::Type, system_uname::uname, SystemVersion};

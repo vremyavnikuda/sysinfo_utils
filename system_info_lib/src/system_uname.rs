@@ -1,3 +1,4 @@
+//src/system_info.rs
 use log::error;
 use std::process::Command;
 

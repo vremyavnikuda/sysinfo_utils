@@ -1,3 +1,4 @@
+//src/freebsd/mod.rs
 use crate::{bit_depth, system_os::Type, system_uname::uname, Info, SystemVersion};
 use log::{error, trace};
 use std::process::Command;

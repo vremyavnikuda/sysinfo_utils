@@ -1,3 +1,4 @@
+//src/emscripten/mod.rs
 use log::trace;
 
 use crate::{system_os::Type, Info};
