@@ -6,54 +6,73 @@ use std::ffi::CStr;
 use std::os::raw::{c_char, c_uint};
 use std::ptr;
 
-const NVML_SUCCESS: i32 = 0;
-const NVML_TEMPERATURE_GPU: c_uint = 0;
-const NVML_CLOCK_GRAPHICS: c_uint = 0;
+pub(crate) const NVML_SUCCESS: i32 = 0;
+pub(crate) const NVML_TEMPERATURE_GPU: c_uint = 0;
+pub(crate) const NVML_CLOCK_GRAPHICS: c_uint = 0;
 #[allow(dead_code)]
-const NVML_CLOCK_MEM: c_uint = 1;
+pub(crate) const NVML_CLOCK_MEM: c_uint = 1;
 #[allow(dead_code)]
-const NVML_DEVICE_GET_COUNT_MAX: usize = 64;
+pub(crate) const NVML_DEVICE_GET_COUNT_MAX: usize = 64;
 
 #[repr(C)]
 #[allow(non_camel_case_types)]
-struct nvmlDevice_st {
+pub(crate) struct nvmlDevice_st {
     _unused: [u8; 0],
+}
+#[cfg(test)]
+use mockall::automock;
+
+//TODO: ИСПОЛЬЗОВАТЬ ЭТОТ trait
+#[warn(dead_code)]
+#[cfg_attr(test, automock)]
+pub(crate) trait NvmlClient {
+    fn init(&self) -> i32;
+    fn shutdown(&self) -> i32;
+    fn get_count(&self, count: *mut c_uint) -> i32;
+    fn get_handle_by_index(&self, index: c_uint, device: *mut nvmlDevice_t) -> i32;
+    fn get_name(&self, device: nvmlDevice_t, name: *mut c_char, length: c_uint) -> i32;
+    fn get_temperature(&self, device: nvmlDevice_t, sensor_type: c_uint, temp: *mut c_uint) -> i32;
+    fn get_utilization_rates(&self, device: nvmlDevice_t, util: *mut nvmlUtilization_t) -> i32;
+    fn get_power_usage(&self, device: nvmlDevice_t, milliwatts: *mut c_uint) -> i32;
+    fn get_clock_info(&self, device: nvmlDevice_t, clk_type: c_uint, clock: *mut c_uint) -> i32;
+    fn get_max_clock_info(&self, device: nvmlDevice_t, clk_type: c_uint, clock: *mut c_uint) -> i32;
+    fn get_power_management_limit(&self, device: nvmlDevice_t, limit: *mut c_uint) -> i32;
 }
 
 #[allow(non_camel_case_types)]
 #[allow(unsafe_code)]
-type nvmlDevice_t = *mut nvmlDevice_st;
+pub(crate) type nvmlDevice_t = *mut nvmlDevice_st;
 
 extern "C" {
-    fn nvmlInit_v2() -> i32;
-    fn nvmlShutdown() -> i32;
+    pub(crate)fn nvmlInit_v2() -> i32;
+    pub(crate)fn nvmlShutdown() -> i32;
     #[allow(unsafe_code)]
-    fn nvmlDeviceGetCount_v2(count: *mut c_uint) -> i32;
+    pub(crate)fn nvmlDeviceGetCount_v2(count: *mut c_uint) -> i32;
     #[allow(unsafe_code)]
-    fn nvmlDeviceGetHandleByIndex_v2(index: c_uint, device: *mut nvmlDevice_t) -> i32;
-    fn nvmlDeviceGetName(device: nvmlDevice_t, name: *mut c_char, length: c_uint) -> i32;
-    fn nvmlDeviceGetMaxClockInfo(
+    pub(crate)fn nvmlDeviceGetHandleByIndex_v2(index: c_uint, device: *mut nvmlDevice_t) -> i32;
+    pub(crate)fn nvmlDeviceGetName(device: nvmlDevice_t, name: *mut c_char, length: c_uint) -> i32;
+    pub(crate)fn nvmlDeviceGetMaxClockInfo(
         device: nvmlDevice_t,
         clkType: c_uint,
         clockMHz: *mut c_uint,
     ) -> i32;
-    fn nvmlDeviceGetPowerManagementLimit(device: nvmlDevice_t, limit: *mut c_uint) -> i32;
-    fn nvmlDeviceGetTemperature(device: nvmlDevice_t, sensorType: c_uint, temp: *mut c_uint)
+    pub(crate)fn nvmlDeviceGetPowerManagementLimit(device: nvmlDevice_t, limit: *mut c_uint) -> i32;
+    pub(crate) fn nvmlDeviceGetTemperature(device: nvmlDevice_t, sensorType: c_uint, temp: *mut c_uint)
         -> i32;
-    fn nvmlDeviceGetClockInfo(device: nvmlDevice_t, clkType: c_uint, clockMHz: *mut c_uint) -> i32;
-    fn nvmlDeviceGetUtilizationRates(
+    pub(crate)fn nvmlDeviceGetClockInfo(device: nvmlDevice_t, clkType: c_uint, clockMHz: *mut c_uint) -> i32;
+    pub(crate)fn nvmlDeviceGetUtilizationRates(
         device: nvmlDevice_t,
         utilization: *mut nvmlUtilization_t,
     ) -> i32;
-    fn nvmlDeviceGetPowerUsage(device: nvmlDevice_t, milliwatts: *mut c_uint) -> i32;
+    pub(crate)fn nvmlDeviceGetPowerUsage(device: nvmlDevice_t, milliwatts: *mut c_uint) -> i32;
 }
 
 #[repr(C)]
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, Copy)]
-struct nvmlUtilization_t {
-    gpu: c_uint,
-    memory: c_uint,
+pub(crate) struct nvmlUtilization_t {
+    pub(crate) gpu: c_uint,
+    pub(crate) memory: c_uint,
 }
 
 
@@ -284,7 +303,7 @@ pub fn info_gpu() -> GpuInfo {
     let mut gpus = detect_nvidia_gpus();
     if !gpus.is_empty() {
         let mut gpu = gpus.remove(0);
-        update_nvidia_info(&mut gpu);
+        update_nvidia_info(&mut gpu, );
         gpu
     } else {
         error!("No NVIDIA GPUs detected.");

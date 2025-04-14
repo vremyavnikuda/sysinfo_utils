@@ -390,6 +390,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(unused_unsafe)]
     fn get_architecture() {
         let cpu_types: [(u16, Option<String>); 6] = [
             (PROCESSOR_ARCHITECTURE_AMD64, Some("x86_64".to_owned())),
