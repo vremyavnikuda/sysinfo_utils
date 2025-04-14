@@ -1,18 +1,651 @@
 //src/test/test.rs
 #[cfg(test)]
 mod gpu_info_tests {
-    use crate::gpu_info::GpuVendor;
-    use crate::{GpuInfo, GpuManager};
+    use vendor::Vendor;
+    use crate::{ gpu_info, vendor, GpuInfo };
     use std::cell::RefCell;
     use std::fs;
     use std::fs::File;
     use std::io::Write;
-    use std::process::{Command, ExitStatus};
-    use tempfile::TempDir;
+    use std::process::{ Command, ExitStatus };
 
     struct MockCommand {
         success: bool,
         output: &'static str,
+    }
+
+    /// Test format driver version fn `format_driver_version()`
+    #[test]
+    fn _format_driver_version_returns_driver_version_when_present() {
+        let gpu_info = GpuInfo {
+            driver_version: Some("460.39".to_string()),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_driver_version(), "460.39");
+    }
+
+    /// Test format driver version fn `format_driver_version()`
+    #[test]
+    fn _format_driver_version_returns_unknown_when_absent() {
+        let gpu_info = GpuInfo {
+            driver_version: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_driver_version(), "Unknown Driver Version");
+    }
+
+    /// Test formater fn `format_max_clock_speed()`
+    #[test]
+    fn _format_max_clock_speed_returns_max_clock_speed_when_present() {
+        let gpu_info = GpuInfo {
+            max_clock_speed: Some(1800),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_max_clock_speed(), 1800);
+    }
+
+    /// Test formater fn `format_max_clock_speed()`
+    #[test]
+    fn _format_max_clock_speed_returns_zero_when_absent() {
+        let gpu_info = GpuInfo {
+            max_clock_speed: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_max_clock_speed(), 0);
+    }
+
+    /// Verifies that the default implementation of `GpuInfo` returns an instance with all fields set to unknown values.
+    /// Test `default()` method of `GpuInfo` struct.
+    /// impl Default for GpuInfo {}
+    #[test]
+    fn _default_returns_instance_with_unknown_values() {
+        let gpu_info = GpuInfo::default();
+        assert_eq!(gpu_info.vendor, Vendor::Unknown);
+        assert!(gpu_info.name_gpu.is_none());
+        assert!(gpu_info.temperature.is_none());
+        assert!(gpu_info.utilization.is_none());
+        assert!(gpu_info.power_usage.is_none());
+        assert!(gpu_info.core_clock.is_none());
+        assert!(gpu_info.memory_util.is_none());
+        assert!(gpu_info.memory_clock.is_none());
+        assert!(gpu_info.active.is_none());
+        assert!(gpu_info.power_limit.is_none());
+        assert!(gpu_info.memory_total.is_none());
+        assert!(gpu_info.driver_version.is_none());
+        assert!(gpu_info.max_clock_speed.is_none());
+    }
+
+    /// Format test fn `format_memory_total()`
+    #[test]
+    fn _default_creates_new_instance_each_time() {
+        let gpu_info1 = GpuInfo::default();
+        let gpu_info2 = GpuInfo::default();
+        assert_ne!(&gpu_info1 as *const _, &gpu_info2 as *const _);
+    }
+
+    /// Format test fn `format_memory_total()`
+    #[test]
+    fn _format_memory_total_returns_total_memory_when_present() {
+        let gpu_info = GpuInfo {
+            memory_total: Some(8192),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_memory_total(), 8192);
+    }
+
+    /// Format test fn `format_memory_total()`
+    #[test]
+    fn _format_memory_total_returns_zero_when_absent() {
+        let gpu_info = GpuInfo {
+            memory_total: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_memory_total(), 0);
+    }
+
+    /// Test formater fn `format_power_limit()`
+    #[test]
+    fn _format_power_limit_returns_power_limit_when_present() {
+        let gpu_info = GpuInfo {
+            power_limit: Some(250.0),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_power_limit(), 250.0);
+    }
+
+    /// Test formater fn `format_power_limit()`
+    #[test]
+    fn _format_power_limit_returns_zero_when_absent() {
+        let gpu_info = GpuInfo {
+            power_limit: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_power_limit(), 0.0);
+    }
+
+    /// Test formater fn `format_active()`
+    #[test]
+    fn _format_active_returns_active_when_gpu_is_active() {
+        let gpu_info = GpuInfo {
+            active: Some(true),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_active(), "Active");
+    }
+
+    /// Test formater fn `format_active()`
+    #[test]
+    fn _format_active_returns_inactive_when_gpu_is_inactive() {
+        let gpu_info = GpuInfo {
+            active: Some(false),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_active(), "Inactive");
+    }
+
+    /// Test formater fn `format_active()`
+    #[test]
+    fn _format_active_returns_inactive_when_active_status_is_unknown() {
+        let gpu_info = GpuInfo {
+            active: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_active(), "Inactive");
+    }
+
+    /// Test formater fn `format_memory_clock(&self)`
+    #[test]
+    fn _format_memory_clock_returns_memory_clock_when_present() {
+        let gpu_info = GpuInfo {
+            memory_clock: Some(7000),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_memory_clock(), 7000);
+    }
+
+    /// Test formater fn `format_memory_clock(&self)`
+    #[test]
+    fn _format_memory_clock_returns_zero_when_absent() {
+        let gpu_info = GpuInfo {
+            memory_clock: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_memory_clock(), 0);
+    }
+
+    /// Test format fn `format_memory_util()`
+    #[test]
+    fn _format_memory_util_returns_memory_utilization_when_present() {
+        let gpu_info = GpuInfo {
+            memory_util: Some(75.5),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_memory_util(), 75.5);
+    }
+
+    /// Test format fn `format_memory_util()`
+    #[test]
+    fn _format_memory_util_returns_zero_when_absent() {
+        let gpu_info = GpuInfo {
+            memory_util: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_memory_util(), 0.0);
+    }
+
+    /// Test format fn `format_core_clock()`
+    #[test]
+    fn _format_core_clock_returns_core_clock_when_present() {
+        let gpu_info = GpuInfo {
+            core_clock: Some(1500),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_core_clock(), 1500);
+    }
+
+    /// Test format fn `format_core_clock()`
+    #[test]
+    fn _format_core_clock_returns_zero_when_absent() {
+        let gpu_info = GpuInfo {
+            core_clock: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_core_clock(), 0);
+    }
+
+    /// Test format fn `format_power_usage(&self)`
+    #[test]
+    fn _format_power_usage_returns_power_usage_when_present() {
+        let gpu_info = GpuInfo {
+            power_usage: Some(150.5),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_power_usage(), 150.5);
+    }
+
+    /// Test format fn `format_power_usage(&self)`
+    #[test]
+    fn _format_power_usage_returns_zero_when_absent() {
+        let gpu_info = GpuInfo {
+            power_usage: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_power_usage(), 0.0);
+    }
+
+    /// Test format fn `format_utilization(&self)`
+    #[test]
+    fn _format_utilization_returns_utilization_when_present() {
+        let gpu_info = GpuInfo {
+            utilization: Some(85.3),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_utilization(), 85.3);
+    }
+
+    /// Test format fn `format_utilization(&self)`
+    #[test]
+    fn _format_utilization_returns_zero_when_absent() {
+        let gpu_info = GpuInfo {
+            utilization: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_utilization(), 0.0);
+    }
+
+    /// Test format fn `format_temperature(&self)`
+    #[test]
+    fn _format_temperature_returns_temperature_when_present() {
+        let gpu_info = GpuInfo {
+            temperature: Some(65.5),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_temperature(), 65.5);
+    }
+
+    /// Test format fn `format_temperature(&self)`
+    #[test]
+    fn _format_temperature_returns_zero_when_absent() {
+        let gpu_info = GpuInfo {
+            temperature: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_temperature(), 0.0);
+    }
+
+    /// Test format fn `format_name_gpu(&self)`
+    #[test]
+    fn _format_name_gpu_returns_name_when_present() {
+        let gpu_info = GpuInfo {
+            name_gpu: Some("NVIDIA GeForce RTX 3080".to_string()),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_name_gpu(), "NVIDIA GeForce RTX 3080");
+    }
+
+    /// Test format fn `format_name_gpu(&self)`
+    #[test]
+    fn _format_name_gpu_returns_unknown_when_absent() {
+        let gpu_info = GpuInfo {
+            name_gpu: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.format_name_gpu(), "Unknown GPU");
+    }
+
+    /// Test default format fn `max_clock_speed(&self)`
+    #[test]
+    fn _max_clock_speed_returns_value_when_present() {
+        let gpu_info = GpuInfo {
+            max_clock_speed: Some(2100),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.max_clock_speed(), Some(2100));
+    }
+
+    /// Test default format fn `max_clock_speed(&self)`
+    #[test]
+    fn _max_clock_speed_returns_none_when_absent() {
+        let gpu_info = GpuInfo {
+            max_clock_speed: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.max_clock_speed(), None);
+    }
+
+    /// Test default format fn `driver_version(&self)`
+    #[test]
+    fn _driver_version_returns_value_when_present() {
+        let gpu_info = GpuInfo {
+            driver_version: Some("470.57.02".to_string()),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.driver_version(), Some("470.57.02"));
+    }
+
+    /// Test default format fn `driver_version(&self)`
+    #[test]
+    fn _driver_version_returns_none_when_absent() {
+        let gpu_info = GpuInfo {
+            driver_version: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.driver_version(), None);
+    }
+
+    /// Test default format fn `memory_total(&self)`
+    #[test]
+    fn _memory_total_returns_value_when_present() {
+        let gpu_info = GpuInfo {
+            memory_total: Some(8192),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.memory_total(), Some(8192));
+    }
+
+    /// Test format fn `memory_total(&self)`
+    #[test]
+    fn _memory_total_returns_none_when_absent() {
+        let gpu_info = GpuInfo {
+            memory_total: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.memory_total(), None);
+    }
+
+    /// Test default format fn `power_limit(&self)`
+    #[test]
+    fn _power_limit_returns_value_when_present() {
+        let gpu_info = GpuInfo {
+            power_limit: Some(250.0),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.power_limit(), Some(250.0));
+    }
+
+    /// Test default format fn `power_limit(&self)`
+    #[test]
+    fn _power_limit_returns_none_when_absent() {
+        let gpu_info = GpuInfo {
+            power_limit: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.power_limit(), None);
+    }
+
+    /// Test default format fn `active(&self)`
+    #[test]
+    fn _active_returns_true_when_gpu_is_active() {
+        let gpu_info = GpuInfo {
+            active: Some(true),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.active(), Some(true));
+    }
+
+    /// Test default format fn `active(&self)`
+    #[test]
+    fn _active_returns_false_when_gpu_is_inactive() {
+        let gpu_info = GpuInfo {
+            active: Some(false),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.active(), Some(false));
+    }
+
+    /// Test default format fn `active(&self)`
+    #[test]
+    fn _active_returns_none_when_status_is_unknown() {
+        let gpu_info = GpuInfo {
+            active: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.active(), None);
+    }
+
+    /// Test default format fn `memory_clock(&self)`
+    #[test]
+    fn _memory_clock_returns_value_when_present() {
+        let gpu_info = GpuInfo {
+            memory_clock: Some(7000),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.memory_clock(), Some(7000));
+    }
+
+    /// Test default format fn `memory_clock(&self)`
+    #[test]
+    fn _memory_clock_returns_none_when_absent() {
+        let gpu_info = GpuInfo {
+            memory_clock: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.memory_clock(), None);
+    }
+
+    /// Test default format fn `memory_util(&self)`
+    #[test]
+    fn _memory_util_returns_value_when_present() {
+        let gpu_info = GpuInfo {
+            memory_util: Some(75.5),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.memory_util(), Some(75.5));
+    }
+
+    /// Test default format fn `memory_util(&self)`
+    #[test]
+    fn _memory_util_returns_none_when_absent() {
+        let gpu_info = GpuInfo {
+            memory_util: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.memory_util(), None);
+    }
+
+    /// Test default format fn `core_clock(&self)`
+    #[test]
+    fn _core_clock_returns_value_when_present() {
+        let gpu_info = GpuInfo {
+            core_clock: Some(1500),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.core_clock(), Some(1500));
+    }
+
+    /// Test default format fn `core_clock(&self)`
+    #[test]
+    fn _core_clock_returns_none_when_absent() {
+        let gpu_info = GpuInfo {
+            core_clock: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.core_clock(), None);
+    }
+
+    /// Test default format fn `power_usage(&self)`
+    #[test]
+    fn _power_usage_returns_value_when_present() {
+        let gpu_info = GpuInfo {
+            power_usage: Some(120.5),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.power_usage(), Some(120.5));
+    }
+
+    /// Test default format fn `power_usage(&self)`
+    #[test]
+    fn _power_usage_returns_none_when_absent() {
+        let gpu_info = GpuInfo {
+            power_usage: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.power_usage(), None);
+    }
+
+    /// Test default format fn `utilization(&self)`
+    #[test]
+    fn _utilization_returns_value_when_present() {
+        let gpu_info = GpuInfo {
+            utilization: Some(85.0),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.utilization(), Some(85.0));
+    }
+
+    /// Test default format fn `utilization(&self)`
+    #[test]
+    fn _utilization_returns_none_when_absent() {
+        let gpu_info = GpuInfo {
+            utilization: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.utilization(), None);
+    }
+
+    /// Test default format fn `temperature(&self)`
+    #[test]
+    fn _temperature_returns_value_when_present() {
+        let gpu_info = GpuInfo {
+            temperature: Some(70.5),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.temperature(), Some(70.5));
+    }
+
+    /// Test default format fn `temperature(&self)`
+    #[test]
+    fn _temperature_returns_none_when_absent() {
+        let gpu_info = GpuInfo {
+            temperature: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.temperature(), None);
+    }
+
+    /// Test default format fn `name_gpu(&self)`
+    #[test]
+    fn _name_gpu_returns_value_when_present() {
+        let gpu_info = GpuInfo {
+            name_gpu: Some("NVIDIA GeForce RTX 3080".to_string()),
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.name_gpu(), Some("NVIDIA GeForce RTX 3080"));
+    }
+
+    /// Test default format fn `name_gpu(&self)`
+    #[test]
+    fn _name_gpu_returns_none_when_absent() {
+        let gpu_info = GpuInfo {
+            name_gpu: None,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.name_gpu(), None);
+    }
+
+    /// Test default format fn `vendor(&self)`
+    #[test]
+    fn _vendor_returns_correct_vendor_when_present() {
+        let gpu_info = GpuInfo {
+            vendor: Vendor::Nvidia,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.vendor(), Vendor::Nvidia);
+    }
+
+    /// Test default format fn `vendor(&self)
+    #[test]
+    fn _vendor_returns_unknown_when_vendor_is_not_set() {
+        let gpu_info = GpuInfo {
+            vendor: Vendor::Unknown,
+            ..GpuInfo::default()
+        };
+        assert_eq!(gpu_info.vendor(), Vendor::Unknown);
+    }
+
+    /// Test default format fn `write_vendor(vendor: Vendor)`
+    #[test]
+    fn _write_vendor_creates_instance_with_specified_vendor() {
+        let gpu_info = GpuInfo::write_vendor(Vendor::Nvidia);
+        assert_eq!(gpu_info.vendor, Vendor::Nvidia);
+    }
+
+    /// Test `write_vendor()`
+    #[test]
+    fn _write_vendor_sets_other_fields_to_default() {
+        let gpu_info = GpuInfo::write_vendor(Vendor::Nvidia);
+        assert_eq!(gpu_info.name_gpu, None);
+        assert_eq!(gpu_info.temperature, None);
+        assert_eq!(gpu_info.utilization, None);
+        assert_eq!(gpu_info.power_usage, None);
+        assert_eq!(gpu_info.core_clock, None);
+        assert_eq!(gpu_info.memory_util, None);
+        assert_eq!(gpu_info.memory_clock, None);
+        assert_eq!(gpu_info.active, None);
+        assert_eq!(gpu_info.power_limit, None);
+        assert_eq!(gpu_info.memory_total, None);
+        assert_eq!(gpu_info.driver_version, None);
+        assert_eq!(gpu_info.max_clock_speed, None);
+    }
+
+    /// Test `Display` implementation for `GpuInfo`
+    #[test]
+    fn _display_includes_all_fields_when_present() {
+        let gpu_info = GpuInfo {
+            vendor: Vendor::Nvidia,
+            name_gpu: Some("NVIDIA GeForce RTX 3080".to_string()),
+            temperature: Some(70.5),
+            utilization: Some(85.0),
+            power_usage: Some(120.5),
+            core_clock: Some(1500),
+            memory_util: Some(75.5),
+            memory_clock: Some(7000),
+            active: Some(true),
+            power_limit: Some(250.0),
+            memory_total: Some(8192),
+            driver_version: Some("470.57.02".to_string()),
+            max_clock_speed: Some(2100),
+            ..GpuInfo::default()
+        };
+
+        let display_output = format!("{}", gpu_info);
+        assert!(display_output.contains("Nvidia"));
+        assert!(display_output.contains("NVIDIA GeForce RTX 3080"));
+        assert!(display_output.contains("70.5"));
+        assert!(display_output.contains("85.0"));
+        assert!(display_output.contains("120.5"));
+        assert!(display_output.contains("1500"));
+        assert!(display_output.contains("75.5"));
+        assert!(display_output.contains("7000"));
+        assert!(display_output.contains("true"));
+        assert!(display_output.contains("250.0"));
+        assert!(display_output.contains("8192"));
+        assert!(display_output.contains("470.57.02"));
+        assert!(display_output.contains("2100"));
+    }
+
+    /// Test `Display` implementation for `GpuInfo` with missing fields
+    #[test]
+    fn _display_handles_missing_fields_gracefully() {
+        let gpu_info = GpuInfo {
+            vendor: Vendor::Unknown,
+            ..GpuInfo::default()
+        };
+
+        let display_output = format!("{}", gpu_info);
+        assert!(display_output.contains("Unknown"));
+        assert!(!display_output.contains("NVIDIA GeForce RTX 3080"));
+        assert!(!display_output.contains("70.5"));
+        assert!(!display_output.contains("85.0"));
+        assert!(!display_output.contains("120.5"));
+        assert!(!display_output.contains("1500"));
+        assert!(!display_output.contains("75.5"));
+        assert!(!display_output.contains("7000"));
+        assert!(!display_output.contains("true"));
+        assert!(!display_output.contains("250.0"));
+        assert!(!display_output.contains("8192"));
+        assert!(!display_output.contains("470.57.02"));
+        assert!(!display_output.contains("2100"));
     }
 
     impl MockCommand {
@@ -44,7 +677,6 @@ mod gpu_info_tests {
     ///   succeed or fail.
     /// * `output`: A string slice containing the output of the mocked command.
     ///
-    /// # Examples
     ///
     ///
     fn mock_command(success: bool, output: &'static str) {
@@ -67,39 +699,42 @@ mod gpu_info_tests {
     #[test]
     fn test_gpu_info_methods() {
         let gpu = GpuInfo {
-            name: "Test GPU".to_string(),
-            vendor: GpuVendor::Nvidia,
-            temperature: Some(75.0),
-            utilization: Some(50.0),
-            clock_speed: Some(1500),
-            max_clock_speed: Some(2000),
-            power_usage: Some(100.0),
-            max_power_usage: Some(150.0),
-            is_active: true,
+            vendor: Vendor::Nvidia,
+            name_gpu: Some("Test GPU".to_string()),
+            temperature: None,
+            utilization: Some(75.0),
+            power_usage: Some(50.0),
+            core_clock: Some(1500),
+            memory_util: Some(2000.0),
+            memory_clock: Some(100),
+            active: None,
+            power_limit: None,
+            memory_total: None,
+            driver_version: None,
+            max_clock_speed: None,
         };
 
-        assert_eq!(gpu.name_gpu(), "Test GPU");
-        assert!(matches!(gpu.vendor_gpu(), GpuVendor::Nvidia));
-        assert_eq!(gpu.temperature_gpu(), Some(75.0));
-        assert_eq!(gpu.utilization_gpu(), Some(50.0));
-        assert_eq!(gpu.clock_speed_gpu(), Some(1500));
-        assert_eq!(gpu.max_clock_speed_gpu(), Some(2000));
-        assert_eq!(gpu.power_usage_gpu(), Some(100.0));
-        assert_eq!(gpu.max_power_usage_gpu(), Some(150.0));
-        assert!(gpu.is_active_gpu());
+        assert_eq!(gpu.name_gpu(), Some("Test GPU"));
+        assert!(matches!(gpu.vendor(), Vendor::Nvidia));
+        assert_eq!(gpu.temperature(), Some(75.0));
+        assert_eq!(gpu.utilization(), Some(50.0));
+        assert_eq!(gpu.core_clock(), Some(1500));
+        assert_eq!(gpu.max_clock_speed(), Some(2000));
+        assert_eq!(gpu.power_usage(), Some(100.0));
+        assert_eq!(gpu.power_limit(), Some(150.0));
+        assert_eq!(gpu.active().unwrap(), true);
     }
 
     /// Tests that `GpuManager` can be successfully created and that it is
     /// initialized with a non-empty list of GPUs and the active GPU set to 0.
     #[test]
     fn _test_gpu_manager_creation() {
-        let manager = GpuManager::new();
-        assert!(
-            !manager.gpu.is_empty(),
-            "Expected gpus to be empty, but it was not."
-        );
-        assert_eq!(manager.active_gpu, 0);
+        let gpu = GpuInfo::default();
+        assert!(gpu.name_gpu == None, "Expected gpus to be empty, but it was not.");
+        assert_eq!(gpu.active, Some(true));
     }
+
+    
 
     /// Tests that `GpuManager` can parse a line of NVIDIA GPU information
     /// produced by `nvidia-smi` and create a `GpuInfo` instance from it.
@@ -113,17 +748,17 @@ mod gpu_info_tests {
     fn _test_nvidia_parsing() {
         mock_command(true, "NVIDIA GPU,75,50,1500,2000,100,150\n");
 
-        let mut manager = GpuManager::new();
-        manager.detect_gpus();
+        let gpu = GpuInfo::default();
+        gpu.detect_gpus();
 
         assert!(!manager.gpu.is_empty());
         let gpu = &manager.gpu[0];
         assert!(
-            gpu.name.starts_with("NVIDIA")
-                || gpu.name.starts_with("AMD")
-                || gpu.name.starts_with("INTEL")
+            gpu.name.starts_with("NVIDIA") ||
+                gpu.name.starts_with("AMD") ||
+                gpu.name.starts_with("INTEL")
         );
-        assert!(matches!(gpu.vendor, GpuVendor::Nvidia));
+        assert!(matches!(gpu.vendor, Vendor::Nvidia));
     }
 
     /// Tests the functionality of switching active GPUs in `GpuManager`.
@@ -138,18 +773,18 @@ mod gpu_info_tests {
     /// - Fails to switch active GPU to index 2, as it is out of bounds.
     #[test]
     fn _test_gpu_switching() {
-        let mut manager = GpuManager {
+        let mut manager = GpuInfo {
             gpu: vec![
                 GpuInfo {
-                    name: "GPU1".to_string(),
-                    vendor: GpuVendor::Nvidia,
+                    name_gpu: Some("GPU1".to_string()),
+                    vendor: Vendor::Nvidia,
                     ..Default::default()
                 },
                 GpuInfo {
-                    name: "GPU2".to_string(),
-                    vendor: GpuVendor::AMD,
+                    name_gpu: Some("GPU2".to_string()),
+                    vendor: Vendor::Amd,
                     ..Default::default()
-                },
+                }
             ],
             active_gpu: 0,
         };
@@ -202,12 +837,8 @@ mod gpu_info_tests {
 
     // Реализация моков для системных команд
     mod mock_impl {
-        use std::os::windows::process::ExitStatusExt;
         use super::*;
-        use std::{
-            os::unix::process::ExitStatusExt,
-            process::{Command, Output},
-        };
+        use std::{ os::unix::process::ExitStatusExt, process::{ Command, Output } };
 
         /// Mocks the execution of a system command by returning predefined output.
         ///
@@ -289,10 +920,7 @@ mod gpu_info_tests {
         manager.detect_gpus();
 
         assert!(!manager.gpus.is_empty());
-        assert!(manager
-            .gpus
-            .iter()
-            .any(|g| matches!(g.vendor, GpuVendor::AMD)));
+        assert!(manager.gpus.iter().any(|g| matches!(g.vendor, GpuVendor::AMD)));
     }
 
     /// Tests the detection of an Intel GPU by mocking the sysfs intel_info file.
@@ -319,10 +947,7 @@ mod gpu_info_tests {
         manager.detect_gpus();
 
         assert!(!manager.gpus.is_empty());
-        assert!(manager
-            .gpus
-            .iter()
-            .any(|g| matches!(g.vendor, GpuVendor::Intel)));
+        assert!(manager.gpus.iter().any(|g| matches!(g.vendor, GpuVendor::Intel)));
     }
 
     /// Tests that metrics are correctly updated for an NVIDIA GPU.
@@ -335,9 +960,9 @@ mod gpu_info_tests {
     fn test_metrics_update() {
         mock_command(true, "75,50,1500,100\n");
 
-        let mut manager = GpuManager {
+        let mut manager = gpu_info {
             gpus: vec![GpuInfo {
-                vendor: GpuVendor::Nvidia,
+                vendor: Vendor::Nvidia,
                 ..Default::default()
             }],
             active_gpu: 0,
@@ -373,10 +998,7 @@ mod gpu_info_tests {
         let mut manager = GpuManager::new();
         manager.detect_gpus();
 
-        assert!(manager
-            .gpus
-            .iter()
-            .all(|g| !matches!(g.vendor, GpuVendor::Nvidia)));
+        assert!(manager.gpus.iter().all(|g| !matches!(g.vendor, GpuVendor::Nvidia)));
 
         mock_command(true, "invalid,data,here\n");
         manager.detect_gpus();
@@ -402,28 +1024,20 @@ mod gpu_info_tests {
         manager.detect_gpus();
 
         if Path::new("/usr/bin/nvidia-smi").exists() {
-            assert!(manager
-                .gpus
-                .iter()
-                .any(|g| matches!(g.vendor, GpuVendor::Nvidia)));
+            assert!(manager.gpus.iter().any(|g| matches!(g.vendor, GpuVendor::Nvidia)));
         }
 
         if Path::new("/sys/class/drm/card0/device/vendor").exists() {
-            let vendor =
-                fs::read_to_string("/sys/class/drm/card0/device/vendor").unwrap_or_default();
+            let vendor = fs
+                ::read_to_string("/sys/class/drm/card0/device/vendor")
+                .unwrap_or_default();
 
             if vendor.contains("0x1002") {
-                assert!(manager
-                    .gpu
-                    .iter()
-                    .any(|g| matches!(g.vendor, GpuVendor::AMD)));
+                assert!(manager.gpu.iter().any(|g| matches!(g.vendor, GpuVendor::AMD)));
             }
 
             if vendor.contains("0x8086") {
-                assert!(manager
-                    .gpu
-                    .iter()
-                    .any(|g| matches!(g.vendor, GpuVendor::Intel)));
+                assert!(manager.gpu.iter().any(|g| matches!(g.vendor, GpuVendor::Intel)));
             }
         }
     }
@@ -471,12 +1085,82 @@ mod gpu_info_tests {
     #[test]
     fn test_partial_data_parsing() {
         mock_command(true, "NVIDIA GPU,75,,1500,,100,\n");
-        let mut manager = GpuManager::new();
+        let mut manager = gpu_info::get();
         manager.detect_gpus();
 
         let gpu = &manager.gpus[0];
         assert_eq!(gpu.utilization, None);
         assert_eq!(gpu.max_clock_speed, None);
         assert_eq!(gpu.max_power_usage, None);
+    }
+}
+
+mod linux_nvidia_test{
+    use crate::nvml_bindings::{
+        NvmlDevice_t, NvmlInitFn, NvmlShutdownFn, NvmlDeviceGetHandleByIndexFn,
+        NvmlDeviceGetTemperatureFn, NvmlDeviceGetNameFn, NvmlDeviceGetUtilizationRatesFn,
+        NvmlDeviceGetPowerUsageFn, NvmlDeviceGetClockInfoFn, NvmlDeviceGetMemoryInfoFn,
+        NvmlUtilization, NvmlMemory, NVML_CLOCK_GRAPHICS,
+    };
+    
+    unsafe {
+        let ret: NvmlReturn_t = nvmlInit_v2();
+        if ret != 0 {
+            println!("Failed to initialize NVML: {}", ret);
+        }
+    }
+    /// Test `update_nvidia_info()` updates GPU information
+    #[test]
+    fn update_nvidia_info_updates_gpu_data() {
+         
+        let mut gpu = crate::GpuInfo {
+            name_gpu: Some("NVIDIA GeForce RTX 3080".to_string()),
+            ..Default::default()
+        };
+
+        // Simulate NVML data
+        unsafe {
+            nvmlDeviceGetTemperature = |_, _, temp| {
+                *temp = 70;
+                NVML_SUCCESS
+            };
+
+            nvmlDeviceGetUtilizationRates = |_, util| {
+                util.gpu = 85;
+                util.memory = 75;
+                NVML_SUCCESS
+            };
+
+            nvmlDeviceGetPowerUsage = |_, power| {
+                *power = 120000;
+                NVML_SUCCESS
+            };
+
+            nvmlDeviceGetClockInfo = |_, _, clock| {
+                *clock = 1500;
+                NVML_SUCCESS
+            };
+
+            nvmlDeviceGetMaxClockInfo = |_, _, max_clock| {
+                *max_clock = 2100;
+                NVML_SUCCESS
+            };
+
+            nvmlDeviceGetPowerManagementLimit = |_, limit| {
+                *limit = 250000;
+                NVML_SUCCESS
+            };
+        }
+
+        update_nvidia_info(&mut gpu);
+
+        assert_eq!(gpu.temperature, Some(70.0));
+        assert_eq!(gpu.utilization, Some(85.0));
+        assert_eq!(gpu.memory_util, Some(75.0));
+        assert_eq!(gpu.power_usage, Some(120.0));
+        assert_eq!(gpu.core_clock, Some(1500));
+        assert_eq!(gpu.max_clock_speed, Some(2100));
+        assert_eq!(gpu.power_limit, Some(250.0));
+        assert_eq!(gpu.active, Some(true));
     }
 }

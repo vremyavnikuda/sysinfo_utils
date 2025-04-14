@@ -4,10 +4,12 @@ use log::{debug, error};
 use std::{env, os::raw::c_char, ptr};
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct NvmlDevice {
     _private: [u8; 0],
 }
+
+#[allow(non_camel_case_types)]
 pub type NvmlDevice_t = *mut NvmlDevice;
 
 #[allow(non_camel_case_types)]
@@ -17,14 +19,14 @@ pub const NVML_SUCCESS: nvmlReturn_t = 0;
 pub const NVML_TEMPERATURE_GPU: u32 = 0;
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct NvmlUtilization {
     gpu: u32,
     memory: u32,
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct NvmlMemory {
     total: u64,
     free: u64,
@@ -45,6 +47,18 @@ type NvmlDeviceGetMemoryInfoFn =
 
 pub const NVML_CLOCK_GRAPHICS: u32 = 0;
 
+/// Fetches detailed information about the first detected NVIDIA GPU using dynamic NVML loading.
+///
+/// This function loads the NVML shared library and calls various functions to fetch information
+/// about the first detected NVIDIA GPU. It returns a `GpuInfo` struct containing the information
+/// fetched.
+///
+/// Note that this function is only available on Linux.
+///
+/// # Panics
+///
+/// This function will panic if it fails to load the NVML library or if it fails to fetch the
+/// information.
 pub(crate) fn info_gpu() -> GpuInfo {
     debug!("Fetching GPU info using dynamic NVML loading");
 

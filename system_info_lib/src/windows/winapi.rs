@@ -403,7 +403,9 @@ mod tests {
         let mut native_info = native_system_info();
 
         for cpu_type in cpu_types {
-            unsafe { native_info.Anonymous.Anonymous.wProcessorArchitecture = cpu_type.0; }
+            unsafe {
+                native_info.Anonymous.Anonymous.wProcessorArchitecture = cpu_type.0;
+            }
             assert_eq!(architecture(native_info), cpu_type.1);
         }
     }

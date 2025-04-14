@@ -1,10 +1,10 @@
 //gpu_info/src/windows/mod.rs
+use crate::gpu_info::GpuInfo;
+use crate::vendor::Vendor;
 use log::{error, info, warn};
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_uint};
 use std::ptr;
-use crate::gpu_info::GpuInfo;
-use crate::vendor::Vendor;
 
 const NVML_SUCCESS: i32 = 0;
 const NVML_TEMPERATURE_GPU: c_uint = 0;
@@ -38,16 +38,9 @@ extern "C" {
         clockMHz: *mut c_uint,
     ) -> i32;
     fn nvmlDeviceGetPowerManagementLimit(device: nvmlDevice_t, limit: *mut c_uint) -> i32;
-    fn nvmlDeviceGetTemperature(
-        device: nvmlDevice_t,
-        sensorType: c_uint,
-        temp: *mut c_uint,
-    ) -> i32;
-    fn nvmlDeviceGetClockInfo(
-        device: nvmlDevice_t,
-        clkType: c_uint,
-        clockMHz: *mut c_uint,
-    ) -> i32;
+    fn nvmlDeviceGetTemperature(device: nvmlDevice_t, sensorType: c_uint, temp: *mut c_uint)
+        -> i32;
+    fn nvmlDeviceGetClockInfo(device: nvmlDevice_t, clkType: c_uint, clockMHz: *mut c_uint) -> i32;
     fn nvmlDeviceGetUtilizationRates(
         device: nvmlDevice_t,
         utilization: *mut nvmlUtilization_t,
@@ -63,6 +56,17 @@ struct nvmlUtilization_t {
     memory: c_uint,
 }
 
+
+/// Detects NVIDIA GPUs using the NVML library and returns their information.
+///
+/// This function initializes the NVML library, retrieves the count of available NVIDIA GPUs,
+/// and collects basic information (such as the name and vendor) for each detected GPU.
+/// If the initialization or any NVML function call fails, appropriate error messages are logged.
+///
+/// # Returns
+/// A `Vec<GpuInfo>` containing information about the detected NVIDIA GPUs. If no GPUs are found
+/// or an error occurs during detection, an empty vector is returned.
+///
 pub fn detect_nvidia_gpus() -> Vec<GpuInfo> {
     let mut gpus = Vec::new();
 
@@ -111,10 +115,28 @@ pub fn detect_nvidia_gpus() -> Vec<GpuInfo> {
         });
     }
 
-    unsafe { nvmlShutdown(); }
+    unsafe {
+        nvmlShutdown();
+    }
     gpus
 }
 
+/// Updates the information of a given NVIDIA GPU using the NVML library.
+///
+/// This function attempts to match the provided `GpuInfo` instance with an NVIDIA GPU
+/// detected by the NVML library. If a match is found, it updates the GPU's information,
+/// including temperature, utilization, power usage, clock speeds, and power limits.
+///
+/// # Arguments
+/// * `gpu` - A mutable reference to a `GpuInfo` instance that will be updated with
+///           the latest information from the NVML library.
+///
+/// If the NVML library fails to initialize or the GPU cannot be matched, the function
+/// logs appropriate error messages and exits early.
+///
+/// # Safety
+/// This function uses unsafe blocks to interact with the NVML library, which requires
+/// careful handling of pointers and external function calls
 pub fn update_nvidia_info(gpu: &mut GpuInfo) {
     let ret_init = unsafe { nvmlInit_v2() };
     if ret_init != NVML_SUCCESS {
@@ -126,7 +148,9 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
     let ret_count = unsafe { nvmlDeviceGetCount_v2(&mut count) };
     if ret_count != NVML_SUCCESS {
         error!("nvmlDeviceGetCount_v2 failed: {}", ret_count);
-        unsafe { nvmlShutdown(); }
+        unsafe {
+            nvmlShutdown();
+        }
         return;
     }
 
@@ -134,7 +158,9 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
         Some(name) => name.to_lowercase(),
         None => {
             error!("GPU name is not set");
-            unsafe { nvmlShutdown(); }
+            unsafe {
+                nvmlShutdown();
+            }
             return;
         }
     };
@@ -160,8 +186,13 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
     let dev = match found_dev {
         Some(d) => d,
         None => {
-            error!("No matching NVML device for '{}'", gpu.name_gpu.as_deref().unwrap_or("unknown"));
-            unsafe { nvmlShutdown(); }
+            error!(
+                "No matching NVML device for '{}'",
+                gpu.name_gpu.as_deref().unwrap_or("unknown")
+            );
+            unsafe {
+                nvmlShutdown();
+            }
             return;
         }
     };
@@ -183,7 +214,10 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
         gpu.utilization = Some(util_data.gpu as f32);
         gpu.memory_util = Some(util_data.memory as f32);
     } else {
-        warn!("nvmlDeviceGetUtilizationRates failed with code {}", ret_util);
+        warn!(
+            "nvmlDeviceGetUtilizationRates failed with code {}",
+            ret_util
+        );
         gpu.utilization = None;
         gpu.memory_util = None;
     }
@@ -210,7 +244,8 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
 
     // Обновление максимальной тактовой частоты
     let mut max_clk_val: c_uint = 0;
-    let ret_max_clk = unsafe { nvmlDeviceGetMaxClockInfo(dev, NVML_CLOCK_GRAPHICS, &mut max_clk_val) };
+    let ret_max_clk =
+        unsafe { nvmlDeviceGetMaxClockInfo(dev, NVML_CLOCK_GRAPHICS, &mut max_clk_val) };
     if ret_max_clk == NVML_SUCCESS {
         gpu.max_clock_speed = Some(max_clk_val as u32);
     } else {
@@ -229,8 +264,22 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
 
     gpu.active = Some(true);
 
-    unsafe { nvmlShutdown(); }
+    unsafe {
+        nvmlShutdown();
+    }
 }
+
+/// Retrieves information about the first detected NVIDIA GPU.
+///
+/// This function uses `detect_nvidia_gpus` to find all available NVIDIA GPUs
+/// and selects the first one from the list. It then updates the GPU's information
+/// using `update_nvidia_info`. If no NVIDIA GPUs are detected, it returns a default
+/// `GpuInfo` instance with unknown or empty values.
+///
+/// # Returns
+/// A `GpuInfo` instance containing detailed information about the first detected
+/// NVIDIA GPU. If no GPUs are found, the returned instance will have default values.
+///
 pub fn info_gpu() -> GpuInfo {
     let mut gpus = detect_nvidia_gpus();
     if !gpus.is_empty() {

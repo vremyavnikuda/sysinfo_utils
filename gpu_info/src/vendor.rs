@@ -5,6 +5,11 @@ use std::fmt::Display;
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[non_exhaustive]
+
+///
+/// GPU vendor information
+/// Vendor enum representing different GPU vendors
+///
 pub enum Vendor {
     Nvidia,
     Amd,
@@ -13,12 +18,16 @@ pub enum Vendor {
     Unknown,
 }
 
+/// Converts a string to a Vendor enum
 impl Default for Vendor {
     fn default() -> Self {
         Vendor::Unknown
     }
 }
 
+///
+/// Display trait implementation for Vendor enum
+///
 impl Display for Vendor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
