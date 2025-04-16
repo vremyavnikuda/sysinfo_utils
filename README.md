@@ -52,7 +52,7 @@ let info = system_info::get();
 // gpu_info
 let _gpu_options = GpuOptions::parse();
 let gpu = gpu_info::get();
-
+//default output 
 "Vendor: {:?}", gpu.vendor()
 "Name: {:?}", gpu.name_gpu()
 "Utilization: {:?}", gpu.utilization()
@@ -68,6 +68,24 @@ let gpu = gpu_info::get();
 "Codename: {:?}", info.codename()
 "BitDepth: {}", info.bit_depth()
 "Architecture: {:?}", info.architecture()
+
+//.fmt_string() -> format to_string
+"Vendor: {:?}", gpu.vendor()
+"Name: {:?}", gpu.name_gpu().fmt_string()
+"Utilization: {:?}", gpu.utilization().fmt_string()
+"Temperature: {:?}", gpu.temperature().fmt_string()
+"Clock Speed: {:?}", gpu.core_clock().fmt_string()
+"Power Usage: {:?}", gpu.power_usage().fmt_string()
+"Memory Usage: {:?}", gpu.memory_util().fmt_string()
+"Memory Total: {:?}", gpu.memory_total().fmt_string()
+
+// Formatting with units of measurement
+"Utilization: {:?}", gpu.format_utilization()
+"Temperature: {:?}", gpu.format_temperature()
+"Clock Speed: {:?}", gpu.format_core_clock()
+"Power Usage: {:?}", gpu.format_power_usage()
+"Memory Usage: {:?}", gpu.format_memory_clock()
+"Memory Total: {:?}", gpu.format_memory_total()
 ```
 
 ## Usage

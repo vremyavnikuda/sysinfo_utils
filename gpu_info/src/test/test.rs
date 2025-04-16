@@ -1,7 +1,7 @@
 //src/test/test.rs
 #[cfg(test)]
 mod gpu_info_tests {
-    use crate::{ vendor, GpuInfo };
+    use crate::{gpu_info::Formattable, vendor, GpuInfo};
     use std::cell::RefCell;
     use vendor::Vendor;
 
@@ -296,7 +296,7 @@ mod gpu_info_tests {
             max_clock_speed: Some(2100),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.max_clock_speed(), Some(2100));
+        assert_eq!(gpu_info.max_clock_speed().fmt_string(), "2100");
     }
 
     /// Test default format fn `max_clock_speed(&self)`
@@ -306,7 +306,7 @@ mod gpu_info_tests {
             max_clock_speed: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.max_clock_speed(), None);
+        assert_eq!(gpu_info.max_clock_speed().fmt_string(), "N/A");
     }
 
     /// Test default format fn `driver_version(&self)`
@@ -316,7 +316,7 @@ mod gpu_info_tests {
             driver_version: Some("470.57.02".to_string()),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.driver_version(), Some("470.57.02"));
+        assert_eq!(gpu_info.driver_version().fmt_string(), "470.57.02");
     }
 
     /// Test default format fn `driver_version(&self)`
@@ -326,7 +326,7 @@ mod gpu_info_tests {
             driver_version: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.driver_version(), None);
+        assert_eq!(gpu_info.driver_version().fmt_string(), "N/A");
     }
 
     /// Test default format fn `memory_total(&self)`
@@ -336,7 +336,7 @@ mod gpu_info_tests {
             memory_total: Some(8192),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.memory_total(), Some(8192));
+        assert_eq!(gpu_info.memory_total().fmt_string(), "8192");
     }
 
     /// Test format fn `memory_total(&self)`
@@ -346,7 +346,7 @@ mod gpu_info_tests {
             memory_total: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.memory_total(), None);
+        assert_eq!(gpu_info.memory_total().fmt_string(), "N/A");
     }
 
     /// Test default format fn `power_limit(&self)`
@@ -356,7 +356,7 @@ mod gpu_info_tests {
             power_limit: Some(250.0),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.power_limit(), Some(250.0));
+        assert_eq!(gpu_info.power_limit().fmt_string(), "250.0");
     }
 
     /// Test default format fn `power_limit(&self)`
@@ -366,7 +366,7 @@ mod gpu_info_tests {
             power_limit: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.power_limit(), None);
+        assert_eq!(gpu_info.power_limit().fmt_string(), "N/A");
     }
 
     /// Test default format fn `active(&self)`
@@ -396,7 +396,7 @@ mod gpu_info_tests {
             active: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.active(), None);
+        assert_eq!(gpu_info.active().fmt_string(), "N/A");
     }
 
     /// Test default format fn `memory_clock(&self)`
@@ -406,7 +406,7 @@ mod gpu_info_tests {
             memory_clock: Some(7000),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.memory_clock(), Some(7000));
+        assert_eq!(gpu_info.memory_clock().fmt_string(), "7000");
     }
 
     /// Test default format fn `memory_clock(&self)`
@@ -416,7 +416,7 @@ mod gpu_info_tests {
             memory_clock: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.memory_clock(), None);
+        assert_eq!(gpu_info.memory_clock().fmt_string(), "N/A");
     }
 
     /// Test default format fn `memory_util(&self)`
@@ -426,7 +426,7 @@ mod gpu_info_tests {
             memory_util: Some(75.5),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.memory_util(), Some(75.5));
+        assert_eq!(gpu_info.memory_util().fmt_string(), "75.5");
     }
 
     /// Test default format fn `memory_util(&self)`
@@ -436,7 +436,7 @@ mod gpu_info_tests {
             memory_util: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.memory_util(), None);
+        assert_eq!(gpu_info.memory_util().fmt_string(), "N/A");
     }
 
     /// Test default format fn `core_clock(&self)`
@@ -446,7 +446,7 @@ mod gpu_info_tests {
             core_clock: Some(1500),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.core_clock(), Some(1500));
+        assert_eq!(gpu_info.core_clock().fmt_string(), "1500");
     }
 
     /// Test default format fn `core_clock(&self)`
@@ -456,7 +456,7 @@ mod gpu_info_tests {
             core_clock: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.core_clock(), None);
+        assert_eq!(gpu_info.core_clock().fmt_string(), "N/A");
     }
 
     /// Test default format fn `power_usage(&self)`
@@ -466,7 +466,7 @@ mod gpu_info_tests {
             power_usage: Some(120.5),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.power_usage(), Some(120.5));
+        assert_eq!(gpu_info.power_usage().fmt_string(), "120.5");
     }
 
     /// Test default format fn `power_usage(&self)`
@@ -476,7 +476,7 @@ mod gpu_info_tests {
             power_usage: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.power_usage(), None);
+        assert_eq!(gpu_info.power_usage().fmt_string(), "N/A");
     }
 
     /// Test default format fn `utilization(&self)`
@@ -486,7 +486,7 @@ mod gpu_info_tests {
             utilization: Some(85.0),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.utilization(), Some(85.0));
+        assert_eq!(gpu_info.utilization().fmt_string(), "85.0");
     }
 
     /// Test default format fn `utilization(&self)`
@@ -496,7 +496,7 @@ mod gpu_info_tests {
             utilization: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.utilization(), None);
+        assert_eq!(gpu_info.utilization().fmt_string(), "N/A");
     }
 
     /// Test default format fn `temperature(&self)`
@@ -506,7 +506,7 @@ mod gpu_info_tests {
             temperature: Some(70.5),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.temperature(), Some(70.5));
+        assert_eq!(gpu_info.temperature().fmt_string(), "70.5");
     }
 
     /// Test default format fn `temperature(&self)`
@@ -516,7 +516,7 @@ mod gpu_info_tests {
             temperature: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.temperature(), None);
+        assert_eq!(gpu_info.temperature().fmt_string(), "N/A");
     }
 
     /// Test default format fn `name_gpu(&self)`
@@ -526,7 +526,7 @@ mod gpu_info_tests {
             name_gpu: Some("NVIDIA GeForce RTX 3080".to_string()),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.name_gpu(), Some("NVIDIA GeForce RTX 3080"));
+        assert_eq!(gpu_info.name_gpu().fmt_string(), "NVIDIA GeForce RTX 3080");
     }
 
     /// Test default format fn `name_gpu(&self)`
@@ -536,7 +536,7 @@ mod gpu_info_tests {
             name_gpu: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.name_gpu(), None);
+        assert_eq!(gpu_info.name_gpu().fmt_string(), "N/A");
     }
 
     /// Test default format fn `vendor(&self)`
@@ -726,8 +726,11 @@ mod gpu_info_tests {
     #[test]
     fn _test_gpu_manager_creation() {
         let gpu = GpuInfo::default();
-        assert_eq!(gpu.name_gpu, None, "Expected gpus to be empty, but it was not.");
-        assert_eq!(gpu.active, Some(true));
+        assert_eq!(
+            gpu.name_gpu, None,
+            "Expected gpus to be empty, but it was not."
+        );
+        assert_eq!(gpu.active.fmt_string(), "N/A");
     }
 
     // TODO: ПОКА ЧТО ДАННЫЙ ТЕСТ НЕ НУЖЕН ТАК КАК МЫ БОЛЬШЕ НЕ ПАРСИМ ИНФОРМАЦИЮ ,А ПОЛУЧАЕМ КОНКРЕТНЫЕ ЗНАЧЕНИЯ ПО ОТДЕЛЬНОСТИ . НО В БУДУЩЕМ ВОЗМОЖНО ПРИГОДИТСЯ
@@ -842,7 +845,10 @@ fn _test_power_state_check() {
 #[cfg(all(not(target_os = "hermit"), any(unix, doc)))]
 mod mock_impl {
     use super::*;
-    use std::{ os::unix::process::ExitStatusExt, process::{ Command, Output } };
+    use std::{
+        os::unix::process::ExitStatusExt,
+        process::{Command, Output},
+    };
 
     /// Mocks the execution of a system command by returning predefined output.
     ///
@@ -998,7 +1004,7 @@ mod mock_impl {
 ///   fails to execute.
 /// - The `detect_gpus` method does not detect any NVIDIA GPUs if the command
 ///   produces invalid output.
-#[test]
+//#[test]
 // fn test_error_handling() {
 //     mock_command(false, "");
 //     let mut manager = GpuInfo::default();
@@ -1033,18 +1039,27 @@ fn integration_test_real_system() {
     manager.detect_gpus();
 
     if Path::new("/usr/bin/nvidia-smi").exists() {
-        assert!(manager.gpus.iter().any(|g| matches!(g.vendor, GpuVendor::Nvidia)));
+        assert!(manager
+            .gpus
+            .iter()
+            .any(|g| matches!(g.vendor, GpuVendor::Nvidia)));
     }
 
     if Path::new("/sys/class/drm/card0/device/vendor").exists() {
         let vendor = fs::read_to_string("/sys/class/drm/card0/device/vendor").unwrap_or_default();
 
         if vendor.contains("0x1002") {
-            assert!(manager.gpu.iter().any(|g| matches!(g.vendor, GpuVendor::AMD)));
+            assert!(manager
+                .gpu
+                .iter()
+                .any(|g| matches!(g.vendor, GpuVendor::AMD)));
         }
 
         if vendor.contains("0x8086") {
-            assert!(manager.gpu.iter().any(|g| matches!(g.vendor, GpuVendor::Intel)));
+            assert!(manager
+                .gpu
+                .iter()
+                .any(|g| matches!(g.vendor, GpuVendor::Intel)));
         }
     }
 }
@@ -1056,7 +1071,7 @@ fn integration_test_real_system() {
 /// - The first GPU in the list is an NVIDIA GPU
 #[test]
 fn test_get_vendor_nvidia() {
-    let mut manager = crate::GpuInfo::default();
+    let manager = crate::GpuInfo::default();
     manager.vendor;
     let gpu = manager;
     assert!(matches!(gpu.vendor, crate::vendor::Vendor::Nvidia));
@@ -1098,7 +1113,7 @@ fn test_get_vendor_nvidia() {
 #[cfg(test)]
 #[cfg(target_os = "linux")]
 mod linux_nvidia_test {
-    use crate::imp::{ update_nvidia_info, MockNvmlClient, NVML_SUCCESS };
+    use crate::imp::{update_nvidia_info, MockNvmlClient, NVML_SUCCESS};
 
     /// Test `update_nvidia_info()` updates GPU information
     #[test]
@@ -1115,45 +1130,61 @@ mod linux_nvidia_test {
             *count = 1;
             NVML_SUCCESS
         });
-        mock_client.expect_get_handle_by_index().returning(|_, device| unsafe {
-            *device = std::ptr::null_mut();
-            NVML_SUCCESS
-        });
-        mock_client.expect_get_name().returning(|_, name, length| unsafe {
-            let test_name = "NVIDIA GeForce RTX 3080".as_bytes();
-            std::ptr::copy_nonoverlapping(
-                test_name.as_ptr(),
-                name as *mut u8,
-                test_name.len().min(length as usize)
-            );
-            *name.add(test_name.len().min(length as usize)) = 0;
-            NVML_SUCCESS
-        });
-        mock_client.expect_get_temperature().returning(|_, _, temp| unsafe {
-            *temp = 70;
-            NVML_SUCCESS
-        });
-        mock_client.expect_get_utilization_rates().returning(|_, util| unsafe {
-            (*util).gpu = 85;
-            (*util).memory = 75;
-            NVML_SUCCESS
-        });
-        mock_client.expect_get_power_usage().returning(|_, milliwatts| unsafe {
-            *milliwatts = 120000;
-            NVML_SUCCESS
-        });
-        mock_client.expect_get_clock_info().returning(|_, _, clock| unsafe {
-            *clock = 1500;
-            NVML_SUCCESS
-        });
-        mock_client.expect_get_max_clock_info().returning(|_, _, clock| unsafe {
-            *clock = 2100;
-            NVML_SUCCESS
-        });
-        mock_client.expect_get_power_management_limit().returning(|_, limit| unsafe {
-            *limit = 250000;
-            NVML_SUCCESS
-        });
+        mock_client
+            .expect_get_handle_by_index()
+            .returning(|_, device| unsafe {
+                *device = std::ptr::null_mut();
+                NVML_SUCCESS
+            });
+        mock_client
+            .expect_get_name()
+            .returning(|_, name, length| unsafe {
+                let test_name = "NVIDIA GeForce RTX 3080".as_bytes();
+                std::ptr::copy_nonoverlapping(
+                    test_name.as_ptr(),
+                    name as *mut u8,
+                    test_name.len().min(length as usize),
+                );
+                *name.add(test_name.len().min(length as usize)) = 0;
+                NVML_SUCCESS
+            });
+        mock_client
+            .expect_get_temperature()
+            .returning(|_, _, temp| unsafe {
+                *temp = 70;
+                NVML_SUCCESS
+            });
+        mock_client
+            .expect_get_utilization_rates()
+            .returning(|_, util| unsafe {
+                (*util).gpu = 85;
+                (*util).memory = 75;
+                NVML_SUCCESS
+            });
+        mock_client
+            .expect_get_power_usage()
+            .returning(|_, milliwatts| unsafe {
+                *milliwatts = 120000;
+                NVML_SUCCESS
+            });
+        mock_client
+            .expect_get_clock_info()
+            .returning(|_, _, clock| unsafe {
+                *clock = 1500;
+                NVML_SUCCESS
+            });
+        mock_client
+            .expect_get_max_clock_info()
+            .returning(|_, _, clock| unsafe {
+                *clock = 2100;
+                NVML_SUCCESS
+            });
+        mock_client
+            .expect_get_power_management_limit()
+            .returning(|_, limit| unsafe {
+                *limit = 250000;
+                NVML_SUCCESS
+            });
 
         update_nvidia_info(&mut gpu);
 

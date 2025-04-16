@@ -1,3 +1,5 @@
+use gpu_info::gpu_info::Formattable;
+
 /// The main function demonstrating the usage of the `gpu_info` library.
 ///
 /// This function retrieves GPU information using the `gpu_info` library
@@ -13,7 +15,7 @@ fn main() {
     // Print the GPU utilization level
     println!("Utilization: {:?}", gpu.utilization());
     // Print the GPU temperature
-    println!("Temperature: {:?}", gpu.temperature());
+    println!("Temperature: {}", gpu.temperature().fmt_string());
     // Print the GPU core clock speed
     println!("Clock Speed: {:?}", gpu.core_clock());
     // Print the GPU power usage
