@@ -3,6 +3,7 @@
 ### A Rust library for retrieving system and GPU information with a convenient command-line interface.
 
 ## Features
+
 This project is a library that can be used in your projects to determine the user's operating system , bit depth, and release date.
 
 - Operating System information retrieval (type, version, architecture, bit depth)
@@ -11,10 +12,13 @@ This project is a library that can be used in your projects to determine the use
 - Logging support
 
 ## Installation
+
 ```shell
-cargo add system_info
+cargo add sysinfo_utils
 ```
+
 ## Dependencies
+
 ```toml
 [dependencies]
 system_info = "0.1"
@@ -24,9 +28,11 @@ env_logger = "0.10"
 ```
 
 #### Logging initialization
+
 ```rust
 env_logger::init();
 ```
+
 #### Getting OS information
 
 [list](os.md) of supported operating systems
@@ -41,8 +47,11 @@ let info = system_info::get();
 "BitDepth: {}", info.bit_depth()
 "Architecture: {:?}", info.architecture()
 ```
+
 #### Getting GPU information
+
 [list](gpu.md) of supported GPUs
+
 ```rust
 env_logger::init();
 // system_info_lib
@@ -52,7 +61,7 @@ let info = system_info::get();
 // gpu_info
 let _gpu_options = GpuOptions::parse();
 let gpu = gpu_info::get();
-//default output 
+//default output
 "Vendor: {:?}", gpu.vendor()
 "Name: {:?}", gpu.name_gpu()
 "Utilization: {:?}", gpu.utilization()
@@ -89,9 +98,11 @@ let gpu = gpu_info::get();
 ```
 
 ## Usage
+
 The library provides two main command sets: system information and GPU information.
 
 ### System Information Commands
+
 ```bash
 system_info [OPTIONS]
 
@@ -124,6 +135,7 @@ system_info --clock          # Show GPU clock speed (long format)
 ### Output Examples
 
 #### System Information
+
 ```bash
 OS information:
 Type: Windows
@@ -133,6 +145,7 @@ Architecture: x86_64
 ```
 
 #### GPU Information
+
 ```bash
 NVIDIA GeForce RTX 4090
 Temperature: 49°C
@@ -147,4 +160,5 @@ Clock Speed: 1155/2565 MHz
 - The library includes logging functionality that will warn when `--all` supersedes other options
 
 ## Contributing
+
 Contributions are not being considered at the moment!
