@@ -25,7 +25,7 @@ fn main() {
     // Print the total GPU memory
     println!("Memory Total: {:?}", gpu.memory_total());
     // Print the GPU activity status
-    println!("Is active: {:?}", gpu.active());
+    println!("Is active: {}", gpu.active().fmt_string());
     // Print the formatted GPU name
     println!("Formated Name Gpu: {}", gpu.format_name_gpu());
 }

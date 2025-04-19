@@ -28,3 +28,4 @@ system_info_lib/.vscode
 target
 .idea
 gpu_info/TASK.md
+!/gpu_info/.idea/

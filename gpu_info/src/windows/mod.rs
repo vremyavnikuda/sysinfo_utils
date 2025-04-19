@@ -40,6 +40,8 @@ pub(crate) trait NvmlClient {
     fn get_power_management_limit(&self, device: nvmlDevice_t, limit: *mut c_uint) -> i32;
 }
 
+pub struct NvmlClientImpl;
+
 #[allow(non_camel_case_types)]
 #[allow(unsafe_code)]
 pub(crate) type nvmlDevice_t = *mut nvmlDevice_st;
@@ -87,6 +89,56 @@ pub(crate) struct nvmlUtilization_t {
     pub(crate) memory: c_uint,
 }
 
+impl NvmlClient for NvmlClientImpl {
+    fn init(&self) -> i32 {
+        unsafe { nvmlInit_v2() }
+    }
+
+    fn shutdown(&self) -> i32 {
+        unsafe { nvmlShutdown() }
+    }
+
+    fn get_count(&self, count: *mut c_uint) -> i32 {
+        unsafe { nvmlDeviceGetCount_v2(count) }
+    }
+
+    fn get_handle_by_index(&self, index: c_uint, device: *mut nvmlDevice_t) -> i32 {
+        unsafe { nvmlDeviceGetHandleByIndex_v2(index, device) }
+    }
+
+    fn get_name(&self, device: nvmlDevice_t, name: *mut c_char, length: c_uint) -> i32 {
+        unsafe { nvmlDeviceGetName(device, name, length) }
+    }
+
+    fn get_temperature(&self, device: nvmlDevice_t, sensor_type: c_uint, temp: *mut c_uint) -> i32 {
+        unsafe { nvmlDeviceGetTemperature(device, sensor_type, temp) }
+    }
+
+    fn get_utilization_rates(&self, device: nvmlDevice_t, util: *mut nvmlUtilization_t) -> i32 {
+        unsafe { nvmlDeviceGetUtilizationRates(device, util) }
+    }
+
+    fn get_power_usage(&self, device: nvmlDevice_t, milliwatts: *mut c_uint) -> i32 {
+        unsafe { nvmlDeviceGetPowerUsage(device, milliwatts) }
+    }
+
+    fn get_clock_info(&self, device: nvmlDevice_t, clk_type: c_uint, clock: *mut c_uint) -> i32 {
+        unsafe { nvmlDeviceGetClockInfo(device, clk_type, clock) }
+    }
+
+    fn get_max_clock_info(
+        &self,
+        device: nvmlDevice_t,
+        clk_type: c_uint,
+        clock: *mut c_uint,
+    ) -> i32 {
+        unsafe { nvmlDeviceGetMaxClockInfo(device, clk_type, clock) }
+    }
+
+    fn get_power_management_limit(&self, device: nvmlDevice_t, limit: *mut c_uint) -> i32 {
+        unsafe { nvmlDeviceGetPowerManagementLimit(device, limit) }
+    }
+}
 /// Detects NVIDIA GPUs using the NVML library and returns their information.
 ///
 /// This function initializes the NVML library, retrieves the count of available NVIDIA GPUs,
@@ -98,10 +150,11 @@ pub(crate) struct nvmlUtilization_t {
 /// or an error occurs during detection, an empty vector is returned.
 ///
 pub fn detect_nvidia_gpus() -> Vec<GpuInfo> {
+    let nvml = NvmlClientImpl;
     let mut gpus = Vec::new();
 
     // Инициализируем NVML
-    let ret = unsafe { nvmlInit_v2() };
+    let ret = nvml.init();
     if ret != NVML_SUCCESS {
         error!("nvmlInit_v2 failed with code {}", ret);
         return gpus;
@@ -109,26 +162,24 @@ pub fn detect_nvidia_gpus() -> Vec<GpuInfo> {
     info!("NVML initialized successfully.");
 
     let mut count: c_uint = 0;
-    let ret2 = unsafe { nvmlDeviceGetCount_v2(&mut count) };
+    let ret2 = nvml.get_count(&mut count);
     if ret2 != NVML_SUCCESS {
         error!("nvmlDeviceGetCount_v2 failed: {}", ret2);
-        unsafe {
-            nvmlShutdown();
-        }
+        nvml.shutdown();
         return gpus;
     }
     info!("NVML found {} GPU device(s)", count);
 
     for i in 0..count {
         let mut dev: nvmlDevice_t = ptr::null_mut();
-        let ret3 = unsafe { nvmlDeviceGetHandleByIndex_v2(i, &mut dev) };
+        let ret3 = nvml.get_handle_by_index(i, &mut dev);
         if ret3 != NVML_SUCCESS {
             error!("nvmlDeviceGetHandleByIndex_v2({}) failed: {}", i, ret3);
             continue;
         }
 
         let mut name_buf = [0i8; 64];
-        let ret_name = unsafe { nvmlDeviceGetName(dev, name_buf.as_mut_ptr(), 64) };
+        let ret_name = nvml.get_name(dev, name_buf.as_mut_ptr(), 64);
         let gpu_name = if ret_name == NVML_SUCCESS {
             let cstr = unsafe { CStr::from_ptr(name_buf.as_ptr()) };
             cstr.to_string_lossy().into_owned()
@@ -145,9 +196,7 @@ pub fn detect_nvidia_gpus() -> Vec<GpuInfo> {
         });
     }
 
-    unsafe {
-        nvmlShutdown();
-    }
+    nvml.shutdown();
     gpus
 }
 
@@ -168,19 +217,19 @@ pub fn detect_nvidia_gpus() -> Vec<GpuInfo> {
 /// This function uses unsafe blocks to interact with the NVML library, which requires
 /// careful handling of pointers and external function calls
 pub fn update_nvidia_info(gpu: &mut GpuInfo) {
-    let ret_init = unsafe { nvmlInit_v2() };
+    let nvml = NvmlClientImpl;
+
+    let ret_init = nvml.init();
     if ret_init != NVML_SUCCESS {
         error!("nvmlInit_v2 failed with code {}", ret_init);
         return;
     }
 
     let mut count: c_uint = 0;
-    let ret_count = unsafe { nvmlDeviceGetCount_v2(&mut count) };
+    let ret_count = nvml.get_count(&mut count);
     if ret_count != NVML_SUCCESS {
         error!("nvmlDeviceGetCount_v2 failed: {}", ret_count);
-        unsafe {
-            nvmlShutdown();
-        }
+        nvml.shutdown();
         return;
     }
 
@@ -188,9 +237,7 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
         Some(name) => name.to_lowercase(),
         None => {
             error!("GPU name is not set");
-            unsafe {
-                nvmlShutdown();
-            }
+            nvml.shutdown();
             return;
         }
     };
@@ -198,10 +245,10 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
     let mut found_dev: Option<nvmlDevice_t> = None;
     for i in 0..count {
         let mut dev: nvmlDevice_t = ptr::null_mut();
-        let ret = unsafe { nvmlDeviceGetHandleByIndex_v2(i, &mut dev) };
+        let ret = nvml.get_handle_by_index(i, &mut dev);
         if ret == NVML_SUCCESS {
             let mut name_buf = [0i8; 64];
-            let ret_name = unsafe { nvmlDeviceGetName(dev, name_buf.as_mut_ptr(), 64) };
+            let ret_name = nvml.get_name(dev, name_buf.as_mut_ptr(), 64);
             if ret_name == NVML_SUCCESS {
                 let cstr = unsafe { CStr::from_ptr(name_buf.as_ptr()) };
                 let this_name = cstr.to_string_lossy().to_lowercase();
@@ -220,16 +267,14 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
                 "No matching NVML device for '{}'",
                 gpu.name_gpu.as_deref().unwrap_or("unknown")
             );
-            unsafe {
-                nvmlShutdown();
-            }
+            nvml.shutdown();
             return;
         }
     };
 
     // Обновление температуры
     let mut temp_val: c_uint = 0;
-    let ret_temp = unsafe { nvmlDeviceGetTemperature(dev, NVML_TEMPERATURE_GPU, &mut temp_val) };
+    let ret_temp = nvml.get_temperature(dev, NVML_TEMPERATURE_GPU, &mut temp_val);
     if ret_temp == NVML_SUCCESS {
         gpu.temperature = Some(temp_val as f32);
     } else {
@@ -239,7 +284,7 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
 
     // Обновление использования GPU и памяти
     let mut util_data = nvmlUtilization_t { gpu: 0, memory: 0 };
-    let ret_util = unsafe { nvmlDeviceGetUtilizationRates(dev, &mut util_data) };
+    let ret_util = nvml.get_utilization_rates(dev, &mut util_data);
     if ret_util == NVML_SUCCESS {
         gpu.utilization = Some(util_data.gpu as f32);
         gpu.memory_util = Some(util_data.memory as f32);
@@ -254,7 +299,7 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
 
     // Обновление потребления энергии
     let mut mw: c_uint = 0;
-    let ret_pow = unsafe { nvmlDeviceGetPowerUsage(dev, &mut mw) };
+    let ret_pow = nvml.get_power_usage(dev, &mut mw);
     if ret_pow == NVML_SUCCESS {
         gpu.power_usage = Some((mw as f32) / 1000.0);
     } else {
@@ -264,7 +309,7 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
 
     // Обновление текущей тактовой частоты
     let mut clk_val: c_uint = 0;
-    let ret_clk = unsafe { nvmlDeviceGetClockInfo(dev, NVML_CLOCK_GRAPHICS, &mut clk_val) };
+    let ret_clk = nvml.get_clock_info(dev, NVML_CLOCK_GRAPHICS, &mut clk_val);
     if ret_clk == NVML_SUCCESS {
         gpu.core_clock = Some(clk_val as u32);
     } else {
@@ -274,8 +319,7 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
 
     // Обновление максимальной тактовой частоты
     let mut max_clk_val: c_uint = 0;
-    let ret_max_clk =
-        unsafe { nvmlDeviceGetMaxClockInfo(dev, NVML_CLOCK_GRAPHICS, &mut max_clk_val) };
+    let ret_max_clk = nvml.get_max_clock_info(dev, NVML_CLOCK_GRAPHICS, &mut max_clk_val);
     if ret_max_clk == NVML_SUCCESS {
         gpu.max_clock_speed = Some(max_clk_val as u32);
     } else {
@@ -284,7 +328,7 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
     }
 
     let mut max_power_val: c_uint = 0;
-    let ret_max_pow = unsafe { nvmlDeviceGetPowerManagementLimit(dev, &mut max_power_val) };
+    let ret_max_pow = nvml.get_power_management_limit(dev, &mut max_power_val);
     if ret_max_pow == NVML_SUCCESS {
         gpu.power_limit = Some((max_power_val as f32) / 1000.0);
     } else {
@@ -294,9 +338,7 @@ pub fn update_nvidia_info(gpu: &mut GpuInfo) {
 
     gpu.active = Some(true);
 
-    unsafe {
-        nvmlShutdown();
-    }
+    nvml.shutdown();
 }
 
 /// Retrieves information about the first detected NVIDIA GPU.
