@@ -3,9 +3,9 @@ name = "system_cli"
 version = "0.0.1"
 authors = ["Andrew Nevsky <hopperplayer0@gmail.com>"]
 description = "Detect the operating system type and version."
-homepage = "https://github.com/vremyavnikuda/system_info"
-repository = "https://github.com/vremyavnikuda/system_cli"
-keywords = ["system_cli", "system_info", "gpu_info"]
+homepage = "https://github.com/vremyavnikuda/sysinfo_utils"
+repository = "https://github.com/vremyavnikuda/sysinfo_utils"
+keywords = ["system_cli", "system_info_lib", "gpu_info"]
 categories = ["command-line-interface", "filesystem"]
 readme = "README.md"
 license = "MIT"
@@ -13,7 +13,7 @@ edition = "2021"
 rust-version = "1.56"
 
 [[bin]]
-name = "system_info"
+name = "system_info_lib"
 path = "../system_info_lib/examples/version.rs"
 
 [[bin]]
