@@ -1,7 +1,31 @@
 ///! Retrieves detailed GPU information in a cross-platform manner.
 //gpu_info/src/gpu_info.rs
 use crate::vendor::Vendor;
-use std::fmt::{ Debug, Display, Formatter };
+use std::fmt::{Debug, Display, Formatter};
+use std::sync::RwLock;
+use std::time::{Duration, Instant};
+
+#[derive(Debug, thiserror::Error)]
+pub enum GpuError {
+    #[error("Invalid temperature value: {0}")]
+    InvalidTemperature(f32),
+    #[error("Invalid utilization value: {0}")]
+    InvalidUtilization(f32),
+    #[error("Invalid power usage value: {0}")]
+    InvalidPowerUsage(f32),
+    #[error("Invalid clock speed value: {0}")]
+    InvalidClockSpeed(u32),
+    #[error("Invalid memory value: {0}")]
+    InvalidMemory(u32),
+    #[error("GPU not found")]
+    GpuNotFound,
+    #[error("Driver not installed")]
+    DriverNotInstalled,
+    #[error("GPU not active")]
+    GpuNotActive,
+}
+
+pub type Result<T> = std::result::Result<T, GpuError>;
 
 // TODO: add to DOC
 /// Trait fmt_string (форматируем результат<T> в строковое представление)  defines a method for formatting GPU information.
@@ -434,10 +458,9 @@ impl GpuInfo {
     /// println!("Formated Name Gpu: {}", gpu.format_name_gpu());
     /// ```
     pub fn format_name_gpu(&self) -> String {
-        self.name_gpu.as_ref().map_or_else(
-            || "Unknown GPU".to_string(),
-            |s| s.clone()
-        )
+        self.name_gpu
+            .as_ref()
+            .map_or_else(|| "Unknown GPU".to_string(), |s| s.clone())
     }
 
     /// Returns formatted temperature of the GPU.
@@ -611,7 +634,11 @@ impl GpuInfo {
     /// It performs no I/O operations or complex calculations.
     ///
     pub fn format_active(&self) -> String {
-        if self.active == Some(true) { "Active".to_string() } else { "Inactive".to_string() }
+        if self.active == Some(true) {
+            "Active".to_string()
+        } else {
+            "Inactive".to_string()
+        }
     }
 
     /// Returns formatted power limit of the GPU.
@@ -686,10 +713,9 @@ impl GpuInfo {
     /// It performs no I/O operations or complex calculations.
     ///
     pub fn format_driver_version(&self) -> String {
-        self.driver_version.as_ref().map_or_else(
-            || "Unknown Driver Version".to_string(),
-            |s| s.clone()
-        )
+        self.driver_version
+            .as_ref()
+            .map_or_else(|| "Unknown Driver Version".to_string(), |s| s.clone())
     }
 
     /// Returns the maximum clock speed of the GPU in MHz
@@ -716,6 +742,44 @@ impl GpuInfo {
     ///
     pub fn format_max_clock_speed(&self) -> u32 {
         self.max_clock_speed.unwrap_or(0)
+    }
+
+    pub fn validate(&self) -> Result<()> {
+        if let Some(temp) = self.temperature {
+            if temp < -50.0 || temp > 150.0 {
+                return Err(GpuError::InvalidTemperature(temp));
+            }
+        }
+
+        if let Some(util) = self.utilization {
+            if util < 0.0 || util > 100.0 {
+                return Err(GpuError::InvalidUtilization(util));
+            }
+        }
+
+        if let Some(power) = self.power_usage {
+            if power < 0.0 || power > 1000.0 {
+                return Err(GpuError::InvalidPowerUsage(power));
+            }
+        }
+
+        if let Some(clock) = self.core_clock {
+            if clock > 5000 {
+                return Err(GpuError::InvalidClockSpeed(clock));
+            }
+        }
+
+        if let Some(mem) = self.memory_total {
+            if mem > 128 {
+                return Err(GpuError::InvalidMemory(mem));
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn is_valid(&self) -> bool {
+        self.validate().is_ok()
     }
 }
 
@@ -770,5 +834,43 @@ impl Display for GpuInfo {
             write!(f, "{}", max_clock)?;
         }
         Ok(())
+    }
+}
+
+// Кэширование результатов
+pub struct GpuInfoCache {
+    info: RwLock<Option<(GpuInfo, Instant)>>,
+    ttl: Duration,
+}
+
+impl GpuInfoCache {
+    pub fn new(ttl: Duration) -> Self {
+        Self {
+            info: RwLock::new(None),
+            ttl,
+        }
+    }
+
+    pub fn get(&self) -> Option<GpuInfo> {
+        let guard = self.info.read().ok()?;
+        let (info, timestamp) = guard.as_ref()?;
+
+        if timestamp.elapsed() < self.ttl {
+            Some(info.clone())
+        } else {
+            None
+        }
+    }
+
+    pub fn set(&self, info: GpuInfo) {
+        if let Ok(mut guard) = self.info.write() {
+            *guard = Some((info, Instant::now()));
+        }
+    }
+}
+
+impl Default for GpuInfoCache {
+    fn default() -> Self {
+        Self::new(Duration::from_secs(1))
     }
 }

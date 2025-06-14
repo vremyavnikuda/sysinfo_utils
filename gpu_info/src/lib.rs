@@ -1,14 +1,13 @@
 //gpu_info/src/lib.rs
-pub use crate::gpu_info::GpuInfo;
+pub use crate::gpu_info::{GpuError, GpuInfo, Result};
 
 pub mod gpu_info;
-pub mod vendor;
-pub mod unknown;
-
 #[allow(missing_debug_implementations, missing_docs, unsafe_code)]
 #[cfg(target_os = "linux")]
 #[path = "linux/mod.rs"]
 mod imp;
+pub mod unknown;
+pub mod vendor;
 
 #[cfg(target_os = "windows")]
 #[path = "windows/mod.rs"]
@@ -27,7 +26,7 @@ mod test;
 /// Gets the `GpuInfo` of the primary GPU in the system.
 ///
 /// If the system does not have a GPU, or the GPU is not supported, this returns
-/// an empty `GpuInfo`.
+/// a default `GpuInfo` instance with unknown values.
 ///
 /// # Linux and macOS
 ///
