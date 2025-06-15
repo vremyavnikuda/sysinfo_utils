@@ -3,7 +3,7 @@ use std::path::Path;
 use assert_cmd::Command;
 use predicates::prelude::*;
 
-const BIN_NAME: &str = env!("CARGO_BIN_EXE_system_info");
+const BIN_NAME: &str = env!("CARGO_BIN_EXE_system_cli");
 
 #[test]
 fn path_is_correct() {
@@ -57,7 +57,7 @@ fn version_short() {
 #[test]
 fn version_long() {
     Command::new(BIN_NAME)
-        .arg("--os-version")
+        .arg("--version")
         .assert()
         .success()
         .stdout(version_predicate());

@@ -1,164 +1,96 @@
-# System Information Library Doc
+# System Info Utils
 
-### A Rust library for retrieving system and GPU information with a convenient command-line interface.
+A utility library for system and GPU information.
 
 ## Features
 
-This project is a library that can be used in your projects to determine the user's operating system , bit depth, and release date.
-
-- Operating System information retrieval (type, version, architecture, bit depth)
-- GPU information retrieval (vendor, temperature, utilization, power usage, clock speed)
-- Command-line interface with flexible options
-- Logging support
-
-## Installation
-
-```shell
-cargo add sysinfo_utils
-```
-
-## Dependencies
-
-```toml
-[dependencies]
-system_info = "0.1"
-clap = { version = "4", features = ["derive"] }
-log = "0.4"
-env_logger = "0.10"
-```
-
-#### Logging initialization
-
-```rust
-env_logger::init();
-```
-
-#### Getting OS information
-
-[list](os.md) of supported operating systems
-
-```rust
-env_logger::init();
-let info = system_info::get();
-"Type: {}", info.system_type()
-"Version: {}", info.version()
-"Edition: {:?}", info.edition()
-"Codename: {:?}", info.codename()
-"BitDepth: {}", info.bit_depth()
-"Architecture: {:?}", info.architecture()
-```
-
-#### Getting GPU information
-
-[list](gpu.md) of supported GPUs
-
-```rust
-env_logger::init();
-// system_info_lib
-let _options = Options::parse();
-let info = system_info::get();
-
-// gpu_info
-let _gpu_options = GpuOptions::parse();
-let gpu = gpu_info::get();
-//default output
-"Vendor: {:?}", gpu.vendor()
-"Name: {:?}", gpu.name_gpu()
-"Utilization: {:?}", gpu.utilization()
-"Temperature: {:?}", gpu.temperature()
-"Clock Speed: {:?}", gpu.core_clock()
-"Power Usage: {:?}", gpu.power_usage()
-"Memory Usage: {:?}", gpu.memory_util()
-"Memory Total: {:?}", gpu.memory_total()
-"Is active: {:?}", gpu.active()
-"Type: {}", info.system_type()
-"Version: {}", info.version()
-"Edition: {:?}", info.edition()
-"Codename: {:?}", info.codename()
-"BitDepth: {}", info.bit_depth()
-"Architecture: {:?}", info.architecture()
-
-//.fmt_string() -> format to_string
-"Vendor: {:?}", gpu.vendor()
-"Name: {:?}", gpu.name_gpu().fmt_string()
-"Utilization: {:?}", gpu.utilization().fmt_string()
-"Temperature: {:?}", gpu.temperature().fmt_string()
-"Clock Speed: {:?}", gpu.core_clock().fmt_string()
-"Power Usage: {:?}", gpu.power_usage().fmt_string()
-"Memory Usage: {:?}", gpu.memory_util().fmt_string()
-"Memory Total: {:?}", gpu.memory_total().fmt_string()
-
-// Formatting with units of measurement
-"Utilization: {:?}", gpu.format_utilization()
-"Temperature: {:?}", gpu.format_temperature()
-"Clock Speed: {:?}", gpu.format_core_clock()
-"Power Usage: {:?}", gpu.format_power_usage()
-"Memory Usage: {:?}", gpu.format_memory_clock()
-"Memory Total: {:?}", gpu.format_memory_total()
-```
+- System information (OS type, version, architecture, etc.)
+- GPU information (vendor, temperature, utilization, etc.)
+- Command-line interface for both system and GPU information
 
 ## Usage
 
-The library provides two main command sets: system information and GPU information.
+Add this to your `Cargo.toml`:
 
-### System Information Commands
+```toml
+[dependencies]
+sysinfo_utils = { path = "path/to/sysinfo_utils" }
+```
+
+### System Information
+
+```rust
+use sysinfo_utils::system_info_lib;
+
+fn main() {
+    let info = system_info_lib::get();
+
+    println!("OS information: {info}");
+    println!("Type: {}", info.system_type());
+    println!("Version: {}", info.version());
+    println!("Edition: {:?}", info.edition());
+    println!("Codename: {:?}", info.codename());
+    println!("BitDepth: {}", info.bit_depth());
+    println!("Architecture: {:?}", info.architecture());
+}
+```
+
+### GPU Information
+
+```rust
+use sysinfo_utils::gpu_info;
+
+fn main() {
+    let gpu = gpu_info::get();
+
+    println!("Vendor: {:?}", gpu.vendor());
+    println!("Name: {:?}", gpu.name_gpu());
+    println!("Utilization: {:?}", gpu.utilization());
+    println!("Temperature: {:?}", gpu.temperature());
+    println!("Clock Speed: {:?}", gpu.core_clock());
+    println!("Power Usage: {:?}", gpu.power_usage());
+    println!("Memory Usage: {:?}", gpu.memory_util());
+    println!("Memory Total: {:?}", gpu.memory_total());
+    println!("Is active: {:?}", gpu.active());
+}
+```
+
+## Command-line Interface
+
+The package includes a command-line interface for both system and GPU information:
 
 ```bash
-system_info [OPTIONS]
-
 # Show all system information
-system_info --all
+system_cli --all
 
 # Show specific system information
-system_info -t                  # Show OS type
-system_info --type             # Show OS type (long format)
-system_info -v                 # Show OS version
-system_info --system-version   # Show OS version (long format)
-system_info -b                 # Show OS bit depth
-system_info --bit-depth       # Show OS bit depth (long format)
-system_info -A                 # Show OS architecture
-system_info --Arch            # Show OS architecture (long format)
+system_cli --type
+system_cli --version
+system_cli --bit-depth
+system_cli --architecture
+
+# Show all GPU information
+system_cli --all
 
 # Show specific GPU information
-system_info -v                 # Show GPU vendor
-system_info --name_gpu            # Show GPU vendor (long format)
-system_info -t                 # Show GPU temperature
-system_info --temperature     # Show GPU temperature (long format)
-system_info -u                 # Show GPU utilization
-system_info --utilization     # Show GPU utilization (long format)
-system_info -s                 # Show GPU power usage
-system_info --power          # Show GPU power usage (long format)
-system_info -c                 # Show GPU clock speed
-system_info --clock          # Show GPU clock speed (long format)
+system_cli --name-gpu
+system_cli --temperature
+system_cli --utilization
+system_cli --power
+system_cli --clock
 ```
 
-### Output Examples
+## License
 
-#### System Information
+Licensed under either of
 
-```bash
-OS information:
-Type: Windows
-Version: 10.0
-BitDepth: 64-bit
-Architecture: x86_64
-```
+ * Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+ * MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
-#### GPU Information
+at your option.
 
-```bash
-NVIDIA GeForce RTX 4090
-Temperature: 49°C
-Utilization: 11%
-Power Usage: 69.55/526 W
-Clock Speed: 1155/2565 MHz
-```
+## Contribution
 
-## Notes
-
-- Using the `--all` flag will override any other options and display all available information
-- The library includes logging functionality that will warn when `--all` supersedes other options
-
-## Contributing
-
-Contributions are not being considered at the moment!
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.

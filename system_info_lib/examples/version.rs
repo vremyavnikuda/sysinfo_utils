@@ -4,8 +4,10 @@
 //! Prints the full information as well as the components of `system_info_lib::Info`
 //! separately.
 
+use system_info_lib;
+
 fn main() {
-    let info = system_info::get();
+    let info = system_info_lib::get();
 
     // Print full information:
     println!("OS information: {info}");

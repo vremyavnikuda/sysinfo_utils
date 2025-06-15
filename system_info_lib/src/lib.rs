@@ -116,9 +116,9 @@ pub use crate::{
 /// # Examples
 ///
 /// ```
-/// use system_info;
+/// use system_info_lib;
 ///
-/// let info = system_info::get();
+/// let info = system_info_lib::get();
 ///
 /// // Print full information:
 /// println!("OS information: {info}");
