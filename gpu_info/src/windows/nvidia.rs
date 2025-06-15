@@ -93,15 +93,75 @@ pub trait NvmlClient {
 
 fn get_gpu_info(device: *mut nvmlDevice_st, nvml_client: &NvmlClientImpl) -> Option<GpuInfo> {
     let mut name = [0u8; 64];
-    let ret = unsafe {
-        nvml_client.nvmlDeviceGetName(
-            device,
-            name.as_mut_ptr() as *mut c_char,
-            name.len() as c_uint,
-        )
-    };
+    let ret = nvml_client.nvmlDeviceGetName(
+        device,
+        name.as_mut_ptr() as *mut c_char,
+        name.len() as c_uint,
+    );
     if ret != NVML_SUCCESS {
         error!("Failed to get device name: {}", ret);
+        return None;
+    }
+
+    let mut temp: c_uint = 0;
+    let ret_temp = nvml_client.nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &mut temp);
+    if ret_temp != NVML_SUCCESS {
+        error!("Failed to get temperature: {}", ret_temp);
+        return None;
+    }
+
+    let mut util = nvmlUtilization_t { gpu: 0, memory: 0 };
+    let ret_util = nvml_client.nvmlDeviceGetUtilizationRates(device, &mut util);
+    if ret_util != NVML_SUCCESS {
+        error!("Failed to get utilization: {}", ret_util);
+        return None;
+    }
+
+    let mut power: c_uint = 0;
+    let ret_pow = nvml_client.nvmlDeviceGetPowerUsage(device, &mut power);
+    if ret_pow != NVML_SUCCESS {
+        error!("Failed to get power usage: {}", ret_pow);
+        return None;
+    }
+
+    let mut clock: c_uint = 0;
+    let ret_clk = nvml_client.nvmlDeviceGetClockInfo(device, NVML_CLOCK_GRAPHICS, &mut clock);
+    if ret_clk != NVML_SUCCESS {
+        error!("Failed to get clock info: {}", ret_clk);
+        return None;
+    }
+
+    let mut max_clock: c_uint = 0;
+    let ret_max_clk =
+        nvml_client.nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_GRAPHICS, &mut max_clock);
+    if ret_max_clk != NVML_SUCCESS {
+        error!("Failed to get max clock info: {}", ret_max_clk);
+        return None;
+    }
+
+    let mut power_limit: c_uint = 0;
+    let ret_limit = nvml_client.nvmlDeviceGetPowerManagementLimit(device, &mut power_limit);
+    if ret_limit != NVML_SUCCESS {
+        error!("Failed to get power limit: {}", ret_limit);
+        return None;
+    }
+
+    let mut memory = nvmlMemory_t {
+        total: 0,
+        free: 0,
+        used: 0,
+    };
+    let ret_mem = nvml_client.nvmlDeviceGetMemoryInfo(device, &mut memory);
+    if ret_mem != NVML_SUCCESS {
+        error!("Failed to get memory info: {}", ret_mem);
+        return None;
+    }
+
+    let mut version = [0u8; 80];
+    let ret_ver = nvml_client
+        .nvmlSystemGetDriverVersion(version.as_mut_ptr() as *mut c_char, version.len() as c_uint);
+    if ret_ver != NVML_SUCCESS {
+        error!("Failed to get driver version: {}", ret_ver);
         return None;
     }
 
@@ -111,79 +171,48 @@ fn get_gpu_info(device: *mut nvmlDevice_st, nvml_client: &NvmlClientImpl) -> Opt
             .into_owned()
     };
 
-    let mut temp_val: c_uint = 0;
-    let ret_temp = unsafe {
-        nvml_client.nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &mut temp_val)
-    };
     let temperature = if ret_temp == NVML_SUCCESS {
-        Some(temp_val as f32)
+        Some(temp as f32)
     } else {
         None
     };
 
-    let mut util_data = nvmlUtilization_t { gpu: 0, memory: 0 };
-    let ret_util = unsafe { nvml_client.nvmlDeviceGetUtilizationRates(device, &mut util_data) };
     let utilization = if ret_util == NVML_SUCCESS {
-        Some(util_data.gpu as f32)
+        Some(util.gpu as f32)
     } else {
         None
     };
 
-    let mut mw: c_uint = 0;
-    let ret_pow = unsafe { nvml_client.nvmlDeviceGetPowerUsage(device, &mut mw) };
     let power_usage = if ret_pow == NVML_SUCCESS {
-        Some(mw as f32 / 1000.0)
+        Some(power as f32 / 1000.0)
     } else {
         None
     };
 
-    let mut clk_val: c_uint = 0;
-    let ret_clk =
-        unsafe { nvml_client.nvmlDeviceGetClockInfo(device, NVML_CLOCK_GRAPHICS, &mut clk_val) };
     let core_clock = if ret_clk == NVML_SUCCESS {
-        Some(clk_val)
+        Some(clock)
     } else {
         None
     };
 
-    let mut max_clk_val: c_uint = 0;
-    let ret_max_clk = unsafe {
-        nvml_client.nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_GRAPHICS, &mut max_clk_val)
-    };
     let max_clock_speed = if ret_max_clk == NVML_SUCCESS {
-        Some(max_clk_val)
+        Some(max_clock)
     } else {
         None
     };
 
-    let mut power_limit: c_uint = 0;
-    let ret_pow_limit =
-        unsafe { nvml_client.nvmlDeviceGetPowerManagementLimit(device, &mut power_limit) };
-    let power_limit = if ret_pow_limit == NVML_SUCCESS {
+    let power_limit = if ret_limit == NVML_SUCCESS {
         Some(power_limit as f32 / 1000.0)
     } else {
         None
     };
 
-    let mut memory = nvmlMemory_t {
-        total: 0,
-        free: 0,
-        used: 0,
-    };
-    let ret_mem = unsafe { nvml_client.nvmlDeviceGetMemoryInfo(device, &mut memory) };
     let memory_total = if ret_mem == NVML_SUCCESS {
         Some((memory.total / 1024 / 1024 / 1024) as u32)
     } else {
         None
     };
 
-    let mut version = [0u8; 80];
-    let ret_ver = unsafe {
-        nvml_client.nvmlSystemGetDriverVersion(
-            version.as_mut_ptr() as *mut c_char,
-            version.len() as c_uint,
-        )
-    };
     let driver_version = if ret_ver == NVML_SUCCESS {
         Some(unsafe {
             CStr::from_ptr(version.as_ptr() as *const c_char)
