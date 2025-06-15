@@ -60,6 +60,7 @@ pub(crate) const NVML_CLOCK_GRAPHICS: u32 = 0;
 ///
 /// Note that this function is only available on Linux.
 ///
+/// # Panics
 ///
 /// This function will panic if it fails to load the NVML library or if it fails to fetch the
 /// information.

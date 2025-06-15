@@ -846,6 +846,7 @@ fn _test_power_state_check() {
 mod mock_impl {
     use super::*;
     use std::{
+        os::unix::process::ExitStatusExt,
         process::{Command, Output},
     };
 
