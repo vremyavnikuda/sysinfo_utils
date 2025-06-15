@@ -8,11 +8,10 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/yourusername/sysinfo_utils"
 keywords = ["system", "gpu", "info", "monitoring"]
 categories = ["hardware-support", "system-tools"]
-
-[dependencies]
-gpu_info = { path = "../gpu_info" }
-system_info_lib = { path = "../system_info_lib" }
-system_cli = { path = "../system_cli" }
+    
+[lib]
+name = "sysinfo_utils"
+path = "src/lib.rs"
 
 [workspace]
 resolver = "2"
