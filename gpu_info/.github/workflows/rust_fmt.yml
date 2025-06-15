@@ -1,4 +1,4 @@
-name: rust build --release
+name: rust fmt check
 
 on:
   push:
@@ -17,5 +17,5 @@ jobs:
           toolchain: stable
           profile: minimal
           override: true
-      - name: cargo build 
-        run: cargo build --release
+      - name: cargo fmt --check
+        run: cargo fmt --check

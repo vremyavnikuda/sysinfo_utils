@@ -1,2 +1,2 @@
-//gpu_info/src/test/mod.rs
+#[allow(clippy::module_inception)]
 mod test;

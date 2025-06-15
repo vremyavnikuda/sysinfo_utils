@@ -19,7 +19,7 @@ fn determine_intel_gpu_type(name: &str) -> IntelGpuType {
 
 fn get_intel_gpu_info() -> Result<String> {
     let output = Command::new("powershell")
-        .args(&[
+        .args([
             "Get-WmiObject",
             "Win32_VideoController",
             "|",

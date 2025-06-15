@@ -1,9 +1,8 @@
-///! Retrieves detailed GPU information in a cross-platform manner.
-//gpu_info/src/gpu_info.rs
-use crate::vendor::Vendor;
 use std::fmt::{Debug, Display, Formatter};
 use std::sync::RwLock;
 use std::time::{Duration, Instant};
+
+use crate::vendor::Vendor;
 
 #[derive(Debug, thiserror::Error)]
 pub enum GpuError {
@@ -85,7 +84,6 @@ impl Formattable for Option<u32> {
     /// # Returns
     /// * If `Some(value)`, returns the string representation of the value.
     /// * If `None`, returns "N/A" indicating the absence of a value.
-
     fn fmt_string(&self) -> String {
         match self {
             Some(value) => format!("{}", value),
@@ -100,7 +98,7 @@ impl Formattable for Option<bool> {
     /// # Returns
     /// * If `Some(value)`, returns the string representation of the value.
     /// * If `None`, returns "N/A" indicating the absence of a value.
-
+    ///
     fn fmt_string(&self) -> String {
         match self {
             Some(value) => value.to_string(),
@@ -200,11 +198,11 @@ impl GpuInfo {
     /// ```
     /// # Notes
     /// * This function is useful for creating a `GpuInfo` instance when the
-    ///  vendor is known, but other information is not yet available.
+    ///   vendor is known, but other information is not yet available.
     pub fn write_vendor(vendor: Vendor) -> Self {
         Self {
             vendor,
-            ..Default::default()
+            ..GpuInfo::default()
         }
     }
 
@@ -508,7 +506,6 @@ impl GpuInfo {
     /// # Performance
     /// This is a lightweight accessor method that simply returns stored data.
     /// It performs no I/O operations or complex calculations.
-    ///
     pub fn format_utilization(&self) -> f32 {
         self.utilization.unwrap_or(0.0)
     }
@@ -533,7 +530,6 @@ impl GpuInfo {
     /// # Performance
     /// This is a lightweight accessor method that simply returns stored data.
     /// It performs no I/O operations or complex calculations.
-    ///
     pub fn format_power_usage(&self) -> f32 {
         self.power_usage.unwrap_or(0.0)
     }
@@ -558,7 +554,6 @@ impl GpuInfo {
     /// # Performance
     /// This is a lightweight accessor method that simply returns stored data.
     /// It performs no I/O operations or complex calculations.
-    ///
     pub fn format_core_clock(&self) -> u32 {
         self.core_clock.unwrap_or(0)
     }
@@ -583,7 +578,6 @@ impl GpuInfo {
     /// # Performance
     /// This is a lightweight accessor method that simply returns stored data.
     /// It performs no I/O operations or complex calculations.
-    ///
     pub fn format_memory_util(&self) -> f32 {
         self.memory_util.unwrap_or(0.0)
     }
@@ -608,7 +602,6 @@ impl GpuInfo {
     /// # Performance
     /// This is a lightweight accessor method that simply returns stored data.
     /// It performs no I/O operations or complex calculations.
-    ///
     pub fn format_memory_clock(&self) -> u32 {
         self.memory_clock.unwrap_or(0)
     }
@@ -632,7 +625,6 @@ impl GpuInfo {
     /// # Performance
     /// This is a lightweight accessor method that simply returns stored data.
     /// It performs no I/O operations or complex calculations.
-    ///
     pub fn format_active(&self) -> String {
         if self.active == Some(true) {
             "Active".to_string()
@@ -661,7 +653,6 @@ impl GpuInfo {
     /// # Performance
     /// This is a lightweight accessor method that simply returns stored data.
     /// It performs no I/O operations or complex calculations.
-    ///
     pub fn format_power_limit(&self) -> f32 {
         self.power_limit.unwrap_or(0.0)
     }
@@ -686,7 +677,6 @@ impl GpuInfo {
     /// # Performance
     /// This is a lightweight accessor method that simply returns stored data.
     /// It performs no I/O operations or complex calculations.
-    ///
     pub fn format_memory_total(&self) -> u32 {
         self.memory_total.unwrap_or(0)
     }
@@ -711,7 +701,6 @@ impl GpuInfo {
     /// # Performance
     /// This is a lightweight accessor method that simply returns stored data.
     /// It performs no I/O operations or complex calculations.
-    ///
     pub fn format_driver_version(&self) -> String {
         self.driver_version
             .as_ref()
@@ -739,26 +728,25 @@ impl GpuInfo {
     /// # Performance
     /// This is a lightweight accessor method that simply returns stored data.
     /// It performs no I/O operations or complex calculations.
-    ///
     pub fn format_max_clock_speed(&self) -> u32 {
         self.max_clock_speed.unwrap_or(0)
     }
 
     pub fn validate(&self) -> Result<()> {
         if let Some(temp) = self.temperature {
-            if temp < -50.0 || temp > 150.0 {
+            if !(0.0..=1000.0).contains(&temp) {
                 return Err(GpuError::InvalidTemperature(temp));
             }
         }
 
         if let Some(util) = self.utilization {
-            if util < 0.0 || util > 100.0 {
+            if !(0.0..=100.0).contains(&util) {
                 return Err(GpuError::InvalidUtilization(util));
             }
         }
 
         if let Some(power) = self.power_usage {
-            if power < 0.0 || power > 1000.0 {
+            if !(0.0..=1000.0).contains(&power) {
                 return Err(GpuError::InvalidPowerUsage(power));
             }
         }
@@ -788,7 +776,6 @@ impl Default for GpuInfo {
     ///
     /// # Returns
     /// * `GpuInfo` - A new instance of `GpuInfo` with all fields set to their default values.
-    ///
     fn default() -> Self {
         Self::unknown()
     }

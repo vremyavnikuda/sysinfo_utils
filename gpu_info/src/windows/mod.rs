@@ -11,7 +11,7 @@ mod nvidia;
 
 fn detect_gpu_vendor() -> Option<Vendor> {
     let output = Command::new("powershell")
-        .args(&[
+        .args([
             "Get-WmiObject",
             "Win32_VideoController",
             "|",

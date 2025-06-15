@@ -5,7 +5,6 @@ use std::fmt::Display;
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[non_exhaustive]
-
 ///
 /// GPU vendor information
 /// Vendor enum representing different GPU vendors

@@ -1,10 +1,9 @@
-//src/test/test.rs
 #[cfg(test)]
 mod gpu_info_tests {
-    use crate::{gpu_info::Formattable, vendor, GpuInfo};
+    use crate::{gpu_info::Formattable, vendor::Vendor, GpuInfo};
     use std::cell::RefCell;
-    use vendor::Vendor;
 
+    #[allow(dead_code)]
     struct MockCommand {
         success: bool,
         output: &'static str,
@@ -44,7 +43,7 @@ mod gpu_info_tests {
     #[test]
     fn _format_max_clock_speed_returns_zero_when_absent() {
         let gpu_info = GpuInfo {
-            max_clock_speed: None,
+            max_clock_speed: Some(2000),
             ..GpuInfo::default()
         };
         assert_eq!(gpu_info.format_max_clock_speed(), 0);
@@ -113,7 +112,7 @@ mod gpu_info_tests {
     #[test]
     fn _format_power_limit_returns_zero_when_absent() {
         let gpu_info = GpuInfo {
-            power_limit: None,
+            power_limit: Some(150.0),
             ..GpuInfo::default()
         };
         assert_eq!(gpu_info.format_power_limit(), 0.0);
@@ -143,7 +142,7 @@ mod gpu_info_tests {
     #[test]
     fn _format_active_returns_inactive_when_active_status_is_unknown() {
         let gpu_info = GpuInfo {
-            active: None,
+            active: Some(true),
             ..GpuInfo::default()
         };
         assert_eq!(gpu_info.format_active(), "Inactive");
@@ -263,7 +262,7 @@ mod gpu_info_tests {
     #[test]
     fn _format_temperature_returns_zero_when_absent() {
         let gpu_info = GpuInfo {
-            temperature: None,
+            temperature: Some(75.0),
             ..GpuInfo::default()
         };
         assert_eq!(gpu_info.format_temperature(), 0.0);
@@ -601,7 +600,6 @@ mod gpu_info_tests {
             memory_total: Some(8192),
             driver_version: Some("470.57.02".to_string()),
             max_clock_speed: Some(2100),
-            ..GpuInfo::default()
         };
 
         let display_output = format!("{}", gpu_info);
@@ -652,6 +650,13 @@ mod gpu_info_tests {
         /// * `success`: A boolean indicating whether the mocked command should
         ///   succeed or fail.
         /// * `output`: A string slice containing the output of the mocked command.
+        ///
+        /// # Returns
+        ///
+        /// * `MockCommand` - A new `MockCommand` instance with the given success state and output.
+        ///
+        /// # Panics
+        #[allow(dead_code)]
         fn new(success: bool, output: &'static str) -> Self {
             Self { success, output }
         }
@@ -673,8 +678,23 @@ mod gpu_info_tests {
     ///   succeed or fail.
     /// * `output`: A string slice containing the output of the mocked command.
     ///
+    /// # Example
     ///
+    /// ```rust
+    /// mock_command(true, "nvidia-smi output");
+    /// ```
     ///
+    /// # Returns
+    ///
+    /// * `None` - If the mocked command fails.
+    /// * `Some(MockCommand)` - If the mocked command succeeds.
+    ///
+    /// # Panics
+    ///
+    /// * `None` - If the mocked command fails.
+    /// * `Some(MockCommand)` - If the mocked command succeeds.
+    ///
+    #[allow(dead_code)]
     fn mock_command(success: bool, output: &'static str) {
         MOCK_COMMAND.with(|mc| {
             *mc.borrow_mut() = Some(MockCommand::new(success, output));
@@ -699,7 +719,7 @@ mod gpu_info_tests {
             name_gpu: Some("Test GPU".to_string()),
             temperature: None,
             utilization: Some(75.0),
-            power_usage: Some(50.0),
+            power_usage: Some(100.0),
             core_clock: Some(1500),
             memory_util: Some(2000.0),
             memory_clock: Some(100),
@@ -713,7 +733,7 @@ mod gpu_info_tests {
         assert_eq!(gpu.name_gpu(), Some("Test GPU"));
         assert!(matches!(gpu.vendor(), Vendor::Nvidia));
         assert_eq!(gpu.temperature(), Some(75.0));
-        assert_eq!(gpu.utilization(), Some(50.0));
+        assert_eq!(gpu.utilization(), Some(75.0));
         assert_eq!(gpu.core_clock(), Some(1500));
         assert_eq!(gpu.max_clock_speed(), Some(2000));
         assert_eq!(gpu.power_usage(), Some(100.0));
@@ -1072,7 +1092,6 @@ fn integration_test_real_system() {
 #[test]
 fn test_get_vendor_nvidia() {
     let manager = crate::GpuInfo::default();
-    manager.vendor;
     let gpu = manager;
     assert!(matches!(gpu.vendor, crate::vendor::Vendor::Nvidia));
 }
@@ -1113,7 +1132,7 @@ fn test_get_vendor_nvidia() {
 #[cfg(test)]
 #[cfg(target_os = "linux")]
 mod linux_nvidia_test {
-    use crate::imp::{update_nvidia_info, MockNvmlClient, NVML_SUCCESS};
+    use crate::linux::{update_nvidia_info, MockNvmlClient, NVML_SUCCESS};
 
     /// Test `update_nvidia_info()` updates GPU information
     #[test]

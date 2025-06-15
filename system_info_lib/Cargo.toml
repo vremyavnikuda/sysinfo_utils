@@ -1,5 +1,5 @@
 [package]
-name = "system_info"
+name = "system_info_lib"
 version = "0.0.1"
 authors = ["Andrew Nevsky <hopperplayer0@gmail.com>"]
 description = "System detect information"
@@ -12,17 +12,13 @@ license = "MIT"
 edition = "2021"
 rust-version = "1.56"
 
-include = [
-    "Cargo.toml",
-    "src/**/*.rs",
-    "README.MD",
-]
+include = ["Cargo.toml", "src/**/*.rs", "README.MD"]
 
 [features]
 default = ["serde"]
 
 [dependencies]
-log.workspace = true
+log = { workspace = true }
 serde = { version = "1.0.217", optional = true, features = ["derive"] }
 serde_derive = "1.0"
 tempfile = "3.15.0"

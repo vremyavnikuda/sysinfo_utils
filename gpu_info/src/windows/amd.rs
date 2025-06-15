@@ -5,7 +5,7 @@ use std::process::Command;
 
 fn get_amd_gpu_info() -> Result<String> {
     let output = Command::new("powershell")
-        .args(&[
+        .args([
             "Get-WmiObject",
             "Win32_VideoController",
             "|",

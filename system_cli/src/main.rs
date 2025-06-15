@@ -1,46 +1,8 @@
 //! system_info_lib/system_cl/src/main.rs
+use crate::cli::{GpuOptions, Options};
 use clap::Parser;
-#[derive(Parser)]
-#[clap(about, version)]
-struct Options {
-    /// Show all OS information.
-    #[clap(long)]
-    all: bool,
-    /// Show OS type.
-    #[clap(short = 't', long = "type")]
-    system_type: bool,
-    /// Show OS version.
-    #[clap(short = 'v', long)]
-    system_version: bool,
-    /// Show OS bit_depth.
-    #[clap(short, long)]
-    bit_depth: bool,
-    /// Show OS architecture.
-    #[clap(short = 'A', long = "Arch")]
-    architecture: bool,
-}
-#[derive(Parser)]
-#[clap(about, version)]
-struct GpuOptions {
-    /// Show all GPU information.
-    #[clap(long)]
-    all: bool,
-    /// Show GPU vendor.
-    #[clap(short = 'n', long = "name_gpu")]
-    vendor: bool,
-    /// Show GPU temperature.
-    #[clap(short = 't', long = "temperature")]
-    temperature: bool,
-    /// Show GPU utilization.
-    #[clap(short = 'u', long = "utilization")]
-    utilization: bool,
-    /// Show GPU power usage.
-    #[clap(short = 'p', long = "power")]
-    power_usage: bool,
-    /// Show GPU clock speed.
-    #[clap(short = 'c', long = "clock")]
-    clock_speed: bool,
-}
+use gpu_info;
+use system_info_lib;
 
 /// Initializes the logging framework, parses command-line options, and retrieves system information.
 ///
@@ -56,7 +18,7 @@ fn main() {
     env_logger::init();
     // system_info_lib
     let _options = Options::parse();
-    let info = system_info::get();
+    let info = system_info_lib::get();
 
     // gpu_info
     let _gpu_options = GpuOptions::parse();
