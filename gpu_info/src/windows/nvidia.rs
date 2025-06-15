@@ -1,9 +1,13 @@
 use crate::gpu_info::{GpuError, GpuInfo, Result};
 use crate::vendor::Vendor;
 use log::error;
+use std::ffi::c_char;
+use std::ffi::c_uint;
 use std::ffi::CStr;
-use std::os::raw::{c_char, c_uint};
 use std::ptr;
+use std::sync::Once;
+use windows::core::PCWSTR;
+use windows::Win32::System::LibraryLoader::LoadLibraryW;
 
 const NVML_SUCCESS: i32 = 0;
 const NVML_TEMPERATURE_GPU: i32 = 0;
@@ -89,6 +93,27 @@ pub trait NvmlClient {
         -> i32;
     #[allow(non_snake_case)]
     fn nvmlSystemGetDriverVersion(&self, version: *mut c_char, length: c_uint) -> i32;
+}
+
+static INIT: Once = Once::new();
+
+fn load_local_nvml() -> bool {
+    let mut success = false;
+    INIT.call_once(|| {
+        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+        let dll_path = format!("{}/src/libs/nvml.dll", manifest_dir);
+        let wide_path: Vec<u16> = dll_path.encode_utf16().chain(std::iter::once(0)).collect();
+        unsafe {
+            match LoadLibraryW(PCWSTR::from_raw(wide_path.as_ptr())) {
+                Ok(_) => success = true,
+                Err(e) => {
+                    error!("Failed to load local nvml.dll from {}: {}", dll_path, e);
+                    success = false;
+                }
+            }
+        }
+    });
+    success
 }
 
 fn get_gpu_info(device: *mut nvmlDevice_st, nvml_client: &NvmlClientImpl) -> Option<GpuInfo> {
@@ -240,6 +265,10 @@ fn get_gpu_info(device: *mut nvmlDevice_st, nvml_client: &NvmlClientImpl) -> Opt
 }
 
 pub fn detect_nvidia_gpus() -> Result<Vec<GpuInfo>> {
+    if !load_local_nvml() {
+        return Err(GpuError::DriverNotInstalled);
+    }
+
     let mut gpus = Vec::new();
     let nvml_client = NvmlClientImpl;
 

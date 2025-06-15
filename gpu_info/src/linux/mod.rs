@@ -79,21 +79,74 @@ pub(crate) fn info_gpu() -> GpuInfo {
             }
         };
 
-        let init: Symbol<NvmlInitFn> = lib.get(b"nvmlInit_v2").unwrap();
-        let shutdown: Symbol<NvmlShutdownFn> = lib.get(b"nvmlShutdown").unwrap();
+        let init: Symbol<NvmlInitFn> = match lib.get(b"nvmlInit_v2") {
+            Ok(symbol) => symbol,
+            Err(e) => {
+                error!("Failed to get nvmlInit_v2 symbol: {}", e);
+                return GpuInfo::default();
+            }
+        };
+        let shutdown: Symbol<NvmlShutdownFn> = match lib.get(b"nvmlShutdown") {
+            Ok(symbol) => symbol,
+            Err(e) => {
+                error!("Failed to get nvmlShutdown symbol: {}", e);
+                return GpuInfo::default();
+            }
+        };
         let get_device_handle: Symbol<NvmlDeviceGetHandleByIndexFn> =
-            lib.get(b"nvmlDeviceGetHandleByIndex_v2").unwrap();
+            match lib.get(b"nvmlDeviceGetHandleByIndex_v2") {
+                Ok(symbol) => symbol,
+                Err(e) => {
+                    error!("Failed to get nvmlDeviceGetHandleByIndex_v2 symbol: {}", e);
+                    return GpuInfo::default();
+                }
+            };
         let get_temp: Symbol<NvmlDeviceGetTemperatureFn> =
-            lib.get(b"nvmlDeviceGetTemperature").unwrap();
-        let get_name: Symbol<NvmlDeviceGetNameFn> = lib.get(b"nvmlDeviceGetName").unwrap();
+            match lib.get(b"nvmlDeviceGetTemperature") {
+                Ok(symbol) => symbol,
+                Err(e) => {
+                    error!("Failed to get nvmlDeviceGetTemperature symbol: {}", e);
+                    return GpuInfo::default();
+                }
+            };
+        let get_name: Symbol<NvmlDeviceGetNameFn> = match lib.get(b"nvmlDeviceGetName") {
+            Ok(symbol) => symbol,
+            Err(e) => {
+                error!("Failed to get nvmlDeviceGetName symbol: {}", e);
+                return GpuInfo::default();
+            }
+        };
         let get_util: Symbol<NvmlDeviceGetUtilizationRatesFn> =
-            lib.get(b"nvmlDeviceGetUtilizationRates").unwrap();
-        let get_power: Symbol<NvmlDeviceGetPowerUsageFn> =
-            lib.get(b"nvmlDeviceGetPowerUsage").unwrap();
-        let get_clock: Symbol<NvmlDeviceGetClockInfoFn> =
-            lib.get(b"nvmlDeviceGetClockInfo").unwrap();
+            match lib.get(b"nvmlDeviceGetUtilizationRates") {
+                Ok(symbol) => symbol,
+                Err(e) => {
+                    error!("Failed to get nvmlDeviceGetUtilizationRates symbol: {}", e);
+                    return GpuInfo::default();
+                }
+            };
+        let get_power: Symbol<NvmlDeviceGetPowerUsageFn> = match lib.get(b"nvmlDeviceGetPowerUsage")
+        {
+            Ok(symbol) => symbol,
+            Err(e) => {
+                error!("Failed to get nvmlDeviceGetPowerUsage symbol: {}", e);
+                return GpuInfo::default();
+            }
+        };
+        let get_clock: Symbol<NvmlDeviceGetClockInfoFn> = match lib.get(b"nvmlDeviceGetClockInfo") {
+            Ok(symbol) => symbol,
+            Err(e) => {
+                error!("Failed to get nvmlDeviceGetClockInfo symbol: {}", e);
+                return GpuInfo::default();
+            }
+        };
         let get_meminfo: Symbol<NvmlDeviceGetMemoryInfoFn> =
-            lib.get(b"nvmlDeviceGetMemoryInfo").unwrap();
+            match lib.get(b"nvmlDeviceGetMemoryInfo") {
+                Ok(symbol) => symbol,
+                Err(e) => {
+                    error!("Failed to get nvmlDeviceGetMemoryInfo symbol: {}", e);
+                    return GpuInfo::default();
+                }
+            };
 
         init();
 

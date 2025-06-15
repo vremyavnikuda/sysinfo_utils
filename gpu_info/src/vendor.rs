@@ -1,4 +1,3 @@
-//gpu_info/src/vendor.rs
 use std::fmt::Display;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

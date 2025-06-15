@@ -26,3 +26,7 @@ members = ["gpu_info", "system_cli", "system_info_lib"]
 log = "0.4"
 env_logger = "0.11"
 clap = { version = "4", features = ["derive"] }
+windows = { version = "0.52", features = [
+    "Win32_System_LibraryLoader",
+    "Win32_Foundation",
+] }

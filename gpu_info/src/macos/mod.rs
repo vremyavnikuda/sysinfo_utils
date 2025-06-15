@@ -1,5 +1,8 @@
 //src/platform/macos.rs
-use crate::{gpu_info::GpuInfo, vendor::Vendor};
+use crate::{
+    gpu_info::GpuInfo,
+    vendor::{IntelGpuType, Vendor},
+};
 use log::warn;
 use std::process::Command;
 
@@ -30,18 +33,18 @@ pub fn init() -> Vec<GpuInfo> {
                 vendor = if ven_str.contains("amd") {
                     Vendor::Amd
                 } else if ven_str.contains("intel") {
-                    Vendor::Intel
+                    Vendor::Intel(IntelGpuType::Unknown)
                 } else if ven_str.contains("nvidia") {
                     Vendor::Nvidia
                 } else if ven_str.contains("apple") {
                     Vendor::Apple
                 } else {
-                    Vendor::Unknown(ven_str)
+                    Vendor::Unknown
                 };
 
                 gpus.push(GpuInfo {
                     name_gpu: Some(name.clone()),
-                    vendor: Some(vendor),
+                    vendor,
                     active: Some(true),
                     ..Default::default()
                 });

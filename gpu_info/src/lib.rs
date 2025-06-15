@@ -1,6 +1,10 @@
 pub use crate::gpu_info::{GpuError, GpuInfo, Result};
 
 pub mod gpu_info;
+mod unknown;
+mod windows;
+mod linux;
+mod macos;
 pub mod vendor;
 
 #[allow(missing_debug_implementations, missing_docs, unsafe_code)]

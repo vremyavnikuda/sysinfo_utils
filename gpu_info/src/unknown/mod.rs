@@ -1,4 +1,3 @@
-//gpu_info/src/unknown/mod
 use crate::gpu_info::GpuInfo;
 use log::warn;
 
