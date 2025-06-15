@@ -12,7 +12,9 @@ const NVML_CLOCK_GRAPHICS: i32 = 0;
 #[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct nvmlDevice_st;
+pub(crate) struct nvmlDevice_st {
+    _private: [u8; 0],
+}
 
 #[allow(non_camel_case_types)]
 #[repr(C)]
@@ -86,12 +88,7 @@ pub trait NvmlClient {
     fn nvmlDeviceGetMemoryInfo(&self, device: *mut nvmlDevice_st, memory: *mut nvmlMemory_t)
         -> i32;
     #[allow(non_snake_case)]
-    fn nvmlDeviceGetDriverVersion(
-        &self,
-        device: *mut nvmlDevice_st,
-        version: *mut c_char,
-        length: c_uint,
-    ) -> i32;
+    fn nvmlSystemGetDriverVersion(&self, version: *mut c_char, length: c_uint) -> i32;
 }
 
 fn get_gpu_info(device: *mut nvmlDevice_st, nvml_client: &NvmlClientImpl) -> Option<GpuInfo> {
@@ -182,8 +179,7 @@ fn get_gpu_info(device: *mut nvmlDevice_st, nvml_client: &NvmlClientImpl) -> Opt
 
     let mut version = [0u8; 80];
     let ret_ver = unsafe {
-        nvml_client.nvmlDeviceGetDriverVersion(
-            device,
+        nvml_client.nvmlSystemGetDriverVersion(
             version.as_mut_ptr() as *mut c_char,
             version.len() as c_uint,
         )
@@ -218,39 +214,34 @@ pub fn detect_nvidia_gpus() -> Result<Vec<GpuInfo>> {
     let mut gpus = Vec::new();
     let nvml_client = NvmlClientImpl;
 
-    unsafe {
-        let ret = nvml_client.nvmlInit_v2();
-        if ret != NVML_SUCCESS {
-            error!("Failed to initialize NVML: {}", ret);
-            return Err(GpuError::DriverNotInstalled);
-        }
-
-        let mut device_count: c_uint = 0;
-        let ret = nvml_client.nvmlDeviceGetCount_v2(&mut device_count);
-        if ret != NVML_SUCCESS {
-            error!("Failed to get device count: {}", ret);
-            return Err(GpuError::GpuNotFound);
-        }
-
-        for i in 0..device_count {
-            let mut device: *mut nvmlDevice_st = ptr::null_mut();
-            let ret = nvml_client.nvmlDeviceGetHandleByIndex_v2(i, &mut device);
-            if ret != NVML_SUCCESS {
-                error!("Failed to get device handle: {}", ret);
-                continue;
-            }
-
-            if let Some(gpu) = get_gpu_info(device, &nvml_client) {
-                if gpu.is_valid() {
-                    gpus.push(gpu);
-                } else {
-                    error!("Invalid GPU data detected");
-                }
-            }
-        }
-
-        nvml_client.nvmlShutdown();
+    let ret = nvml_client.nvmlInit_v2();
+    if ret != NVML_SUCCESS {
+        error!("Failed to initialize NVML: {}", ret);
+        return Err(GpuError::DriverNotInstalled);
     }
+
+    let mut device_count: c_uint = 0;
+    let ret = nvml_client.nvmlDeviceGetCount_v2(&mut device_count);
+    if ret != NVML_SUCCESS {
+        error!("Failed to get device count: {}", ret);
+        nvml_client.nvmlShutdown();
+        return Err(GpuError::GpuNotFound);
+    }
+
+    for i in 0..device_count {
+        let mut device: *mut nvmlDevice_st = ptr::null_mut();
+        let ret = nvml_client.nvmlDeviceGetHandleByIndex_v2(i, &mut device);
+        if ret != NVML_SUCCESS {
+            error!("Failed to get device handle: {}", ret);
+            continue;
+        }
+
+        if let Some(gpu_info) = get_gpu_info(device, &nvml_client) {
+            gpus.push(gpu_info);
+        }
+    }
+
+    nvml_client.nvmlShutdown();
 
     if gpus.is_empty() {
         Err(GpuError::GpuNotFound)
@@ -262,26 +253,24 @@ pub fn detect_nvidia_gpus() -> Result<Vec<GpuInfo>> {
 pub fn update_nvidia_info(gpu: &mut GpuInfo) -> Result<()> {
     let nvml_client = NvmlClientImpl;
 
-    unsafe {
-        let ret = nvml_client.nvmlInit_v2();
-        if ret != NVML_SUCCESS {
-            error!("Failed to initialize NVML: {}", ret);
-            return Err(GpuError::DriverNotInstalled);
-        }
-
-        let mut device: *mut nvmlDevice_st = ptr::null_mut();
-        let ret = nvml_client.nvmlDeviceGetHandleByIndex_v2(0, &mut device);
-        if ret != NVML_SUCCESS {
-            error!("Failed to get device handle: {}", ret);
-            return Err(GpuError::GpuNotFound);
-        }
-
-        if let Some(updated_gpu) = get_gpu_info(device, &nvml_client) {
-            *gpu = updated_gpu;
-        }
-
-        nvml_client.nvmlShutdown();
+    let ret = nvml_client.nvmlInit_v2();
+    if ret != NVML_SUCCESS {
+        error!("Failed to initialize NVML: {}", ret);
+        return Err(GpuError::DriverNotInstalled);
     }
+
+    let mut device: *mut nvmlDevice_st = ptr::null_mut();
+    let ret = nvml_client.nvmlDeviceGetHandleByIndex_v2(0, &mut device);
+    if ret != NVML_SUCCESS {
+        error!("Failed to get device handle: {}", ret);
+        return Err(GpuError::GpuNotFound);
+    }
+
+    if let Some(updated_gpu) = get_gpu_info(device, &nvml_client) {
+        *gpu = updated_gpu;
+    }
+
+    nvml_client.nvmlShutdown();
 
     if !gpu.is_valid() {
         return Err(GpuError::GpuNotActive);
@@ -386,13 +375,8 @@ impl NvmlClient for NvmlClientImpl {
     }
 
     #[allow(non_snake_case)]
-    fn nvmlDeviceGetDriverVersion(
-        &self,
-        device: *mut nvmlDevice_st,
-        version: *mut c_char,
-        length: c_uint,
-    ) -> i32 {
-        unsafe { nvmlDeviceGetDriverVersion(device, version, length) }
+    fn nvmlSystemGetDriverVersion(&self, version: *mut c_char, length: c_uint) -> i32 {
+        unsafe { nvmlSystemGetDriverVersion(version, length) }
     }
 }
 
@@ -425,9 +409,5 @@ extern "C" {
     ) -> i32;
     fn nvmlDeviceGetPowerManagementLimit(device: *mut nvmlDevice_st, limit: *mut c_uint) -> i32;
     fn nvmlDeviceGetMemoryInfo(device: *mut nvmlDevice_st, memory: *mut nvmlMemory_t) -> i32;
-    fn nvmlDeviceGetDriverVersion(
-        device: *mut nvmlDevice_st,
-        version: *mut c_char,
-        length: c_uint,
-    ) -> i32;
+    fn nvmlSystemGetDriverVersion(version: *mut c_char, length: c_uint) -> i32;
 }

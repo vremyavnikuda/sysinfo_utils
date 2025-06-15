@@ -1,5 +1,5 @@
 //gpu_info/src/windows/mod.rs
-use crate::gpu_info::{GpuInfo, Result};
+use crate::gpu_info::GpuInfo;
 use crate::vendor::Vendor;
 use log::{error, info};
 use std::process::Command;
