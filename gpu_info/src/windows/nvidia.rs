@@ -97,7 +97,7 @@ pub trait NvmlClient {
 
 static INIT: Once = Once::new();
 
-fn load_local_nvml() -> bool {
+pub fn load_local_nvml() -> bool {
     let mut success = false;
     INIT.call_once(|| {
         let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();

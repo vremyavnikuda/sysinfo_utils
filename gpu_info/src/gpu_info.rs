@@ -161,7 +161,7 @@ impl GpuInfo {
     /// let unknown_gpu = GpuInfo::unknown();
     /// ```
     pub fn unknown() -> Self {
-        Self {
+        return Self {
             vendor: Vendor::Unknown,
             name_gpu: None,
             temperature: None,
@@ -175,7 +175,7 @@ impl GpuInfo {
             memory_total: None,
             driver_version: None,
             max_clock_speed: None,
-        }
+        };
     }
 
     /// Creates a new `GpuInfo` instance with the specified GPU vendor.
@@ -226,7 +226,7 @@ impl GpuInfo {
     /// * Vendor information is typically set by the manufacturer
     ///   and is stored in the GPU driver, BIOS, or device firmwar
     pub fn vendor(&self) -> Vendor {
-        self.vendor
+        return self.vendor.clone();
     }
 
     /// Returns the full name of the GPU.

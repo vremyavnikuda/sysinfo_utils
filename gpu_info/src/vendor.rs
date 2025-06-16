@@ -20,8 +20,8 @@ pub enum Vendor {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 pub enum IntelGpuType {
-    Integrated, // Встроенная графика
-    Discrete,   // Дискретная графика
+    Integrated,
+    Discrete,
     Unknown,
 }
 

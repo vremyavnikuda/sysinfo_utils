@@ -1,7 +1,8 @@
+use std::process::Command;
+
 use crate::gpu_info::GpuInfo;
 use crate::vendor::Vendor;
 use log::{error, info};
-use std::process::Command;
 
 mod amd;
 /// lib detect discrete gpu
