@@ -5,52 +5,50 @@ use std::{env, os::raw::c_char, ptr};
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct NvmlDevice {
+pub struct NvmlDevice {
     _private: [u8; 0],
 }
 
 #[allow(non_camel_case_types)]
-pub(crate) type NvmlDevice_t = *mut NvmlDevice;
+pub type NvmlDevice_t = *mut NvmlDevice;
 
 #[allow(non_camel_case_types)]
-pub(crate) type nvmlReturn_t = i32;
+pub type nvmlReturn_t = i32;
 
-pub(crate) const NVML_SUCCESS: nvmlReturn_t = 0;
-pub(crate) const NVML_TEMPERATURE_GPU: u32 = 0;
+pub const NVML_SUCCESS: nvmlReturn_t = 0;
+pub const NVML_TEMPERATURE_GPU: u32 = 0;
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct NvmlUtilization {
+pub struct NvmlUtilization {
     gpu: u32,
     memory: u32,
 }
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct NvmlMemory {
+pub struct NvmlMemory {
     total: u64,
     free: u64,
     used: u64,
 }
 
-pub(crate) type NvmlInitFn = unsafe extern "C" fn() -> nvmlReturn_t;
-pub(crate) type NvmlShutdownFn = unsafe extern "C" fn() -> nvmlReturn_t;
-pub(crate) type NvmlDeviceGetHandleByIndexFn =
+pub type NvmlInitFn = unsafe extern "C" fn() -> nvmlReturn_t;
+pub type NvmlShutdownFn = unsafe extern "C" fn() -> nvmlReturn_t;
+pub type NvmlDeviceGetHandleByIndexFn =
     unsafe extern "C" fn(u32, *mut NvmlDevice_t) -> nvmlReturn_t;
-pub(crate) type NvmlDeviceGetTemperatureFn =
+pub type NvmlDeviceGetTemperatureFn =
     unsafe extern "C" fn(NvmlDevice_t, u32, *mut u32) -> nvmlReturn_t;
-pub(crate) type NvmlDeviceGetNameFn =
-    unsafe extern "C" fn(NvmlDevice_t, *mut c_char, u32) -> nvmlReturn_t;
-pub(crate) type NvmlDeviceGetUtilizationRatesFn =
+pub type NvmlDeviceGetNameFn = unsafe extern "C" fn(NvmlDevice_t, *mut c_char, u32) -> nvmlReturn_t;
+pub type NvmlDeviceGetUtilizationRatesFn =
     unsafe extern "C" fn(NvmlDevice_t, *mut NvmlUtilization) -> nvmlReturn_t;
-pub(crate) type NvmlDeviceGetPowerUsageFn =
-    unsafe extern "C" fn(NvmlDevice_t, *mut u32) -> nvmlReturn_t;
-pub(crate) type NvmlDeviceGetClockInfoFn =
+pub type NvmlDeviceGetPowerUsageFn = unsafe extern "C" fn(NvmlDevice_t, *mut u32) -> nvmlReturn_t;
+pub type NvmlDeviceGetClockInfoFn =
     unsafe extern "C" fn(NvmlDevice_t, u32, *mut u32) -> nvmlReturn_t;
-pub(crate) type NvmlDeviceGetMemoryInfoFn =
+pub type NvmlDeviceGetMemoryInfoFn =
     unsafe extern "C" fn(NvmlDevice_t, *mut NvmlMemory) -> nvmlReturn_t;
 
-pub(crate) const NVML_CLOCK_GRAPHICS: u32 = 0;
+pub const NVML_CLOCK_GRAPHICS: u32 = 0;
 
 /// Fetches detailed information about the first detected NVIDIA GPU using dynamic NVML loading.
 ///
@@ -64,7 +62,7 @@ pub(crate) const NVML_CLOCK_GRAPHICS: u32 = 0;
 ///
 /// This function will panic if it fails to load the NVML library or if it fails to fetch the
 /// information.
-pub(crate) fn info_gpu() -> GpuInfo {
+pub fn info_gpu() -> GpuInfo {
     debug!("Fetching GPU info using dynamic NVML loading");
 
     unsafe {

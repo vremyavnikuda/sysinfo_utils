@@ -226,7 +226,7 @@ impl GpuInfo {
     /// * Vendor information is typically set by the manufacturer
     ///   and is stored in the GPU driver, BIOS, or device firmwar
     pub fn vendor(&self) -> Vendor {
-        return self.vendor.clone();
+        self.vendor
     }
 
     /// Returns the full name of the GPU.

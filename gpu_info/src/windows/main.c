@@ -48,6 +48,8 @@ int main()
         pLoc->lpVtbl->Release(pLoc);
         CoUninitialize();
         return 1;
+    }else{
+        printf("Connected to WMI successfully.\n");
     }
 
     // Установка уровня безопасности для прокси
@@ -61,6 +63,8 @@ int main()
         pLoc->lpVtbl->Release(pLoc);
         CoUninitialize();
         return 1;
+    }else{
+        printf("Proxy set successfully.\n");
     }
 
     // Выполнение запроса к классу Win32_VideoController
@@ -75,6 +79,8 @@ int main()
         pLoc->lpVtbl->Release(pLoc);
         CoUninitialize();
         return 1;
+    }else{
+        printf("Query executed successfully.\n");
     }
 
     // Получение результатов
@@ -83,8 +89,11 @@ int main()
     while (pEnumerator)
     {
         hres = pEnumerator->lpVtbl->Next(pEnumerator, WBEM_INFINITE, 1, &pclsObj, &uReturn);
-        if (uReturn == 0)
+        if (uReturn == 0){
             break;
+        }else{
+            printf("Processing GPU information...\n");
+        }
 
         VARIANT vtProp;
 
@@ -96,6 +105,8 @@ int main()
             WideCharToMultiByte(CP_ACP, 0, vtProp.bstrVal, -1, name, sizeof(name), NULL, NULL);
             printf("GPU name: %s\n", name);
             VariantClear(&vtProp);
+        }else{
+            printf("GPU name: Not available (HRESULT: 0x%08lx , Type: %d)\n", hres, vtProp.vt);
         }
 
         // Получение объема видеопамяти (в байтах)
@@ -104,6 +115,8 @@ int main()
         {
             printf("Video memory: %u MB\n", vtProp.ulVal / (1024 * 1024));
             VariantClear(&vtProp);
+        }else{
+            printf("Video memory: Not available (HRESULT: 0x%08lx , Type: %d)\n", hres, vtProp.vt);
         }
 
         // Получение версии драйвера
@@ -114,6 +127,8 @@ int main()
             WideCharToMultiByte(CP_ACP, 0, vtProp.bstrVal, -1, driver, sizeof(driver), NULL, NULL);
             printf("Driver version: %s\n", driver);
             VariantClear(&vtProp);
+        }else{
+            printf("Driver version: Not available (HRESULT: 0x%08lx , Type: %d)\n", hres, vtProp.vt);
         }
 
         pclsObj->lpVtbl->Release(pclsObj);
@@ -125,6 +140,6 @@ int main()
     pLoc->lpVtbl->Release(pLoc);
     CoUninitialize();
 
-    printf("Program finished.\n");
+    printf("DONE.\n");
     return 0;
 }

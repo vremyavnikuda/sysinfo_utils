@@ -1,13 +1,54 @@
-use std::process::Command;
-
 use crate::gpu_info::GpuInfo;
 use crate::vendor::Vendor;
 use log::{error, info};
+use std::process::Command;
+pub mod amd;
+pub mod intel;
+pub mod nvidia;
 
-mod amd;
-/// lib detect discrete gpu
-mod intel;
-mod nvidia;
+/// Returns information about the GPU.
+/// Automatically detects GPU vendor and returns appropriate information.
+pub fn info_gpu() -> GpuInfo {
+    match detect_gpu_vendor() {
+        Some(Vendor::Nvidia) => match nvidia::detect_nvidia_gpus() {
+            Ok(nvidia_gpus) if !nvidia_gpus.is_empty() => {
+                let mut gpu = nvidia_gpus[0].clone();
+                if nvidia::update_nvidia_info(&mut gpu).is_ok() {
+                    return gpu;
+                }
+            }
+            _ => {
+                error!("Failed to get NVIDIA GPU information");
+            }
+        },
+
+        Some(Vendor::Amd) => {
+            let amd_gpus = amd::detect_amd_gpus();
+            if !amd_gpus.is_empty() {
+                let mut gpu = amd_gpus[0].clone();
+                if amd::update_amd_info(&mut gpu).is_ok() {
+                    return gpu;
+                }
+            }
+        }
+
+        Some(Vendor::Intel(_)) => {
+            let intel_gpu = intel::detect_intel_gpus();
+            if !intel_gpu.is_empty() {
+                let mut gpu = intel_gpu[0].clone();
+                if intel::update_intel_info(&mut gpu).is_ok() {
+                    return gpu;
+                }
+            }
+        }
+        _ => {
+            error!("No supported GPU detected");
+        }
+    }
+
+    error!("Failed to get GPU information");
+    GpuInfo::unknown()
+}
 
 fn detect_gpu_vendor() -> Option<Vendor> {
     let output = Command::new("powershell")
@@ -38,46 +79,4 @@ fn detect_gpu_vendor() -> Option<Vendor> {
         info!("Unknown GPU vendor");
         None
     }
-}
-
-/// Returns information about the GPU.
-/// Automatically detects GPU vendor and returns appropriate information.
-pub fn info_gpu() -> GpuInfo {
-    match detect_gpu_vendor() {
-        Some(Vendor::Nvidia) => match nvidia::detect_nvidia_gpus() {
-            Ok(nvidia_gpus) if !nvidia_gpus.is_empty() => {
-                let mut gpu = nvidia_gpus[0].clone();
-                if nvidia::update_nvidia_info(&mut gpu).is_ok() {
-                    return gpu;
-                }
-            }
-            _ => {
-                error!("Failed to get NVIDIA GPU information");
-            }
-        },
-        Some(Vendor::Amd) => {
-            let amd_gpus = amd::detect_amd_gpus();
-            if !amd_gpus.is_empty() {
-                let mut gpu = amd_gpus[0].clone();
-                if amd::update_amd_info(&mut gpu).is_ok() {
-                    return gpu;
-                }
-            }
-        }
-        Some(Vendor::Intel(_)) => {
-            let intel_gpu = intel::detect_intel_gpus();
-            if !intel_gpu.is_empty() {
-                let mut gpu = intel_gpu[0].clone();
-                if intel::update_intel_info(&mut gpu).is_ok() {
-                    return gpu;
-                }
-            }
-        }
-        _ => {
-            error!("No supported GPU detected");
-        }
-    }
-
-    error!("Failed to get GPU information");
-    GpuInfo::unknown()
 }

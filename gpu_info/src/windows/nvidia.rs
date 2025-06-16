@@ -1,10 +1,13 @@
 use crate::gpu_info::{GpuError, GpuInfo, Result};
 use crate::vendor::Vendor;
 use log::error;
+use once_cell::sync::Lazy;
 use std::ffi::c_char;
 use std::ffi::c_uint;
 use std::ffi::CStr;
 use std::ptr;
+use std::sync::Arc;
+use std::sync::Mutex;
 use std::sync::Once;
 use windows::core::PCWSTR;
 use windows::Win32::System::LibraryLoader::LoadLibraryW;
@@ -16,14 +19,14 @@ const NVML_CLOCK_GRAPHICS: i32 = 0;
 #[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct nvmlDevice_st {
+pub struct nvmlDevice_st {
     _private: [u8; 0],
 }
 
 #[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct nvmlUtilization_t {
+pub struct nvmlUtilization_t {
     pub(crate) gpu: c_uint,
     pub(crate) memory: c_uint,
 }
@@ -31,7 +34,7 @@ pub(crate) struct nvmlUtilization_t {
 #[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct nvmlMemory_t {
+pub struct nvmlMemory_t {
     pub(crate) total: u64,
     pub(crate) free: u64,
     pub(crate) used: u64,
@@ -96,6 +99,9 @@ pub trait NvmlClient {
 }
 
 static INIT: Once = Once::new();
+
+static NVML_CLIENT: Lazy<Arc<Mutex<Option<NvmlClientImpl>>>> =
+    Lazy::new(|| Arc::new(Mutex::new(None)));
 
 pub fn load_local_nvml() -> bool {
     let mut success = false;
@@ -309,31 +315,33 @@ pub fn detect_nvidia_gpus() -> Result<Vec<GpuInfo>> {
 }
 
 pub fn update_nvidia_info(gpu: &mut GpuInfo) -> Result<()> {
-    let nvml_client = NvmlClientImpl;
+    let mut client_guard = NVML_CLIENT.lock().map_err(|_| GpuError::GpuNotActive)?;
+    if client_guard.is_none() {
+        *client_guard = Some(NvmlClientImpl);
+    }
+    let client = client_guard.as_ref().ok_or(GpuError::GpuNotActive)?;
 
-    let ret = nvml_client.nvmlInit_v2();
-    if ret != NVML_SUCCESS {
-        error!("Failed to initialize NVML: {}", ret);
-        return Err(GpuError::DriverNotInstalled);
+    if client.nvmlInit_v2() != NVML_SUCCESS {
+        return Err(GpuError::DriverNotInstalled.into());
+    }
+
+    let mut device_count: c_uint = 0;
+    if client.nvmlDeviceGetCount_v2(&mut device_count) != NVML_SUCCESS || device_count == 0 {
+        client.nvmlShutdown();
+        return Err(GpuError::GpuNotActive.into());
     }
 
     let mut device: *mut nvmlDevice_st = ptr::null_mut();
-    let ret = nvml_client.nvmlDeviceGetHandleByIndex_v2(0, &mut device);
-    if ret != NVML_SUCCESS {
-        error!("Failed to get device handle: {}", ret);
-        return Err(GpuError::GpuNotFound);
+    if client.nvmlDeviceGetHandleByIndex_v2(0, &mut device) != NVML_SUCCESS {
+        client.nvmlShutdown();
+        return Err(GpuError::GpuNotActive.into());
     }
 
-    if let Some(updated_gpu) = get_gpu_info(device, &nvml_client) {
-        *gpu = updated_gpu;
+    if let Some(updated_info) = get_gpu_info(device, client) {
+        *gpu = updated_info;
     }
 
-    nvml_client.nvmlShutdown();
-
-    if !gpu.is_valid() {
-        return Err(GpuError::GpuNotActive);
-    }
-
+    client.nvmlShutdown();
     Ok(())
 }
 
