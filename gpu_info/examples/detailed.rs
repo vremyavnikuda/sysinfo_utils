@@ -23,6 +23,7 @@ fn main() -> Result<()> {
 
     println!("Active: {}", gpu.format_active());
 
+    // refactor:task_1:todo: Качество_кода - дублирование match логики обновления GPU по vendor
     for i in 0..5 {
         match gpu.vendor {
             Vendor::Nvidia => {

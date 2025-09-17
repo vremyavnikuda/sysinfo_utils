@@ -29,3 +29,13 @@ target
 .idea
 gpu_info/TASK.md
 !/gpu_info/.idea/
+gpu_info/GPU_TESTING_INFRASTRUCTURE.md
+gpu_info/GPU_TESTING_GUIDE.md
+.anchora/tasks.json
+gpu_info/REFACTOR_TASK_1_SUMMARY.md
+gpu_info/examples/gpu_test_demo.rs
+gpu_info/examples/macos_test.rs
+gpu_info/examples/simple_test.rs
+gpu_info/examples/test_runner.rs
+gpu_info/src/demo_test.rs
+gpu_info/src/test_provider.rs

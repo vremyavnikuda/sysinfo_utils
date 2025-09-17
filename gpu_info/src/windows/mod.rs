@@ -8,6 +8,7 @@ pub mod nvidia;
 
 /// Returns information about the GPU.
 /// Automatically detects GPU vendor and returns appropriate information.
+// refactor:task_1:todo: Качество_кода - дублирование логики определения типа GPU по vendor
 pub fn info_gpu() -> GpuInfo {
     match detect_gpu_vendor() {
         Some(Vendor::Nvidia) => match nvidia::detect_nvidia_gpus() {
@@ -21,17 +22,16 @@ pub fn info_gpu() -> GpuInfo {
                 error!("Failed to get NVIDIA GPU information");
             }
         },
-
         Some(Vendor::Amd) => {
-            let amd_gpus = amd::detect_amd_gpus();
-            if !amd_gpus.is_empty() {
-                let mut gpu = amd_gpus[0].clone();
-                if amd::update_amd_info(&mut gpu).is_ok() {
-                    return gpu;
+            if let Ok(amd_gpus) = amd::detect_amd_gpus() {
+                if !amd_gpus.is_empty() {
+                    let mut gpu = amd_gpus[0].clone();
+                    if amd::update_amd_info(&mut gpu).is_ok() {
+                        return gpu;
+                    }
                 }
             }
         }
-
         Some(Vendor::Intel(_)) => {
             let intel_gpu = intel::detect_intel_gpus();
             if !intel_gpu.is_empty() {
@@ -45,11 +45,11 @@ pub fn info_gpu() -> GpuInfo {
             error!("No supported GPU detected");
         }
     }
-
     error!("Failed to get GPU information");
     GpuInfo::unknown()
 }
 
+// refactor:task_1:todo: Качество_кода - дублирование логики определения vendor через PowerShell
 fn detect_gpu_vendor() -> Option<Vendor> {
     let output = Command::new("powershell")
         .args([
@@ -63,9 +63,7 @@ fn detect_gpu_vendor() -> Option<Vendor> {
         ])
         .output()
         .ok()?;
-
     let output_str = String::from_utf8_lossy(&output.stdout);
-
     if output_str.contains("NVIDIA") {
         info!("Detected NVIDIA GPU");
         Some(Vendor::Nvidia)

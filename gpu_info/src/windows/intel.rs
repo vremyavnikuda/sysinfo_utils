@@ -3,6 +3,7 @@ use crate::vendor::{IntelGpuType, Vendor};
 use log::{error, info, warn};
 use std::process::Command;
 
+// refactor:task_1:todo: Качество_кода - дублирование логики определения типа GPU
 fn determine_intel_gpu_type(name: &str) -> IntelGpuType {
     let name = name.to_lowercase();
     if name.contains("iris") || name.contains("uhd") || name.contains("hd graphics") {
@@ -17,6 +18,7 @@ fn determine_intel_gpu_type(name: &str) -> IntelGpuType {
     }
 }
 
+// refactor:task_1:todo: Качество_кода - дублирование логики PowerShell запросов
 fn get_intel_gpu_info() -> Result<String> {
     let output = Command::new("powershell")
         .args([
@@ -41,6 +43,7 @@ fn get_intel_gpu_info() -> Result<String> {
 }
 
 fn parse_gpu_info(output_str: &str) -> Option<GpuInfo> {
+    // refactor:task_1:todo: Качество_кода - дублирование логики парсинга PowerShell вывода
     let gpu_name = output_str
         .lines()
         .find(|line| line.contains("Name"))
@@ -91,6 +94,7 @@ fn parse_gpu_info(output_str: &str) -> Option<GpuInfo> {
         info!("Max clock speed: {} MHz", max_clock);
     }
 
+    // refactor:task_1:todo: Качество_кода - дублирование логики создания GpuInfo структуры
     Some(GpuInfo {
         name_gpu: Some(gpu_name),
         vendor: Vendor::Intel(gpu_type),
@@ -111,7 +115,6 @@ fn parse_gpu_info(output_str: &str) -> Option<GpuInfo> {
 pub fn detect_intel_gpus() -> Vec<GpuInfo> {
     let mut gpus = Vec::new();
     info!("Starting Intel GPU detection");
-
     match get_intel_gpu_info() {
         Ok(output_str) => {
             if output_str.contains("Intel") {
@@ -126,30 +129,24 @@ pub fn detect_intel_gpus() -> Vec<GpuInfo> {
             error!("Failed to get Intel GPU information: {}", e);
         }
     }
-
     if gpus.is_empty() {
         warn!("No Intel GPUs were detected");
     } else {
         info!("Successfully detected {} Intel GPU(s)", gpus.len());
     }
-
     gpus
 }
 
 pub fn update_intel_info(gpu: &mut GpuInfo) -> Result<()> {
     info!("Updating Intel GPU information");
-
     let output_str = get_intel_gpu_info()?;
-
     if let Some(updated_gpu) = parse_gpu_info(&output_str) {
         *gpu = updated_gpu;
     }
-
     if !gpu.is_valid() {
         warn!("GPU data validation failed");
         return Err(GpuError::GpuNotActive);
     }
-
     info!("Successfully updated Intel GPU information");
     Ok(())
 }

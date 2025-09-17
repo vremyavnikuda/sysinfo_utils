@@ -5,7 +5,7 @@ use std::time::Duration;
 fn main() {
     let cache = GpuInfoCache::new(Duration::from_secs(2));
 
-    println!("=== Demonstration of GPU information caching ===");
+    println!("Demonstration of GPU information caching");
 
     println!("\nFirst data retrieval:");
     if let Some(gpu) = cache.get() {

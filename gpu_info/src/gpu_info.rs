@@ -26,14 +26,13 @@ pub enum GpuError {
 
 pub type Result<T> = std::result::Result<T, GpuError>;
 
-// TODO: add to DOC
 /// Trait fmt_string (форматируем результат<T> в строковое представление)  defines a method for formatting GPU information.
 pub trait Formattable: Debug {
     fn fmt_string(&self) -> String;
 }
 
 /// All information gathered from the system about the current GPU.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct GpuInfo {
     /// The GPU vendor (e.g., NVIDIA, AMD, Intel).
@@ -738,31 +737,26 @@ impl GpuInfo {
                 return Err(GpuError::InvalidTemperature(temp));
             }
         }
-
         if let Some(util) = self.utilization {
             if !(0.0..=100.0).contains(&util) {
                 return Err(GpuError::InvalidUtilization(util));
             }
         }
-
         if let Some(power) = self.power_usage {
             if !(0.0..=1000.0).contains(&power) {
                 return Err(GpuError::InvalidPowerUsage(power));
             }
         }
-
         if let Some(clock) = self.core_clock {
             if clock > 5000 {
                 return Err(GpuError::InvalidClockSpeed(clock));
             }
         }
-
         if let Some(mem) = self.memory_total {
             if mem > 128 {
                 return Err(GpuError::InvalidMemory(mem));
             }
         }
-
         Ok(())
     }
 
@@ -784,42 +778,18 @@ impl Default for GpuInfo {
 impl Display for GpuInfo {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.vendor)?;
-        if let Some(name) = &self.name_gpu {
-            write!(f, "{}", name)?;
-        }
-        if let Some(temp) = &self.temperature {
-            write!(f, "{}", temp)?;
-        }
-        if let Some(util) = &self.utilization {
-            write!(f, "{}", util)?;
-        }
-        if let Some(power) = &self.power_usage {
-            write!(f, "{}", power)?;
-        }
-        if let Some(core) = &self.core_clock {
-            write!(f, "{}", core)?;
-        }
-        if let Some(mem_util) = &self.memory_util {
-            write!(f, "{}", mem_util)?;
-        }
-        if let Some(mem_clock) = &self.memory_clock {
-            write!(f, "{}", mem_clock)?;
-        }
-        if let Some(active) = &self.active {
-            write!(f, "{}", active)?;
-        }
-        if let Some(power_limit) = &self.power_limit {
-            write!(f, "{}", power_limit)?;
-        }
-        if let Some(mem_total) = &self.memory_total {
-            write!(f, "{}", mem_total)?;
-        }
-        if let Some(driver) = &self.driver_version {
-            write!(f, "{}", driver)?;
-        }
-        if let Some(max_clock) = &self.max_clock_speed {
-            write!(f, "{}", max_clock)?;
-        }
+        write!(f, "{}", self.name_gpu.fmt_string())?;
+        write!(f, "{}", self.temperature.fmt_string())?;
+        write!(f, "{}", self.utilization.fmt_string())?;
+        write!(f, "{}", self.power_usage.fmt_string())?;
+        write!(f, "{}", self.core_clock.fmt_string())?;
+        write!(f, "{}", self.memory_util.fmt_string())?;
+        write!(f, "{}", self.memory_clock.fmt_string())?;
+        write!(f, "{}", self.active.fmt_string())?;
+        write!(f, "{}", self.power_limit.fmt_string())?;
+        write!(f, "{}", self.memory_total.fmt_string())?;
+        write!(f, "{}", self.driver_version.fmt_string())?;
+        write!(f, "{}", self.max_clock_speed.fmt_string())?;
         Ok(())
     }
 }
@@ -841,7 +811,6 @@ impl GpuInfoCache {
     pub fn get(&self) -> Option<GpuInfo> {
         let guard = self.info.read().ok()?;
         let (info, timestamp) = guard.as_ref()?;
-
         if timestamp.elapsed() < self.ttl {
             Some(info.clone())
         } else {

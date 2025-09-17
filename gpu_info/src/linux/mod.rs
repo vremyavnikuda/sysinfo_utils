@@ -147,21 +147,18 @@ pub fn info_gpu() -> GpuInfo {
             };
 
         init();
-
         let mut device: NvmlDevice_t = ptr::null_mut();
         if get_device_handle(0, &mut device) != NVML_SUCCESS {
             error!("Failed to get NVML device handle");
             shutdown();
             return GpuInfo::default();
         }
-
         let mut temp = 0u32;
         let temperature = if get_temp(device, NVML_TEMPERATURE_GPU, &mut temp) == NVML_SUCCESS {
             Some(temp as f32)
         } else {
             None
         };
-
         let mut name_buf = [0i8; 64];
         let name = if get_name(device, name_buf.as_mut_ptr(), 64) == NVML_SUCCESS {
             Some(
@@ -172,28 +169,24 @@ pub fn info_gpu() -> GpuInfo {
         } else {
             Some("NVIDIA GPU".to_string())
         };
-
         let mut util = NvmlUtilization { gpu: 0, memory: 0 };
         let (gpu_util, mem_util) = if get_util(device, &mut util) == NVML_SUCCESS {
             (Some(util.gpu as f32), Some(util.memory as f32))
         } else {
             (None, None)
         };
-
         let mut power = 0u32;
         let power_usage = if get_power(device, &mut power) == NVML_SUCCESS {
             Some((power as f32) / 1000.0)
         } else {
             None
         };
-
         let mut clock = 0u32;
         let core_clock = if get_clock(device, NVML_CLOCK_GRAPHICS, &mut clock) == NVML_SUCCESS {
             Some(clock)
         } else {
             None
         };
-
         let mut mem_info = NvmlMemory {
             total: 0,
             free: 0,
@@ -204,9 +197,7 @@ pub fn info_gpu() -> GpuInfo {
         } else {
             None
         };
-
         shutdown();
-
         GpuInfo {
             vendor: Vendor::Nvidia,
             name_gpu: name,
