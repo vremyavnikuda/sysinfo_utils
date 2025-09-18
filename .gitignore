@@ -39,3 +39,4 @@ gpu_info/examples/simple_test.rs
 gpu_info/examples/test_runner.rs
 gpu_info/src/demo_test.rs
 gpu_info/src/test_provider.rs
+gpu_info/ANALYSIS_REPORT_18_09_2025.md
