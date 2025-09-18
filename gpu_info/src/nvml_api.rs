@@ -1,5 +1,5 @@
 //! NVML API abstraction using common FFI utilities
-//! 
+//!
 //! This module provides a clean abstraction over NVML (NVIDIA Management Library)
 //! using the common FFI utilities to reduce code duplication.
 
@@ -60,7 +60,8 @@ pub struct NvmlFunctions {
         unsafe extern "C" fn(*mut nvmlDevice_st, *mut nvmlUtilization_t) -> i32,
     pub device_get_power_usage: unsafe extern "C" fn(*mut nvmlDevice_st, *mut c_uint) -> i32,
     pub device_get_clock_info: unsafe extern "C" fn(*mut nvmlDevice_st, i32, *mut c_uint) -> i32,
-    pub device_get_max_clock_info: unsafe extern "C" fn(*mut nvmlDevice_st, i32, *mut c_uint) -> i32,
+    pub device_get_max_clock_info:
+        unsafe extern "C" fn(*mut nvmlDevice_st, i32, *mut c_uint) -> i32,
     pub device_get_power_management_limit:
         unsafe extern "C" fn(*mut nvmlDevice_st, *mut c_uint) -> i32,
     pub device_get_memory_info: unsafe extern "C" fn(*mut nvmlDevice_st, *mut nvmlMemory_t) -> i32,
@@ -74,12 +75,14 @@ pub struct NvmlFunctions<'a> {
     pub shutdown: Symbol<'a, unsafe extern "C" fn() -> i32>,
     pub device_get_handle_by_index:
         Symbol<'a, unsafe extern "C" fn(u32, *mut *mut nvmlDevice_st) -> i32>,
-    pub device_get_name: Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, *mut c_char, u32) -> i32>,
+    pub device_get_name:
+        Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, *mut c_char, u32) -> i32>,
     pub device_get_temperature:
         Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, u32, *mut u32) -> i32>,
     pub device_get_utilization_rates:
         Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, *mut nvmlUtilization_t) -> i32>,
-    pub device_get_power_usage: Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, *mut u32) -> i32>,
+    pub device_get_power_usage:
+        Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, *mut u32) -> i32>,
     pub device_get_clock_info:
         Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, u32, *mut u32) -> i32>,
     pub device_get_memory_info:
@@ -119,7 +122,8 @@ impl NvmlClient {
             device_get_power_usage: resolver.resolve("nvmlDeviceGetPowerUsage")?,
             device_get_clock_info: resolver.resolve("nvmlDeviceGetClockInfo")?,
             device_get_max_clock_info: resolver.resolve("nvmlDeviceGetMaxClockInfo")?,
-            device_get_power_management_limit: resolver.resolve("nvmlDeviceGetPowerManagementLimit")?,
+            device_get_power_management_limit: resolver
+                .resolve("nvmlDeviceGetPowerManagementLimit")?,
             device_get_memory_info: resolver.resolve("nvmlDeviceGetMemoryInfo")?,
             system_get_driver_version: resolver.resolve("nvmlSystemGetDriverVersion")?,
         };
@@ -182,28 +186,29 @@ impl NvmlClient {
     pub fn get_device_count(&self) -> NvmlResult<u32> {
         let mut count = 0;
         let code = unsafe { (self.api_table.functions().device_get_count)(&mut count) };
-        NvmlResult {
-            code,
-            value: count,
-        }
+        NvmlResult { code, value: count }
     }
     /// Get device handle by index
     #[cfg(windows)]
     pub fn get_device_handle(&self, index: u32) -> NvmlResult<*mut nvmlDevice_st> {
         let mut device = ptr::null_mut();
-        let code = unsafe {
-            (self.api_table.functions().device_get_handle_by_index)(index, &mut device)
-        };
-        NvmlResult { code, value: device }
+        let code =
+            unsafe { (self.api_table.functions().device_get_handle_by_index)(index, &mut device) };
+        NvmlResult {
+            code,
+            value: device,
+        }
     }
     /// Get device handle by index on Unix
     #[cfg(unix)]
     pub fn get_device_handle(&self, index: u32) -> NvmlResult<*mut nvmlDevice_st> {
         let mut device = ptr::null_mut();
-        let code = unsafe {
-            (self.api_table.functions().device_get_handle_by_index)(index, &mut device)
-        };
-        NvmlResult { code, value: device }
+        let code =
+            unsafe { (self.api_table.functions().device_get_handle_by_index)(index, &mut device) };
+        NvmlResult {
+            code,
+            value: device,
+        }
     }
     /// Get device name
     pub fn get_device_name(&self, device: *mut nvmlDevice_st) -> NvmlResult<String> {
@@ -268,9 +273,8 @@ impl NvmlClient {
     /// Get device utilization rates
     pub fn get_device_utilization(&self, device: *mut nvmlDevice_st) -> NvmlResult<(f32, f32)> {
         let mut util = nvmlUtilization_t { gpu: 0, memory: 0 };
-        let code = unsafe {
-            (self.api_table.functions().device_get_utilization_rates)(device, &mut util)
-        };
+        let code =
+            unsafe { (self.api_table.functions().device_get_utilization_rates)(device, &mut util) };
         NvmlResult {
             code,
             value: (util.gpu as f32, util.memory as f32),
@@ -280,7 +284,8 @@ impl NvmlClient {
     /// Get device power usage
     pub fn get_device_power_usage(&self, device: *mut nvmlDevice_st) -> NvmlResult<f32> {
         let mut power = 0u32;
-        let code = unsafe { (self.api_table.functions().device_get_power_usage)(device, &mut power) };
+        let code =
+            unsafe { (self.api_table.functions().device_get_power_usage)(device, &mut power) };
         NvmlResult {
             code,
             value: (power as f32) / 1000.0, // Convert mW to W
@@ -313,15 +318,17 @@ impl NvmlClient {
     }
 
     /// Get device memory info
-    pub fn get_device_memory_info(&self, device: *mut nvmlDevice_st) -> NvmlResult<(u64, u64, u64)> {
+    pub fn get_device_memory_info(
+        &self,
+        device: *mut nvmlDevice_st,
+    ) -> NvmlResult<(u64, u64, u64)> {
         let mut memory = nvmlMemory_t {
             total: 0,
             free: 0,
             used: 0,
         };
-        let code = unsafe {
-            (self.api_table.functions().device_get_memory_info)(device, &mut memory)
-        };
+        let code =
+            unsafe { (self.api_table.functions().device_get_memory_info)(device, &mut memory) };
         NvmlResult {
             code,
             value: (memory.total, memory.free, memory.used),
@@ -331,10 +338,7 @@ impl NvmlClient {
     /// Create GpuInfo from NVML device
     pub fn create_gpu_info(&self, device: *mut nvmlDevice_st) -> Option<GpuInfo> {
         use crate::handle_api_result;
-        let name = handle_api_result!(
-            self.get_device_name(device),
-            "Failed to get device name"
-        );
+        let name = handle_api_result!(self.get_device_name(device), "Failed to get device name");
         let temperature = handle_api_result!(
             self.get_device_temperature(device),
             "Failed to get device temperature"
@@ -366,8 +370,8 @@ impl NvmlClient {
             memory_total: Some((total_memory / (1024 * 1024 * 1024)) as u32), // Convert bytes to GB
             memory_clock: None, // Not available in this version
             active: Some(true),
-            power_limit: None, // Could be added later
-            driver_version: None, // Could be added later
+            power_limit: None,     // Could be added later
+            driver_version: None,  // Could be added later
             max_clock_speed: None, // Could be added later
         })
     }

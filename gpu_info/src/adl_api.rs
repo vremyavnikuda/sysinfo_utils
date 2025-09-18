@@ -1,5 +1,5 @@
 //! ADL API abstraction using common FFI utilities
-//! 
+//!
 //! This module provides a clean abstraction over ADL (AMD Display Library)
 //! using the common FFI utilities to reduce code duplication.
 
@@ -104,7 +104,8 @@ impl AdlClient {
             adapter_number_of_adapters_get: resolver.resolve("ADL_Adapter_NumberOfAdapters_Get")?,
             adapter_adapter_info_get: resolver.resolve("ADL_Adapter_AdapterInfo_Get")?,
             overdrive5_temperature_get: resolver.resolve("ADL_Overdrive5_Temperature_Get")?,
-            overdrive5_current_activity_get: resolver.resolve("ADL_Overdrive5_CurrentActivity_Get")?,
+            overdrive5_current_activity_get: resolver
+                .resolve("ADL_Overdrive5_CurrentActivity_Get")?,
             overdrive5_power_control_get: resolver.resolve("ADL_Overdrive5_PowerControl_Get")?,
         };
 
@@ -127,11 +128,12 @@ impl AdlClient {
         let code = unsafe {
             (self.api_table.functions().main_control_create)(
                 Some(Self::adl_malloc), // Memory allocation callback
-                1, // ADL version
+                1,                      // ADL version
             )
         };
 
-        if code == ADL_OK {
+        let result = AdlResult { code, value: () };
+        if result.is_success() {
             self.initialized = true;
         }
 
@@ -149,7 +151,8 @@ impl AdlClient {
 
         let code = unsafe { (self.api_table.functions().main_control_destroy)() };
 
-        if code == ADL_OK {
+        let result = AdlResult { code, value: () };
+        if result.is_success() {
             self.initialized = false;
         }
 
@@ -171,10 +174,7 @@ impl AdlClient {
 
     /// Get adapter information for all adapters
     pub fn get_adapter_info(&self, count: i32) -> AdlResult<Vec<AdapterInfo>> {
-        let mut adapters = vec![
-            unsafe { std::mem::zeroed::<AdapterInfo>() };
-            count as usize
-        ];
+        let mut adapters = vec![unsafe { std::mem::zeroed::<AdapterInfo>() }; count as usize];
         let buffer_size = count * std::mem::size_of::<AdapterInfo>() as i32;
 
         let code = unsafe {
@@ -272,9 +272,7 @@ impl AdlClient {
             .to_option();
 
         // Get activity information
-        let activity = self
-            .get_adapter_activity(adapter.iAdapterIndex)
-            .to_option();
+        let activity = self.get_adapter_activity(adapter.iAdapterIndex).to_option();
 
         let (utilization, core_clock, memory_clock) = if let Some(act) = activity {
             (
@@ -287,7 +285,9 @@ impl AdlClient {
         };
 
         // Get power information (optional)
-        let _power_info = self.get_adapter_power_info(adapter.iAdapterIndex).to_option();
+        let _power_info = self
+            .get_adapter_power_info(adapter.iAdapterIndex)
+            .to_option();
         Some(GpuInfo {
             name_gpu: Some(name),
             vendor: Vendor::Amd,
