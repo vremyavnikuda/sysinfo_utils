@@ -91,6 +91,20 @@ macro_rules! handle_api_result {
     };
 }
 
+/// Macro to handle API result conversion with error logging for functions returning Vec
+#[macro_export]
+macro_rules! handle_api_result_vec {
+    ($result:expr, $error_msg:expr) => {
+        match $result.to_option() {
+            Some(value) => value,
+            None => {
+                log::error!("{}: error code {}", $error_msg, $result.error_code());
+                return Vec::new();
+            }
+        }
+    };
+}
+
 /// Cross-platform dynamic library wrapper
 pub enum DynamicLibrary {
     #[cfg(windows)]

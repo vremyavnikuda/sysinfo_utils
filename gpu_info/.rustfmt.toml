@@ -1,0 +1,13 @@
+# Убираем лишние пустые строки между элементами
+blank_lines_upper_bound = 0
+blank_lines_lower_bound = 0
+
+# Не добавлять пустую строку перед doc-комментариями
+# (это важно, чтобы /// шли сразу после предыдущего метода)
+format_doc_comments = false
+
+# Не разрывать impl-блоки лишними переносами
+reorder_impl_items = false
+
+# отступы в match/struct и т.д.
+fn_single_line = true

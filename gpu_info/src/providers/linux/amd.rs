@@ -1,16 +1,23 @@
-use crate::gpu_info::{GpuError, GpuInfo, Result};
+//! Linux AMD GPU provider implementation
+//! 
+//! This module implements the GpuProvider trait for AMD GPUs on Linux using sysfs.
+
+use crate::gpu_info::{GpuInfo, Result, GpuProvider, GpuError};
 use crate::vendor::Vendor;
-use log::{debug, error, info, warn};
+use log::{debug, info, warn};
 use std::fs;
 use std::path::Path;
 
-/// AMD GPU detection and monitoring for Linux using sysfs and AMDGPU driver
+/// AMD GPU provider for Linux
 pub struct AmdLinuxProvider;
 
 impl AmdLinuxProvider {
-    // refactor:task_1:todo: Качество_кода - дублирование логики поиска GPU через sysfs
+    pub fn new() -> Self {
+        Self
+    }
+    
     /// Detect AMD GPUs through sysfs interface
-    pub fn detect_amd_gpus() -> Result<Vec<GpuInfo>> {
+    fn detect_amd_gpus(&self) -> Result<Vec<GpuInfo>> {
         let mut gpus = Vec::new();
         let drm_path = Path::new("/sys/class/drm");
         if !drm_path.exists() {
@@ -23,7 +30,7 @@ impl AmdLinuxProvider {
             
             if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
                 if name.starts_with("card") && !name.contains("-") {
-                    if let Ok(gpu_info) = Self::probe_amd_card(&path) {
+                    if let Ok(gpu_info) = self.probe_amd_card(&path) {
                         gpus.push(gpu_info);
                     }
                 }
@@ -38,20 +45,24 @@ impl AmdLinuxProvider {
     }
 
     /// Probe specific AMD card for information
-    fn probe_amd_card(card_path: &Path) -> Result<GpuInfo> {
+    fn probe_amd_card(&self, card_path: &Path) -> Result<GpuInfo> {
         let device_path = card_path.join("device");
         // Check vendor ID for AMD (0x1002)
-        let vendor_id = Self::read_hex_file(&device_path.join("vendor"))?;
+        let vendor_id = self.read_hex_file(&device_path.join("vendor"))?;
         if vendor_id != 0x1002 {
             return Err(GpuError::GpuNotFound);
         }
-        let name = Self::get_gpu_name(&device_path)?;
-        let driver_version = Self::get_driver_version();
-        let power_usage = Self::get_power_usage(&device_path);
-        let temperature = Self::get_temperature(&device_path);
-        let utilization = Self::get_gpu_utilization(&device_path);
-        let memory_info = Self::get_memory_info(&device_path);
+        // Get basic GPU information
+        let name = self.get_gpu_name(&device_path)?;
+        let driver_version = self.get_driver_version();
+        // Get power management info if available
+        let power_usage = self.get_power_usage(&device_path);
+        let temperature = self.get_temperature(&device_path);
+        let utilization = self.get_gpu_utilization(&device_path);
+        let memory_info = self.get_memory_info(&device_path);
+
         info!("Found AMD GPU: {}", name);
+        
         Ok(GpuInfo {
             vendor: Vendor::Amd,
             name_gpu: Some(name),
@@ -69,7 +80,7 @@ impl AmdLinuxProvider {
         })
     }
 
-    fn read_hex_file(path: &Path) -> Result<u32> {
+    fn read_hex_file(&self, path: &Path) -> Result<u32> {
         let content = fs::read_to_string(path)
             .map_err(|_| GpuError::GpuNotFound)?;
         let hex_str = content.trim().trim_start_matches("0x");
@@ -77,7 +88,7 @@ impl AmdLinuxProvider {
             .map_err(|_| GpuError::GpuNotFound)
     }
 
-    fn get_gpu_name(device_path: &Path) -> Result<String> {
+    fn get_gpu_name(&self, device_path: &Path) -> Result<String> {
         if let Ok(content) = fs::read_to_string(device_path.join("product_name")) {
             return Ok(content.trim().to_string());
         }
@@ -87,7 +98,7 @@ impl AmdLinuxProvider {
         Ok("AMD GPU".to_string())
     }
 
-    fn get_driver_version() -> Option<String> {
+    fn get_driver_version(&self) -> Option<String> {
         // Try to get AMDGPU driver version
         if let Ok(content) = fs::read_to_string("/sys/module/amdgpu/version") {
             return Some(content.trim().to_string());
@@ -95,7 +106,7 @@ impl AmdLinuxProvider {
         None
     }
 
-    fn get_power_usage(device_path: &Path) -> Option<f32> {
+    fn get_power_usage(&self, device_path: &Path) -> Option<f32> {
         let hwmon_path = device_path.join("hwmon");
         if let Ok(entries) = fs::read_dir(&hwmon_path) {
             for entry in entries.flatten() {
@@ -110,7 +121,7 @@ impl AmdLinuxProvider {
         None
     }
 
-    fn get_temperature(device_path: &Path) -> Option<f32> {
+    fn get_temperature(&self, device_path: &Path) -> Option<f32> {
         // Check hwmon for temperature
         let hwmon_path = device_path.join("hwmon");
         if let Ok(entries) = fs::read_dir(&hwmon_path) {
@@ -126,44 +137,59 @@ impl AmdLinuxProvider {
         None
     }
 
-    fn get_gpu_utilization(_device_path: &Path) -> Option<f32> {
+    fn get_gpu_utilization(&self, _device_path: &Path) -> Option<f32> {
         // TODO: Implement GPU utilization reading from sysfs
         // This might require parsing /sys/class/drm/cardX/engine/*/busy_percent
         None
     }
 
-    fn get_memory_info(_device_path: &Path) -> (Option<u32>, Option<f32>) {
+    fn get_memory_info(&self, _device_path: &Path) -> (Option<u32>, Option<f32>) {
         // TODO: Implement memory information from sysfs
         // Check /sys/class/drm/cardX/mem_info_* files
         (None, None)
     }
+}
 
-    /// Update AMD GPU information
-    pub fn update_amd_info(gpu: &mut GpuInfo) -> Result<()> {
+impl Default for AmdLinuxProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl GpuProvider for AmdLinuxProvider {
+    /// Detect all AMD GPUs on Linux using sysfs
+    fn detect_gpus(&self) -> Result<Vec<GpuInfo>> {
+        debug!("Detecting AMD GPUs on Linux using sysfs");
+        self.detect_amd_gpus()
+    }
+    
+    /// Update AMD GPU information on Linux
+    fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
         debug!("Updating AMD GPU information on Linux");
         // For now, we'll re-detect the GPU
         // In a more sophisticated implementation, we'd maintain device handles
-        let gpus = Self::detect_amd_gpus()?;
+        let gpus = self.detect_gpus()?;
         if let Some(updated_gpu) = gpus.first() {
             *gpu = updated_gpu.clone();
         }
         
         Ok(())
     }
-}
-
-/// Get AMD GPU information for Linux
-pub fn info_gpu() -> GpuInfo {
-    match AmdLinuxProvider::detect_amd_gpus() {
-        Ok(gpus) if !gpus.is_empty() => gpus[0].clone(),
-        _ => {
-            error!("Failed to detect AMD GPU on Linux");
-            GpuInfo::unknown()
-        }
+    
+    /// Get the vendor for this provider
+    fn get_vendor(&self) -> Vendor {
+        Vendor::Amd
     }
 }
 
-/// Update AMD GPU information for Linux
-pub fn update_amd_info(gpu: &mut GpuInfo) -> Result<()> {
-    AmdLinuxProvider::update_amd_info(gpu)
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::vendor::Vendor;
+    
+    #[test]
+    fn test_amd_linux_provider_vendor() {
+        let provider = AmdLinuxProvider::new();
+        assert_eq!(provider.get_vendor(), Vendor::Amd);
+    }
 }

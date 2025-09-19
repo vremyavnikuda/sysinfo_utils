@@ -25,23 +25,42 @@ fn main() -> Result<()> {
 
     // refactor:task_1:todo: Качество_кода - дублирование match логики обновления GPU по vendor
     for i in 0..5 {
-        match gpu.vendor {
-            Vendor::Nvidia => {
-                if let Err(e) = gpu_info::windows::nvidia::update_nvidia_info(&mut gpu) {
-                    println!("Error updating NVIDIA GPU: {}", e);
+        #[cfg(target_os = "windows")]
+        {
+            use gpu_info::providers::{nvidia, amd, intel};
+            match gpu.vendor {
+                Vendor::Nvidia => {
+                    if let Err(e) = nvidia::update_nvidia_info(&mut gpu) {
+                        println!("Error updating NVIDIA GPU: {}", e);
+                    }
                 }
-            }
-            Vendor::Amd => {
-                if let Err(e) = gpu_info::windows::amd::update_amd_info(&mut gpu) {
-                    println!("Error updating AMD GPU: {}", e);
+                Vendor::Amd => {
+                    if let Err(e) = amd::update_amd_info(&mut gpu) {
+                        println!("Error updating AMD GPU: {}", e);
+                    }
                 }
-            }
-            Vendor::Intel(_) => {
-                if let Err(e) = gpu_info::windows::intel::update_intel_info(&mut gpu) {
-                    println!("Error updating Intel GPU: {}", e);
+                Vendor::Intel(_) => {
+                    if let Err(e) = intel::update_intel_info(&mut gpu) {
+                        println!("Error updating Intel GPU: {}", e);
+                    }
                 }
+                _ => {}
             }
-            _ => {}
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            // For non-Windows platforms, use the old interface for now
+            match gpu.vendor {
+                Vendor::Nvidia => {
+                    #[cfg(any(target_os = "linux", target_os = "macos"))]
+                    {
+                        if let Err(e) = gpu_info::update_nvidia_info(&mut gpu) {
+                            println!("Error updating NVIDIA GPU: {}", e);
+                        }
+                    }
+                }
+                _ => {}
+            }
         }
 
         println!("\nMeasurement #{}", i + 1);
@@ -52,9 +71,9 @@ fn main() -> Result<()> {
     }
 
     if gpu.is_valid() {
-        println!("GPU data is valid");
+        println!("GPU data is okay");
     } else {
-        println!("GPU data is invalid");
+        println!("GPU data has problems");
     }
 
     Ok(())

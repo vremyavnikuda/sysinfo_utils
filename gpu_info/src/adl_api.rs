@@ -321,6 +321,8 @@ impl Drop for AdlClient {
 /// Convenience function to get all AMD GPUs using the new abstraction
 #[cfg(windows)]
 pub fn get_amd_gpus() -> Vec<GpuInfo> {
+    use crate::handle_api_result_vec;
+    
     let mut client = match AdlClient::new() {
         Some(client) => client,
         None => {
@@ -328,24 +330,15 @@ pub fn get_amd_gpus() -> Vec<GpuInfo> {
             return Vec::new();
         }
     };
-    if client.initialize().to_option().is_none() {
-        error!("Failed to initialize ADL");
-        return Vec::new();
-    }
-    let adapter_count = match client.get_adapter_count().to_option() {
-        Some(count) if count > 0 => count,
-        _ => {
-            error!("Failed to get ADL adapter count or no adapters found");
-            return Vec::new();
-        }
-    };
-    let adapters = match client.get_adapter_info(adapter_count).to_option() {
-        Some(adapters) => adapters,
-        None => {
-            error!("Failed to get ADL adapter information");
-            return Vec::new();
-        }
-    };
+    
+    handle_api_result_vec!(client.initialize(), "Failed to initialize ADL");
+    
+    let adapter_count = handle_api_result_vec!(client.get_adapter_count(), 
+                                              "Failed to get ADL adapter count or no adapters found");
+    
+    let adapters = handle_api_result_vec!(client.get_adapter_info(adapter_count), 
+                                          "Failed to get ADL adapter information");
+    
     let mut gpus = Vec::new();
     for adapter in &adapters {
         // Only include active adapters

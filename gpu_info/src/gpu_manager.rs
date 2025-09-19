@@ -1,9 +1,8 @@
 use crate::gpu_info::{GpuError, GpuInfo, Result};
 use crate::vendor::Vendor;
 use log::{debug, error, info, warn};
-use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 /// Менеджер для работы с множественными GPU в системе
 #[derive(Debug, Clone)]
@@ -12,10 +11,10 @@ pub struct GpuManager {
     gpus: Vec<GpuInfo>,
     /// Индекс основного GPU (используется по умолчанию)
     primary_gpu_index: usize,
-    /// Кэш для оптимизации повторных запросов
-    cache: Arc<Mutex<HashMap<usize, (GpuInfo, Instant)>>>,
-    /// TTL для кэша
-    cache_ttl: Duration,
+    /// GPU information cache with unified caching utilities
+    /// 
+    /// This cache eliminates duplication by using the common caching infrastructure.
+    cache: crate::cache_utils::MultiGpuInfoCache,
 }
 
 impl Default for GpuManager {
@@ -30,8 +29,7 @@ impl GpuManager {
         let mut manager = Self {
             gpus: Vec::new(),
             primary_gpu_index: 0,
-            cache: Arc::new(Mutex::new(HashMap::new())),
-            cache_ttl: Duration::from_millis(500),
+            cache: crate::cache_utils::MultiGpuInfoCache::new(Duration::from_millis(500)),
         };
         
         manager.detect_all_gpus();
@@ -43,8 +41,7 @@ impl GpuManager {
         let mut manager = Self {
             gpus: Vec::new(),
             primary_gpu_index: 0,
-            cache: Arc::new(Mutex::new(HashMap::new())),
-            cache_ttl,
+            cache: crate::cache_utils::MultiGpuInfoCache::new(cache_ttl),
         };
         
         manager.detect_all_gpus();
@@ -80,23 +77,23 @@ impl GpuManager {
     // refactor:task_1:todo: Качество_кода - дублирование логики обнаружения GPU по платформам
     #[cfg(target_os = "windows")]
     fn detect_windows_gpus(&mut self) {
-        use crate::windows;
+        use crate::providers::{nvidia, amd, intel};
         // NVIDIA GPUs
-        if let Ok(nvidia_gpus) = windows::nvidia::detect_nvidia_gpus() {
+        if let Ok(nvidia_gpus) = nvidia::detect_nvidia_gpus() {
             for (index, gpu) in nvidia_gpus.into_iter().enumerate() {
                 info!("Found NVIDIA GPU #{}: {:?}", index, gpu.name_gpu);
                 self.gpus.push(gpu);
             }
         }
         // AMD GPUs  
-        if let Ok(amd_gpus) = windows::amd::detect_amd_gpus() {
+        if let Ok(amd_gpus) = amd::detect_amd_gpus() {
             for (index, gpu) in amd_gpus.into_iter().enumerate() {
                 info!("Found AMD GPU #{}: {:?}", index, gpu.name_gpu);
                 self.gpus.push(gpu);
             }
         }
         // Intel GPUs
-        let intel_gpus = windows::intel::detect_intel_gpus();
+        let intel_gpus = intel::detect_intel_gpus();
         for (index, gpu) in intel_gpus.into_iter().enumerate() {
             info!("Found Intel GPU #{}: {:?}", index, gpu.name_gpu);
             self.gpus.push(gpu);
@@ -227,9 +224,7 @@ impl GpuManager {
                 errors.push((index, e));
             }
         }
-        if let Ok(mut cache) = self.cache.lock() {
-            cache.clear();
-        }
+        self.cache.clear_all();
         if errors.is_empty() {
             Ok(())
         } else {
@@ -241,9 +236,7 @@ impl GpuManager {
     pub fn refresh_gpu(&mut self, index: usize) -> Result<()> {
         let gpu = self.gpus.get_mut(index).ok_or(GpuError::GpuNotFound)?;
         Self::update_single_gpu_static(gpu)?;
-        if let Ok(mut cache) = self.cache.lock() {
-            cache.insert(index, (gpu.clone(), Instant::now()));
-        }
+        self.cache.set(index, gpu.clone());
         Ok(())
     }
 
@@ -255,33 +248,46 @@ impl GpuManager {
     // refactor:task_1:todo: Качество_кода - дублирование логики обновления GPU по vendor
     /// Внутренняя функция обновления одного GPU
     fn update_single_gpu_static(gpu: &mut GpuInfo) -> Result<()> {
-        match gpu.vendor {
-            #[cfg(target_os = "windows")]
-            Vendor::Nvidia => crate::windows::nvidia::update_nvidia_info(gpu),
-            #[cfg(target_os = "windows")]
-            Vendor::Amd => crate::windows::amd::update_amd_info(gpu),
-            #[cfg(target_os = "windows")]
-            Vendor::Intel(_) => crate::windows::intel::update_intel_info(gpu),
-            #[cfg(target_os = "linux")]
-            Vendor::Nvidia => crate::linux::nvidia::update_nvidia_info(gpu),
-            #[cfg(target_os = "macos")]
-            _ => crate::macos::update_gpu_info(gpu),
-            _ => {
-                warn!("GPU update not implemented for vendor: {:?}", gpu.vendor);
-                Ok(())
+        // Use the new provider interface when available
+        #[cfg(target_os = "windows")]
+        {
+            use crate::providers::{nvidia, amd, intel};
+            match gpu.vendor {
+                Vendor::Nvidia => nvidia::update_nvidia_info(gpu),
+                Vendor::Amd => amd::update_amd_info(gpu),
+                Vendor::Intel(_) => intel::update_intel_info(gpu),
+                _ => {
+                    warn!("GPU update not implemented for vendor: {:?}", gpu.vendor);
+                    Ok(())
+                }
             }
+        }
+        #[cfg(target_os = "linux")]
+        {
+            match gpu.vendor {
+                Vendor::Nvidia => crate::linux::nvidia::update_nvidia_info(gpu),
+                _ => {
+                    warn!("GPU update not implemented for vendor: {:?}", gpu.vendor);
+                    Ok(())
+                }
+            }
+        }
+        #[cfg(target_os = "macos")]
+        {
+            crate::macos::update_gpu_info(gpu)
+        }
+        #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
+        {
+            warn!("GPU update not implemented for vendor: {:?}", gpu.vendor);
+            Ok(())
         }
     }
 
     /// Возвращает GPU с кэшированием
     pub fn get_gpu_cached(&self, index: usize) -> Option<GpuInfo> {
-        if let Ok(cache) = self.cache.lock() {
-            if let Some((cached_gpu, timestamp)) = cache.get(&index) {
-                if timestamp.elapsed() < self.cache_ttl {
-                    debug!("Returning cached GPU #{}", index);
-                    return Some(cached_gpu.clone());
-                }
-            }
+        if let Some(cached_gpu) = self.cache.get(&index) {
+            debug!("Returning cached GPU #{}", index);
+            return Some(cached_gpu);
         }
         self.get_gpu_by_index_owned(index)
     }

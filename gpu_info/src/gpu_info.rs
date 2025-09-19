@@ -1,6 +1,5 @@
 use std::fmt::{Debug, Display, Formatter};
-use std::sync::RwLock;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use crate::vendor::Vendor;
 
@@ -25,6 +24,84 @@ pub enum GpuError {
 }
 
 pub type Result<T> = std::result::Result<T, GpuError>;
+
+/// Trait for unified GPU provider interface
+pub trait GpuProvider: Send + Sync {
+    /// Detect all GPUs provided by this provider
+    fn detect_gpus(&self) -> Result<Vec<GpuInfo>>;
+    
+    /// Update the information for a specific GPU
+    fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()>;
+    
+    /// Get the vendor associated with this provider
+    fn get_vendor(&self) -> Vendor;
+}
+
+/// Handle empty vector result by converting to Result
+/// 
+/// This function eliminates duplication in provider implementations where
+/// they need to convert an empty Vec to a GpuError::GpuNotFound error.
+/// 
+/// # Arguments
+/// * `items` - Vector of items to check
+/// 
+/// # Returns
+/// * `Ok(Vec<T>)` - If vector is not empty
+/// * `Err(GpuError::GpuNotFound)` - If vector is empty
+/// 
+/// # Example
+/// ```rust
+/// use gpu_info::gpu_info::{handle_empty_result, Result, GpuError};
+/// 
+/// let items = vec![1, 2, 3];
+/// let result: Result<Vec<i32>> = handle_empty_result(items);
+/// assert!(result.is_ok());
+/// 
+/// let empty_items: Vec<i32> = vec![];
+/// let result: Result<Vec<i32>> = handle_empty_result(empty_items);
+/// assert!(matches!(result, Err(GpuError::GpuNotFound)));
+/// ```
+pub fn handle_empty_result<T>(items: Vec<T>) -> Result<Vec<T>> {
+    if items.is_empty() {
+        Err(GpuError::GpuNotFound)
+    } else {
+        Ok(items)
+    }
+}
+
+/// Update GPU information using the common pattern
+/// 
+/// This function eliminates duplication in provider implementations where
+/// they need to update a single GPU from a list of GPUs obtained from API.
+/// 
+/// # Arguments
+/// * `gpu` - Mutable reference to GPU to update
+/// * `api_gpus_fn` - Function that returns a vector of GPUs from API
+/// 
+/// # Returns
+/// * `Ok(())` - If GPU was successfully updated
+/// * `Err(GpuError)` - If update failed
+/// 
+/// # Example
+/// ```rust
+/// use gpu_info::gpu_info::{update_gpu_from_api, GpuInfo, Result};
+/// 
+/// fn update_example(gpu: &mut GpuInfo) -> Result<()> {
+///     update_gpu_from_api(gpu, || vec![GpuInfo::unknown()])
+/// }
+/// ```
+pub fn update_gpu_from_api<F>(gpu: &mut GpuInfo, api_gpus_fn: F) -> Result<()>
+where
+    F: FnOnce() -> Vec<GpuInfo>,
+{
+    let gpus = api_gpus_fn();
+    if let Some(updated_gpu) = gpus.first() {
+        *gpu = updated_gpu.clone();
+        Ok(())
+    } else {
+        Err(GpuError::GpuNotActive)
+    }
+}
 
 /// Trait fmt_string (форматируем результат<T> в строковое представление)  defines a method for formatting GPU information.
 pub trait Formattable: Debug {
@@ -763,33 +840,27 @@ impl Display for GpuInfo {
 }
 
 // Кэширование результатов
+/// GPU information cache that uses unified caching utilities
+/// 
+/// This cache eliminates duplication by using the common caching infrastructure.
 pub struct GpuInfoCache {
-    info: RwLock<Option<(GpuInfo, Instant)>>,
-    ttl: Duration,
+    /// Underlying cache implementation
+    cache: crate::cache_utils::GpuInfoCache,
 }
 
 impl GpuInfoCache {
     pub fn new(ttl: Duration) -> Self {
         Self {
-            info: RwLock::new(None),
-            ttl,
+            cache: crate::cache_utils::GpuInfoCache::new(ttl),
         }
     }
 
     pub fn get(&self) -> Option<GpuInfo> {
-        let guard = self.info.read().ok()?;
-        let (info, timestamp) = guard.as_ref()?;
-        if timestamp.elapsed() < self.ttl {
-            Some(info.clone())
-        } else {
-            None
-        }
+        self.cache.get()
     }
 
     pub fn set(&self, info: GpuInfo) {
-        if let Ok(mut guard) = self.info.write() {
-            *guard = Some((info, Instant::now()));
-        }
+        self.cache.set(info);
     }
 }
 

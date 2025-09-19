@@ -1,6 +1,8 @@
 pub use crate::gpu_info::{GpuError, GpuInfo, Result};
 
 pub mod gpu_info;
+pub mod provider_manager;
+pub mod providers;
 pub mod gpu_manager;
 pub mod extended_info;
 pub mod monitoring;
@@ -13,6 +15,8 @@ pub mod windows;
 pub mod ffi_utils;
 pub mod nvml_api;
 pub mod adl_api;
+pub mod cache_utils;
+pub use provider_manager::GpuProviderManager;
 pub use gpu_manager::{GpuManager, GpuStatistics};
 pub use extended_info::{ExtendedGpuInfo, GpuInfoExtensions};
 pub use monitoring::{GpuMonitor, MonitorConfig, GpuThresholds, AlertType};

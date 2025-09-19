@@ -354,7 +354,7 @@ impl ExtendedGpuInfo {
 
 impl Display for ExtendedGpuInfo {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "=== Extended GPU Information ===")?;
+        writeln!(f, "Extended GPU Information")?;
         writeln!(f, "Name: {}", self.base_info.format_name_gpu())?;
         writeln!(f, "Vendor: {}", self.base_info.vendor)?;
         writeln!(f, "Health Score: {:.1}%", self.health_score())?;

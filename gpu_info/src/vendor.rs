@@ -62,3 +62,85 @@ impl Display for IntelGpuType {
         }
     }
 }
+
+/// Determine GPU vendor from GPU name
+/// 
+/// This function eliminates duplication in vendor determination logic
+/// by providing a unified way to classify GPU vendors based on their names.
+/// 
+/// # Arguments
+/// * `name` - GPU name string to classify
+/// 
+/// # Returns
+/// * `Vendor` - Classified vendor enum
+/// 
+/// # Examples
+/// ```
+/// use gpu_info::vendor::{Vendor, IntelGpuType, determine_vendor_from_name};
+/// 
+/// assert_eq!(determine_vendor_from_name("NVIDIA GeForce RTX 3080"), Vendor::Nvidia);
+/// assert_eq!(determine_vendor_from_name("AMD Radeon RX 6800 XT"), Vendor::Amd);
+/// assert_eq!(determine_vendor_from_name("Intel Iris Xe Graphics"), Vendor::Intel(IntelGpuType::Integrated));
+/// ```
+pub fn determine_vendor_from_name(name: &str) -> Vendor {
+    let name_lower = name.to_lowercase();
+    
+    // Apple Silicon
+    if name_lower.contains("apple") || name_lower.contains("m1") || name_lower.contains("m2") || name_lower.contains("m3") {
+        return Vendor::Apple;
+    }
+    
+    // AMD
+    if name_lower.contains("amd") || name_lower.contains("radeon") {
+        return Vendor::Amd;
+    }
+    
+    // NVIDIA
+    if name_lower.contains("nvidia") || name_lower.contains("geforce") {
+        return Vendor::Nvidia;
+    }
+    
+    // Intel
+    if name_lower.contains("intel") {
+        let gpu_type = if name_lower.contains("iris") || name_lower.contains("uhd") || name_lower.contains("hd graphics") {
+            IntelGpuType::Integrated
+        } else if name_lower.contains("arc") || name_lower.contains("discrete") {
+            IntelGpuType::Discrete
+        } else {
+            IntelGpuType::Unknown
+        };
+        return Vendor::Intel(gpu_type);
+    }
+    
+    Vendor::Unknown
+}
+
+/// Determine Intel GPU type from GPU name
+/// 
+/// This function provides a unified way to classify Intel GPU types
+/// based on their names, eliminating duplication.
+/// 
+/// # Arguments
+/// * `name` - Intel GPU name string to classify
+/// 
+/// # Returns
+/// * `IntelGpuType` - Classified Intel GPU type
+/// 
+/// # Examples
+/// ```
+/// use gpu_info::vendor::{IntelGpuType, determine_intel_gpu_type_from_name};
+/// 
+/// assert_eq!(determine_intel_gpu_type_from_name("Intel Iris Xe Graphics"), IntelGpuType::Integrated);
+/// assert_eq!(determine_intel_gpu_type_from_name("Intel Arc A770"), IntelGpuType::Discrete);
+/// ```
+pub fn determine_intel_gpu_type_from_name(name: &str) -> IntelGpuType {
+    let name_lower = name.to_lowercase();
+    
+    if name_lower.contains("iris") || name_lower.contains("uhd") || name_lower.contains("hd graphics") {
+        IntelGpuType::Integrated
+    } else if name_lower.contains("arc") || name_lower.contains("discrete") {
+        IntelGpuType::Discrete
+    } else {
+        IntelGpuType::Unknown
+    }
+}
