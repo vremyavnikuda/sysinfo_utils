@@ -285,7 +285,7 @@ impl ExtendedGpuInfo {
     
     /// Создает неизвестный ExtendedGpuInfo
     pub fn unknown() -> Self {
-        Self::from_basic(GpuInfo::unknown())
+        Self::default()
     }
     
     /// Возвращает базовую информацию

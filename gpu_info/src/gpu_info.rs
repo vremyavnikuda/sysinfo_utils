@@ -63,12 +63,22 @@ pub struct GpuInfo {
     pub max_clock_speed: Option<u32>, // maximum GPU clock speed (MHz)
 }
 
+/// Макрос для реализации Formattable для Option<T> типов
+macro_rules! impl_formattable_for_option {
+    ($type:ty) => {
+        impl Formattable for Option<$type> {
+            fn fmt_string(&self) -> String {
+                match self {
+                    Some(value) => value.to_string(),
+                    None => String::from("N/A"),
+                }
+            }
+        }
+    };
+}
+
+/// Реализация Formattable для Option<f32> с форматированием до одного знака после запятой
 impl Formattable for Option<f32> {
-    /// Formats the Option<f32> value into a string representation.
-    ///
-    /// # Returns
-    /// * If `Some(value)`, returns the string representation of the value with one decimal place.
-    /// * If `None`, returns "N/A" indicating the absence of a value.
     fn fmt_string(&self) -> String {
         match self {
             Some(value) => format!("{:.1}", value),
@@ -77,55 +87,12 @@ impl Formattable for Option<f32> {
     }
 }
 
-impl Formattable for Option<u32> {
-    /// Formats the Option<u32> value into a string representation.
-    ///
-    /// # Returns
-    /// * If `Some(value)`, returns the string representation of the value.
-    /// * If `None`, returns "N/A" indicating the absence of a value.
-    fn fmt_string(&self) -> String {
-        match self {
-            Some(value) => format!("{}", value),
-            None => String::from("N/A"),
-        }
-    }
-}
-
-impl Formattable for Option<bool> {
-    /// Formats the Option value into a string representation.
-    ///
-    /// # Returns
-    /// * If `Some(value)`, returns the string representation of the value.
-    /// * If `None`, returns "N/A" indicating the absence of a value.
-    ///
-    fn fmt_string(&self) -> String {
-        match self {
-            Some(value) => value.to_string(),
-            None => String::from("N/A"),
-        }
-    }
-}
-
-impl Formattable for Option<String> {
-    /// Formats the Option value into a string representation.
-    ///
-    /// # Returns
-    /// * If `Some(value)`, returns the string representation of the value.
-    /// * If `None`, returns "N/A" indicating the absence of a value.
-    fn fmt_string(&self) -> String {
-        match self {
-            Some(value) => value.to_string(),
-            None => String::from("N/A"),
-        }
-    }
-}
+// Используем макрос для реализации Formattable для других Option<T> типов
+impl_formattable_for_option!(u32);
+impl_formattable_for_option!(bool);
+impl_formattable_for_option!(String);
 
 impl Formattable for Option<&str> {
-    /// Formats the Option value into a string representation.
-    ///
-    /// # Returns
-    /// * If `Some(value)`, returns the string representation of the value.
-    /// * If `None`, returns "N/A" indicating the absence of a value.
     fn fmt_string(&self) -> String {
         match self {
             Some(value) => value.to_string(),
@@ -245,7 +212,7 @@ impl GpuInfo {
     /// * `None` - If the GPU name could not be determined or is not available
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("GPU Name: {:?}", gpu.name_gpu());
     /// ```
@@ -273,7 +240,7 @@ impl GpuInfo {
     /// * `None` - If the GPU temperature could not be determined or is not available.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Temperature: {:?}", gpu.temperature());
     /// ```
@@ -298,7 +265,7 @@ impl GpuInfo {
     /// * `None` - If the power usage of the GPU is unknown.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Power Usage: {:?}", gpu.power_usage());
     /// ```
@@ -313,7 +280,7 @@ impl GpuInfo {
     /// * `None` - If the power usage of the GPU is unknown.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Power Usage: {:?}", gpu.power_usage());
     /// ```
@@ -328,7 +295,7 @@ impl GpuInfo {
     /// * `None` - If the core clock speed of the GPU is unknown.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Core Clock: {:?}", gpu.core_clock());
     /// ```
@@ -343,7 +310,7 @@ impl GpuInfo {
     /// * `None` - If the memory utilization of the GPU is unknown.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Memory Utilization: {:?}", gpu.memory_util());
     /// ```
@@ -358,7 +325,7 @@ impl GpuInfo {
     /// * `None` - If the memory clock speed of the GPU is unknown.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Memory Clock: {:?}", gpu.memory_clock());
     /// ```
@@ -374,7 +341,7 @@ impl GpuInfo {
     /// * `None` - If the active status of the GPU is unknown.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Is Active: {:?}", gpu.active());
     /// ```
@@ -389,7 +356,7 @@ impl GpuInfo {
     /// * `None` - If the power limit of the GPU is unknown.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Power Limit: {:?}", gpu.power_limit());
     /// ```
@@ -404,7 +371,7 @@ impl GpuInfo {
     /// * `None` - If the total memory of the GPU is unknown.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Memory Total: {:?}", gpu.memory_total());
     /// ```
@@ -419,7 +386,7 @@ impl GpuInfo {
     /// * `None` - If the driver version is unknown.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Driver Version: {:?}", gpu.driver_version());
     /// ```
@@ -434,7 +401,7 @@ impl GpuInfo {
     /// * `None` - If the maximum clock speed is unknown.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Max Clock Speed: {:?}", gpu.max_clock_speed());
     /// ```
@@ -450,7 +417,7 @@ impl GpuInfo {
     /// * `String` - The name of the GPU.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Formated Name Gpu: {}", gpu.format_name_gpu());
     /// ```
@@ -458,31 +425,6 @@ impl GpuInfo {
         self.name_gpu
             .as_ref()
             .map_or_else(|| "Unknown GPU".to_string(), |s| s.clone())
-    }
-
-    /// Returns formatted temperature of the GPU.
-    ///
-    /// If the temperature of the GPU is unknown, returns 0.0.
-    ///
-    /// # Returns
-    /// * `f32` - The temperature of the GPU in degrees Celsius.
-    ///
-    /// # Example
-    /// ```
-    /// let gpu = gpu_info::get();
-    /// println!("Formatted Temperature: {}", gpu.format_temperature());
-    /// ```
-    /// # Notes
-    /// * The temperature is typically measured at the GPU die and represents the core temperature.
-    /// * Different GPUs may report temperatures with varying precision.
-    /// * Some GPUs may throttle performance at certain temperature thresholds.
-    /// * The temperature reading may have a small delay from real-time values.
-    /// # Performance
-    /// This is a lightweight accessor method that simply returns stored data.
-    /// It performs no I/O operations or complex calculations.
-    ///
-    pub fn format_temperature(&self) -> f32 {
-        self.temperature.unwrap_or(0.0)
     }
 
     /// Returns formatted utilization of the GPU.
@@ -493,7 +435,7 @@ impl GpuInfo {
     /// * `f32` - The utilization of the GPU as a percentage.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Formatted Utilization: {}", gpu.format_utilization());
     /// ```
@@ -517,7 +459,7 @@ impl GpuInfo {
     /// * `f32` - The power usage of the GPU in watts.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Formatted Power Usage: {}", gpu.format_power_usage());
     /// ```
@@ -541,7 +483,7 @@ impl GpuInfo {
     /// * `u32` - The core clock of the GPU in MHz.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Formatted Core Clock: {}", gpu.format_core_clock());
     /// ```
@@ -565,7 +507,7 @@ impl GpuInfo {
     /// * `f32` - The memory utilization of the GPU as a percentage.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Formatted Memory Utilization: {}", gpu.format_memory_util());
     /// ```
@@ -589,7 +531,7 @@ impl GpuInfo {
     /// * `u32` - The memory clock of the GPU in MHz.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Formatted Memory Clock: {}", gpu.format_memory_clock());
     /// ```
@@ -605,33 +547,6 @@ impl GpuInfo {
         self.memory_clock.unwrap_or(0)
     }
 
-    /// Returns formatted active status of the GPU.
-    ///
-    /// If the active status of the GPU is unknown, returns "Unknown".
-    ///
-    /// # Returns
-    /// * `String` - The active status of the GPU.
-    ///
-    /// # Example
-    /// ```
-    /// let gpu = gpu_info::get();
-    /// println!("Formatted Active Status: {}", gpu.format_active());
-    /// ```
-    /// # Notes
-    /// * The active status indicates whether the GPU is currently in use or idle.
-    /// * Different GPUs may report active status with varying precision.
-    /// * The active status reading may have a small delay from real-time values.
-    /// # Performance
-    /// This is a lightweight accessor method that simply returns stored data.
-    /// It performs no I/O operations or complex calculations.
-    pub fn format_active(&self) -> String {
-        if self.active == Some(true) {
-            "Active".to_string()
-        } else {
-            "Inactive".to_string()
-        }
-    }
-
     /// Returns formatted power limit of the GPU.
     ///
     /// If the power limit of the GPU is unknown, returns 0.0.
@@ -640,7 +555,7 @@ impl GpuInfo {
     /// * `f32` - The power limit of the GPU in watts.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Formatted Power Limit: {}", gpu.format_power_limit());
     /// ```
@@ -664,7 +579,7 @@ impl GpuInfo {
     /// * `u32` - The total memory of the GPU in megabytes.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Formatted Memory Total: {}", gpu.format_memory_total());
     /// ```
@@ -680,6 +595,31 @@ impl GpuInfo {
         self.memory_total.unwrap_or(0)
     }
 
+    /// Returns the maximum clock speed of the GPU in MHz
+    ///
+    /// If the maximum clock speed is not available, returns 0.
+    ///
+    /// # Returns
+    /// * type u32
+    /// * The maximum clock speed in MHz, or 0 if not available
+    /// # Example
+    /// ```rust
+    /// let gpu = gpu_info::get();
+    /// let max_clock_speed = gpu.format_max_clock_speed();
+    /// println!("Max clock speed: {}", max_clock_speed);
+    /// ```
+    /// # Notes
+    /// * The maximum clock speed is typically reported by the GPU driver and represents the highest clock speed the GPU can achieve.
+    /// * Different GPUs may report maximum clock speed with varying precision.
+    /// * Some GPUs may have dynamic clock speeds that change based on workload and temperature.
+    /// * The maximum clock speed reading may have a small delay from real-time values.
+    /// # Performance
+    /// This is a lightweight accessor method that simply returns stored data.
+    /// It performs no I/O operations or complex calculations.
+    pub fn format_max_clock_speed(&self) -> u32 {
+        self.max_clock_speed.unwrap_or(0)
+    }
+
     /// Returns formatted driver version of the GPU.
     ///
     /// If the driver version of the GPU is unknown, returns "Unknown Driver Version".
@@ -688,7 +628,7 @@ impl GpuInfo {
     /// * `String` - The driver version of the GPU.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
     /// println!("Formatted Driver Version: {}", gpu.format_driver_version());
     /// ```
@@ -706,29 +646,56 @@ impl GpuInfo {
             .map_or_else(|| "Unknown Driver Version".to_string(), |s| s.clone())
     }
 
-    /// Returns the maximum clock speed of the GPU in MHz
+    /// Returns formatted temperature of the GPU.
     ///
-    /// If the maximum clock speed is not available, returns 0.
+    /// If the temperature of the GPU is unknown, returns 0.0.
     ///
     /// # Returns
-    /// * type u32
-    /// * The maximum clock speed in MHz, or 0 if not available
+    /// * `f32` - The temperature of the GPU in degrees Celsius.
+    ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let gpu = gpu_info::get();
-    /// let max_clock_speed = gpu.format_max_clock_speed();
-    /// max_clock_speed
+    /// println!("Formatted Temperature: {}", gpu.format_temperature());
     /// ```
     /// # Notes
-    /// * The maximum clock speed is typically reported by the GPU driver and represents the highest clock speed the GPU can achieve.
-    /// * Different GPUs may report maximum clock speed with varying precision.
-    /// * Some GPUs may have dynamic clock speeds that change based on workload and temperature.
-    /// * The maximum clock speed reading may have a small delay from real-time values.
+    /// * The temperature is typically measured at the GPU die and represents the core temperature.
+    /// * Different GPUs may report temperatures with varying precision.
+    /// * Some GPUs may throttle performance at certain temperature thresholds.
+    /// * The temperature reading may have a small delay from real-time values.
     /// # Performance
     /// This is a lightweight accessor method that simply returns stored data.
     /// It performs no I/O operations or complex calculations.
-    pub fn format_max_clock_speed(&self) -> u32 {
-        self.max_clock_speed.unwrap_or(0)
+    ///
+    pub fn format_temperature(&self) -> f32 {
+        self.temperature.unwrap_or(0.0)
+    }
+
+    /// Returns formatted active status of the GPU.
+    ///
+    /// If the active status of the GPU is unknown, returns "Unknown".
+    ///
+    /// # Returns
+    /// * `String` - The active status of the GPU.
+    ///
+    /// # Example
+    /// ```rust
+    /// let gpu = gpu_info::get();
+    /// println!("Formatted Active Status: {}", gpu.format_active());
+    /// ```
+    /// # Notes
+    /// * The active status indicates whether the GPU is currently in use or idle.
+    /// * Different GPUs may report active status with varying precision.
+    /// * The active status reading may have a small delay from real-time values.
+    /// # Performance
+    /// This is a lightweight accessor method that simply returns stored data.
+    /// It performs no I/O operations or complex calculations.
+    pub fn format_active(&self) -> String {
+        if self.active == Some(true) {
+            "Active".to_string()
+        } else {
+            "Inactive".to_string()
+        }
     }
 
     pub fn validate(&self) -> Result<()> {
@@ -777,19 +744,20 @@ impl Default for GpuInfo {
 
 impl Display for GpuInfo {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.vendor)?;
-        write!(f, "{}", self.name_gpu.fmt_string())?;
-        write!(f, "{}", self.temperature.fmt_string())?;
-        write!(f, "{}", self.utilization.fmt_string())?;
-        write!(f, "{}", self.power_usage.fmt_string())?;
-        write!(f, "{}", self.core_clock.fmt_string())?;
-        write!(f, "{}", self.memory_util.fmt_string())?;
-        write!(f, "{}", self.memory_clock.fmt_string())?;
-        write!(f, "{}", self.active.fmt_string())?;
-        write!(f, "{}", self.power_limit.fmt_string())?;
-        write!(f, "{}", self.memory_total.fmt_string())?;
-        write!(f, "{}", self.driver_version.fmt_string())?;
-        write!(f, "{}", self.max_clock_speed.fmt_string())?;
+        writeln!(f, "GPU Information:")?;
+        writeln!(f, "  Vendor: {}", self.vendor)?;
+        writeln!(f, "  Name: {}", self.name_gpu.fmt_string())?;
+        writeln!(f, "  Temperature: {}", self.temperature.fmt_string())?;
+        writeln!(f, "  Utilization: {}", self.utilization.fmt_string())?;
+        writeln!(f, "  Power Usage: {}", self.power_usage.fmt_string())?;
+        writeln!(f, "  Core Clock: {}", self.core_clock.fmt_string())?;
+        writeln!(f, "  Memory Utilization: {}", self.memory_util.fmt_string())?;
+        writeln!(f, "  Memory Clock: {}", self.memory_clock.fmt_string())?;
+        writeln!(f, "  Active: {}", self.active.fmt_string())?;
+        writeln!(f, "  Power Limit: {}", self.power_limit.fmt_string())?;
+        writeln!(f, "  Memory Total: {}", self.memory_total.fmt_string())?;
+        writeln!(f, "  Driver Version: {}", self.driver_version.fmt_string())?;
+        writeln!(f, "  Max Clock Speed: {}", self.max_clock_speed.fmt_string())?;
         Ok(())
     }
 }
