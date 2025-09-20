@@ -6,7 +6,6 @@ use std::fmt::Display;
 ///
 /// GPU vendor information
 /// Vendor enum representing different GPU vendors
-///
 pub enum Vendor {
     Nvidia,
     Amd,
@@ -35,7 +34,6 @@ impl Default for IntelGpuType {
 }
 ///
 /// Display trait implementation for Vendor enum
-///
 impl Display for Vendor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
@@ -69,11 +67,19 @@ impl Display for IntelGpuType {
 ///
 /// # Examples
 /// ```
-/// use gpu_info::vendor::{Vendor, IntelGpuType, determine_vendor_from_name};
-///
-/// assert_eq!(determine_vendor_from_name("NVIDIA GeForce RTX 3080"), Vendor::Nvidia);
-/// assert_eq!(determine_vendor_from_name("AMD Radeon RX 6800 XT"), Vendor::Amd);
-/// assert_eq!(determine_vendor_from_name("Intel Iris Xe Graphics"), Vendor::Intel(IntelGpuType::Integrated));
+/// use gpu_info::vendor::{determine_vendor_from_name, IntelGpuType, Vendor};
+/// assert_eq!(
+///     determine_vendor_from_name("NVIDIA GeForce RTX 3080"),
+///     Vendor::Nvidia
+/// );
+/// assert_eq!(
+///     determine_vendor_from_name("AMD Radeon RX 6800 XT"),
+///     Vendor::Amd
+/// );
+/// assert_eq!(
+///     determine_vendor_from_name("Intel Iris Xe Graphics"),
+///     Vendor::Intel(IntelGpuType::Integrated)
+/// );
 /// ```
 pub fn determine_vendor_from_name(name: &str) -> Vendor {
     let name_lower = name.to_lowercase();
@@ -122,10 +128,15 @@ pub fn determine_vendor_from_name(name: &str) -> Vendor {
 ///
 /// # Examples
 /// ```
-/// use gpu_info::vendor::{IntelGpuType, determine_intel_gpu_type_from_name};
-///
-/// assert_eq!(determine_intel_gpu_type_from_name("Intel Iris Xe Graphics"), IntelGpuType::Integrated);
-/// assert_eq!(determine_intel_gpu_type_from_name("Intel Arc A770"), IntelGpuType::Discrete);
+/// use gpu_info::vendor::{determine_intel_gpu_type_from_name, IntelGpuType};
+/// assert_eq!(
+///     determine_intel_gpu_type_from_name("Intel Iris Xe Graphics"),
+///     IntelGpuType::Integrated
+/// );
+/// assert_eq!(
+///     determine_intel_gpu_type_from_name("Intel Arc A770"),
+///     IntelGpuType::Discrete
+/// );
 /// ```
 pub fn determine_intel_gpu_type_from_name(name: &str) -> IntelGpuType {
     let name_lower = name.to_lowercase();

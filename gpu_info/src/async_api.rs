@@ -16,7 +16,6 @@ use crate::GpuInfo;
 /// # Example
 /// ```rust
 /// use gpu_info::async_api::get_async;
-///
 /// #[tokio::main]
 /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let gpu = get_async().await?;
@@ -45,7 +44,6 @@ pub async fn get_async() -> Result<GpuInfo> {
 /// # Example
 /// ```rust
 /// use gpu_info::async_api::get_all_async;
-///
 /// #[tokio::main]
 /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let gpus = get_all_async().await?;
@@ -79,7 +77,6 @@ pub async fn get_all_async() -> Result<Vec<GpuInfo>> {
 /// # Example
 /// ```rust
 /// use gpu_info::{async_api::update_gpu_async, get};
-///
 /// #[tokio::main]
 /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let mut gpu = get();

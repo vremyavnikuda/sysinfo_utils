@@ -51,14 +51,12 @@ impl<T> CacheEntry<T> {
 ///
 /// # Examples
 /// ```
-/// use gpu_info::cache_utils::{GpuInfoCache, CacheEntry};
+/// use gpu_info::cache_utils::{CacheEntry, GpuInfoCache};
 /// use gpu_info::gpu_info::GpuInfo;
 /// use std::time::Duration;
-///
 /// let cache = GpuInfoCache::new(Duration::from_secs(1));
 /// let gpu_info = GpuInfo::unknown();
 /// cache.set(gpu_info.clone());
-///
 /// assert_eq!(cache.get(), Some(gpu_info));
 /// ```
 pub struct GpuInfoCache {
@@ -134,14 +132,12 @@ impl Default for GpuInfoCache {
 ///
 /// # Examples
 /// ```rust
-/// use gpu_info::cache_utils::{MultiGpuInfoCache, CacheEntry};
+/// use gpu_info::cache_utils::{CacheEntry, MultiGpuInfoCache};
 /// use gpu_info::gpu_info::GpuInfo;
 /// use std::time::Duration;
-///
 /// let cache = MultiGpuInfoCache::new(Duration::from_secs(1));
 /// let gpu_info = GpuInfo::unknown();
 /// cache.set(0, gpu_info.clone());
-///
 /// assert_eq!(cache.get(&0), Some(gpu_info));
 /// ```
 #[derive(Debug, Clone)]

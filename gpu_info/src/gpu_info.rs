@@ -44,12 +44,10 @@ pub trait GpuProvider: Send + Sync {
 ///
 /// # Example
 /// ```rust
-/// use gpu_info::gpu_info::{handle_empty_result, Result, GpuError};
-///
+/// use gpu_info::gpu_info::{handle_empty_result, GpuError, Result};
 /// let items = vec![1, 2, 3];
 /// let result: Result<Vec<i32>> = handle_empty_result(items);
 /// assert!(result.is_ok());
-///
 /// let empty_items: Vec<i32> = vec![];
 /// let result: Result<Vec<i32>> = handle_empty_result(empty_items);
 /// assert!(matches!(result, Err(GpuError::GpuNotFound)));
@@ -77,7 +75,6 @@ pub fn handle_empty_result<T>(items: Vec<T>) -> Result<Vec<T>> {
 /// # Example
 /// ```rust
 /// use gpu_info::gpu_info::{update_gpu_from_api, GpuInfo, Result};
-///
 /// fn update_example(gpu: &mut GpuInfo) -> Result<()> {
 ///     update_gpu_from_api(gpu, || vec![GpuInfo::unknown()])
 /// }
@@ -217,9 +214,8 @@ impl GpuInfo {
     ///
     /// # Example
     /// ```
-    /// use gpu_info::GpuInfo;
     /// use gpu_info::vendor::Vendor;
-    ///
+    /// use gpu_info::GpuInfo;
     /// let gpu_info = GpuInfo::write_vendor(Vendor::Nvidia);
     /// ```
     /// # Notes
@@ -236,7 +232,7 @@ impl GpuInfo {
     /// # Returns
     /// * The vendor of the GPU.
     /// ```
-    /// pub enum Vendor{
+    /// pub enum Vendor {
     ///     Nvidia,
     /// }
     /// ```
@@ -245,7 +241,7 @@ impl GpuInfo {
     /// # Example
     /// ```
     /// let gpu = gpu_info::get();
-    /// println!("Vendor: {}",gpu.vendor())
+    /// println!("Vendor: {}", gpu.vendor())
     /// ```
     /// # Notes
     /// * Vendor information is typically set by the manufacturer
@@ -276,7 +272,6 @@ impl GpuInfo {
     /// ```
     /// # Performance
     /// This is a lightweight accessor method that simply returns to stored data. It performs no I/O operations or complex calculations.
-    ///
     pub fn name_gpu(&self) -> Option<&str> {
         self.name_gpu.as_deref()
     }
@@ -702,7 +697,6 @@ impl GpuInfo {
     /// # Performance
     /// This is a lightweight accessor method that simply returns stored data.
     /// It performs no I/O operations or complex calculations.
-    ///
     pub fn format_temperature(&self) -> f32 {
         self.temperature.unwrap_or(0.0)
     }

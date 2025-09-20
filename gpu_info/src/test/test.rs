@@ -629,7 +629,6 @@ mod gpu_info_tests {
     ///
     /// * `None` - If the mocked command fails.
     /// * `Some(MockCommand)` - If the mocked command succeeds.
-    ///
     #[allow(dead_code)]
     fn mock_command(success: bool, output: &'static str) {
         MOCK_COMMAND.with(|mc| {

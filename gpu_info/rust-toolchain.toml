@@ -1,4 +1,4 @@
 # rust-toolchain.toml
 [toolchain]
-channel = "nightly"
+channel = "stable"
 components = ["rustfmt"]
