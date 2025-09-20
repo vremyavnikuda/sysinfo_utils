@@ -60,71 +60,65 @@ gpu_info/
 The library now provides a unified `GpuProvider` trait that eliminates code duplication:
 
 ```rust
-/// Trait for unified GPU provider interface
 pub trait GpuProvider: Send + Sync {
-    /// Detect all GPUs provided by this provider
     fn detect_gpus(&self) -> Result<Vec<GpuInfo>>;
-    
-    /// Update the information for a specific GPU
     fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()>;
-    
-    /// Get the vendor associated with this provider
     fn get_vendor(&self) -> Vendor;
 }
 ```
 
-## Formatting
+## Enhanced Caching
 
-The library provides smart formatting for all metrics with the following features:
-- Automatic handling of `Option<T>` values (returns "N/A" for `None`)
-- Precision control for floating-point values (1 decimal place)
-- Consistent formatting across all data types
-- Support for:
-  - `Option<f32>` (temperature, utilization, power)
-  - `Option<u32>` (clock speeds, memory)
-  - `Option<bool>` (active state)
-  - `Option<String>` and `Option<&str>` (names, versions)
-  - `String` (raw string values)
+The library now provides enhanced caching features for improved performance:
+
+1. **TTL-based expiration**: Cached entries automatically expire after a configurable time-to-live
+2. **LRU eviction**: Optional size-limited caching with least-recently-used eviction
+3. **Access tracking**: Cache entries track access frequency and last access time
+4. **Cache statistics**: Monitor cache performance with detailed statistics
+
+### Usage Examples
+
+```rust
+use gpu_info::gpu_manager::GpuManager;
+use std::time::Duration;
+let manager = GpuManager::with_cache_config(Duration::from_secs(2), 10);
+if let Some(gpu) = manager.get_gpu_cached(0) {
+    println!("GPU: {} (temp: {}°C)", gpu.format_name_gpu(), gpu.format_temperature());
+}
+if let Some(stats) = manager.get_cache_stats() {
+    println!("Cache entries: {}, Accesses: {}", stats.total_entries, stats.total_accesses);
+}
+```
 
 ### Formatting Examples
 
 ```rust
 let gpu = gpu_info::get()?;
-
-// Using format_* methods
 println!("Temperature: {}", gpu.format_temperature());
 println!("Core Clock: {}", gpu.format_core_clock());
 println!("Active: {}", gpu.format_active());
 println!("Name: {}", gpu.format_name_gpu());
 println!("Driver: {}", gpu.format_driver_version());
-
-// Using fmt_string() method directly
 println!("Temperature: {}", gpu.temperature.fmt_string());
 println!("Core Clock: {}", gpu.core_clock.fmt_string());
 println!("Active: {}", gpu.active.fmt_string());
 println!("Name: {}", gpu.name_gpu.fmt_string());
 println!("Driver: {}", gpu.driver_version.fmt_string());
-
-// Examples with Option<T> values
 let temp: Option<f32> = Some(75.5);
 let clock: Option<u32> = Some(1800);
 let active: Option<bool> = Some(true);
 let name: Option<String> = Some("NVIDIA GeForce RTX 3080".to_string());
 let driver: Option<&str> = Some("512.95");
-
 println!("Temperature: {}", temp.fmt_string());  // "75.5"
 println!("Core Clock: {}", clock.fmt_string());  // "1800"
 println!("Active: {}", active.fmt_string());     // "true"
 println!("Name: {}", name.fmt_string());         // "NVIDIA GeForce RTX 3080"
 println!("Driver: {}", driver.fmt_string());     // "512.95"
-
-// Examples with None values
 let temp: Option<f32> = None;
 let clock: Option<u32> = None;
 let active: Option<bool> = None;
 let name: Option<String> = None;
 let driver: Option<&str> = None;
-
 println!("Temperature: {}", temp.fmt_string());  // "N/A"
 println!("Core Clock: {}", clock.fmt_string());  // "N/A"
 println!("Active: {}", active.fmt_string());     // "N/A"
@@ -140,25 +134,19 @@ println!("Driver: {}", driver.fmt_string());     // "N/A"
 use gpu_info::GpuInfo;
 
 fn main() {
-    // Get information about the primary GPU
     let gpu = gpu_info::get();
-    
     println!("Vendor: {}", gpu.vendor);
     println!("Name GPU: {}", gpu.format_name_gpu());
     println!("Driver: {}", gpu.format_driver_version());
-
     println!("Temperature: {}°C", gpu.format_temperature());
     println!("Utilization: {}%", gpu.format_utilization());
     println!("Core Clock: {} MHz", gpu.format_core_clock());
     println!("Memory Clock: {} MHz", gpu.format_memory_clock());
     println!("Max Clock Speed: {} MHz", gpu.format_max_clock_speed());
-
     println!("Memory Usage: {}%", gpu.format_memory_util());
     println!("Total Memory: {} GB", gpu.format_memory_total());
-
     println!("Current Usage: {} W", gpu.format_power_usage());
     println!("Power Limit: {} W", gpu.format_power_limit());
-
     println!("Active: {}", gpu.format_active());
 }
 ```
@@ -169,25 +157,18 @@ fn main() {
 use gpu_info::GpuManager;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create GPU manager to work with multiple GPUs
     let mut manager = GpuManager::new();
-    
-    // Get all detected GPUs
     let gpus = manager.get_all_gpus_owned();
     println!("Found {} GPU(s)", gpus.len());
-    
     for (i, gpu) in gpus.iter().enumerate() {
         println!("GPU #{}: {} ({})", i, gpu.format_name_gpu(), gpu.vendor);
         println!("  Temperature: {}°C", gpu.format_temperature());
         println!("  Utilization: {}%", gpu.format_utilization());
         println!("  Power Usage: {}W", gpu.format_power_usage());
     }
-    
-    // Get primary GPU
     if let Some(primary_gpu) = manager.get_primary_gpu_owned() {
         println!("Primary GPU: {}", primary_gpu.format_name_gpu());
     }
-    
     Ok(())
 }
 ```
@@ -209,21 +190,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         provider_manager.register_provider(Vendor::Amd, Box::new(AmdProvider::new()));
         provider_manager.register_provider(Vendor::Intel(Default::default()), Box::new(IntelProvider::new()));
     }
-    
     #[cfg(target_os = "linux")]
     {
         // For Linux, you might use different providers
         // provider_manager.register_provider(Vendor::Nvidia, Box::new(crate::providers::linux::NvidiaLinuxProvider::new()));
     }
-    
-    // Detect all GPUs using registered providers
     let gpus = provider_manager.detect_all_gpus();
     println!("Detected {} GPU(s) using provider manager", gpus.len());
-    
     for gpu in gpus {
         println!("GPU: {} ({})", gpu.format_name_gpu(), gpu.vendor);
     }
-    
     Ok(())
 }
 ```
@@ -235,13 +211,10 @@ use gpu_info::{get_async, get_all_async};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Get primary GPU information asynchronously
     let gpu = get_async().await?;
     println!("Primary GPU: {}", gpu.format_name_gpu());
     println!("Temperature: {}°C", gpu.format_temperature());
     println!("Utilization: {}%", gpu.format_utilization());
-
-    // Get all GPUs information asynchronously
     let gpus = get_all_async().await?;
     println!("Found {} GPU(s)", gpus.len());
     for (i, gpu) in gpus.iter().enumerate() {
@@ -250,7 +223,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("  Utilization: {}%", gpu.format_utilization());
         println!("  Power Usage: {}W", gpu.format_power_usage());
     }
-
     Ok(())
 }
 ```
@@ -265,6 +237,11 @@ cargo run --example detailed
 Run the caching example:
 ```bash
 cargo run --example cache
+```
+
+Run the enhanced caching example:
+```bash
+cargo run --example enhanced_cache
 ```
 
 Run the provider manager example:

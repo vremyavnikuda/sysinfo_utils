@@ -2,6 +2,8 @@
 //!
 //! This module provides abstractions for loading dynamic libraries and resolving symbols
 //! across different platforms, reducing code duplication in GPU vendor implementations.
+#[cfg(unix)]
+use libloading::{Library, Symbol};
 use log::error;
 use std::marker::PhantomData;
 #[cfg(windows)]
@@ -11,8 +13,6 @@ use windows::{
     Win32::Foundation::HMODULE,
     Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryA, LoadLibraryW},
 };
-#[cfg(unix)]
-use libloading::{Library, Symbol};
 /// Represents the result of an API call with a success/error code
 pub trait ApiResult<T> {
     /// Check if the result represents success

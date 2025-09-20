@@ -701,11 +701,11 @@ fn _test_power_state_check() {
 // Реализация моков для системных команд
 #[cfg(all(not(target_os = "hermit"), any(unix, windows)))]
 mod mock_impl {
-    use std::process::{Command, ExitStatus, Output};
     #[cfg(unix)]
     use std::os::unix::process::ExitStatusExt;
     #[cfg(windows)]
     use std::os::windows::process::ExitStatusExt;
+    use std::process::{Command, ExitStatus, Output};
     /// Mocks the execution of a system command by returning predefined output.
     ///
     /// This function is used in testing to simulate the execution of a system

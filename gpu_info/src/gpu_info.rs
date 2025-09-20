@@ -1,6 +1,6 @@
+use crate::vendor::Vendor;
 use std::fmt::{Debug, Display, Formatter};
 use std::time::Duration;
-use crate::vendor::Vendor;
 #[derive(Debug, thiserror::Error)]
 pub enum GpuError {
     #[error("Invalid temperature value: {0}")]

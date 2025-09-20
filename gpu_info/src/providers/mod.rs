@@ -10,11 +10,11 @@ pub mod nvidia;
 pub use self::amd::AmdProvider;
 #[cfg(target_os = "windows")]
 pub use self::intel::IntelProvider;
-#[cfg(target_os = "windows")]
-pub use self::nvidia::NvidiaProvider;
 #[cfg(target_os = "linux")]
 pub use self::linux::AmdLinuxProvider;
 #[cfg(target_os = "linux")]
 pub use self::linux::NvidiaLinuxProvider;
 #[cfg(target_os = "macos")]
 pub use self::macos::MacosProvider;
+#[cfg(target_os = "windows")]
+pub use self::nvidia::NvidiaProvider;

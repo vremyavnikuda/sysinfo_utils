@@ -33,21 +33,21 @@ fn main() {
     for vendor in provider_manager.get_registered_vendors() {
         println!("  - {:?}", vendor);
     }
-    println!("\nDetecting GPUs...");
+    println!("Detecting GPUs...");
     let gpus = provider_manager.detect_all_gpus();
     if gpus.is_empty() {
         println!("No GPUs detected");
     } else {
         println!("Found {} GPU(s):", gpus.len());
         for (i, gpu) in gpus.iter().enumerate() {
-            println!("  GPU #{}: {} ({})", i, gpu.format_name_gpu(), gpu.vendor);
-            println!("    Temperature: {}°C", gpu.format_temperature());
-            println!("    Utilization: {}%", gpu.format_utilization());
-            println!("    Power Usage: {}W", gpu.format_power_usage());
-            println!("    Memory: {}GB", gpu.format_memory_total());
+            println!("- GPU #{}: {} ({})", i, gpu.format_name_gpu(), gpu.vendor);
+            println!("  - Temperature: {}°C", gpu.format_temperature());
+            println!("  - Utilization: {}%", gpu.format_utilization());
+            println!("  - Power Usage: {}W", gpu.format_power_usage());
+            println!("  - Memory: {}GB", gpu.format_memory_total());
         }
     }
-    println!("\nProvider Manager Capabilities:");
+    println!("Provider Manager Capabilities:");
     println!(
         "  - Supports NVIDIA: {}",
         provider_manager.is_vendor_supported(&Vendor::Nvidia)

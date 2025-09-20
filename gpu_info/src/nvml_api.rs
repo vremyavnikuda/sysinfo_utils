@@ -7,11 +7,11 @@ use crate::ffi_utils::{
 };
 use crate::gpu_info::GpuInfo;
 use crate::vendor::Vendor;
+#[cfg(unix)]
+use libloading::Symbol;
 use log::error;
 use std::ffi::{c_char, c_uint, CStr};
 use std::ptr;
-#[cfg(unix)]
-use libloading::Symbol;
 /// NVML constants
 pub const NVML_SUCCESS: i32 = 0;
 pub const NVML_TEMPERATURE_GPU: i32 = 0;
@@ -271,7 +271,8 @@ impl NvmlClient {
             unsafe { (self.api_table.functions().device_get_power_usage)(device, &mut power) };
         NvmlResult {
             code,
-            value: (power as f32) / 1000.0, // Convert mW to W
+            // Convert mW to W
+            value: (power as f32) / 1000.0,
         }
     }
     /// Get device clock info
@@ -391,7 +392,6 @@ pub fn get_nvidia_gpus() -> Vec<GpuInfo> {
     }
     #[cfg(unix)]
     {
-        // On Unix, we typically just get the first device
         if let Some(device) = client.get_device_handle(0).to_option() {
             if let Some(gpu_info) = client.create_gpu_info(device) {
                 client.shutdown();

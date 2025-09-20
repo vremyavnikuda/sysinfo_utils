@@ -21,10 +21,6 @@ pub use extended_info::{ExtendedGpuInfo, GpuInfoExtensions};
 pub use gpu_manager::{GpuManager, GpuStatistics};
 pub use monitoring::{AlertType, GpuMonitor, GpuThresholds, MonitorConfig};
 pub use provider_manager::GpuProviderManager;
-#[allow(missing_debug_implementations, missing_docs, unsafe_code)]
-#[cfg(target_os = "linux")]
-#[path = "linux/mod.rs"]
-pub mod linux;
 #[cfg(target_os = "windows")]
 #[path = "windows/mod.rs"]
 pub mod imp;
@@ -34,6 +30,10 @@ pub mod imp;
 #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
 #[path = "unknown/mod.rs"]
 pub mod imp;
+#[allow(missing_debug_implementations, missing_docs, unsafe_code)]
+#[cfg(target_os = "linux")]
+#[path = "linux/mod.rs"]
+pub mod linux;
 pub mod test;
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))]
 /// Gets the `GpuInfo` of the primary GPU in the system.

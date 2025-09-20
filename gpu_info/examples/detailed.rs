@@ -16,7 +16,6 @@ fn main() -> Result<()> {
     println!("Current Usage: {} W", gpu.format_power_usage());
     println!("Power Limit: {} W", gpu.format_power_limit());
     println!("Active: {}", gpu.format_active());
-    // refactor:task_1:todo: Качество_кода - дублирование match логики обновления GPU по vendor
     for i in 0..5 {
         #[cfg(target_os = "windows")]
         {
@@ -42,7 +41,6 @@ fn main() -> Result<()> {
         }
         #[cfg(not(target_os = "windows"))]
         {
-            // For non-Windows platforms, use the old interface for now
             match gpu.vendor {
                 Vendor::Nvidia => {
                     #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -55,7 +53,7 @@ fn main() -> Result<()> {
                 _ => {}
             }
         }
-        println!("\nMeasurement #{}", i + 1);
+        println!("Measurement #{}", i + 1);
         println!("Temperature: {}°C", gpu.format_temperature());
         println!("Utilization: {}%", gpu.format_utilization());
         println!("Core Clock: {} MHz", gpu.format_core_clock());

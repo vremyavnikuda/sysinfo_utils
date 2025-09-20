@@ -8,7 +8,6 @@ use std::path::Path;
 pub struct AmdLinuxProvider;
 
 impl AmdLinuxProvider {
-    // refactor:task_1:todo: Качество_кода - дублирование логики поиска GPU через sysfs
     /// Detect AMD GPUs through sysfs interface
     pub fn detect_amd_gpus() -> Result<Vec<GpuInfo>> {
         let mut gpus = Vec::new();

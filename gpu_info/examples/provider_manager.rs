@@ -17,7 +17,7 @@ fn main() {
     for vendor in provider_manager.get_registered_vendors() {
         println!("  - {:?}", vendor);
     }
-    println!("\nDetecting GPUs...");
+    println!("Detecting GPUs...");
     let gpus = provider_manager.detect_all_gpus();
     if gpus.is_empty() {
         println!("No GPUs detected");
@@ -27,7 +27,7 @@ fn main() {
             println!("  GPU #{}: {} ({})", i, gpu.format_name_gpu(), gpu.vendor);
         }
     }
-    println!("\nProvider Manager Capabilities:");
+    println!("Provider Manager Capabilities:");
     println!(
         "  - Supports NVIDIA: {}",
         provider_manager.is_vendor_supported(&Vendor::Nvidia)

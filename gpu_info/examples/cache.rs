@@ -4,7 +4,7 @@ use std::time::Duration;
 fn main() {
     let cache = GpuInfoCache::new(Duration::from_secs(2));
     println!("Demonstration of GPU information caching");
-    println!("\nFirst data retrieval:");
+    println!("First data retrieval:");
     if let Some(gpu) = cache.get() {
         println!("Temperature: {}°C", gpu.format_temperature());
         println!("Utilization: {}%", gpu.format_utilization());
@@ -13,14 +13,14 @@ fn main() {
         let gpu = gpu_info::get();
         cache.set(gpu);
     }
-    println!("\nSecond data retrieval (should be from cache):");
+    println!("Second data retrieval (should be from cache):");
     if let Some(gpu) = cache.get() {
         println!("Temperature: {}°C", gpu.format_temperature());
         println!("Utilization: {}%", gpu.format_utilization());
     }
-    println!("\nWaiting 3 seconds...");
+    println!("Waiting 3 seconds...");
     thread::sleep(Duration::from_secs(3));
-    println!("\nThird data retrieval (cache should be empty):");
+    println!("Third data retrieval (cache should be empty):");
     if let Some(gpu) = cache.get() {
         println!("Temperature: {}°C", gpu.format_temperature());
         println!("Utilization: {}%", gpu.format_utilization());
@@ -29,11 +29,11 @@ fn main() {
         let gpu = gpu_info::get();
         cache.set(gpu);
     }
-    println!("\nCache update:");
+    println!("Cache update:");
     let gpu = gpu_info::get();
     cache.set(gpu);
     println!("Cache updated");
-    println!("\nChecking updated data:");
+    println!("Checking updated data:");
     if let Some(gpu) = cache.get() {
         println!("Temperature: {}°C", gpu.format_temperature());
         println!("Utilization: {}%", gpu.format_utilization());

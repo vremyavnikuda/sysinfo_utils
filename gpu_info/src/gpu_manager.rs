@@ -41,6 +41,16 @@ impl GpuManager {
         manager.detect_all_gpus();
         manager
     }
+    /// Создает менеджер с настраиваемым TTL кэша и максимальным размером
+    pub fn with_cache_config(cache_ttl: Duration, max_entries: usize) -> Self {
+        let mut manager = Self {
+            gpus: Vec::new(),
+            primary_gpu_index: 0,
+            cache: crate::cache_utils::MultiGpuInfoCache::with_max_entries(cache_ttl, max_entries),
+        };
+        manager.detect_all_gpus();
+        manager
+    }
     /// Обнаруживает все GPU в системе
     pub fn detect_all_gpus(&mut self) {
         self.gpus.clear();
@@ -272,7 +282,14 @@ impl GpuManager {
             debug!("Returning cached GPU #{}", index);
             return Some(cached_gpu);
         }
-        self.get_gpu_by_index_owned(index)
+        // If not in cache, get from source and populate cache
+        if let Some(gpu) = self.get_gpu_by_index_owned(index) {
+            self.cache.set(index, gpu.clone());
+            debug!("Populated cache for GPU #{}", index);
+            Some(gpu)
+        } else {
+            None
+        }
     }
     /// Возвращает основной GPU с кэшированием
     pub fn get_primary_gpu_cached(&self) -> Option<GpuInfo> {
@@ -313,6 +330,10 @@ impl GpuManager {
             .filter(|(_, gpu)| gpu.active.unwrap_or(false))
             .map(|(index, _)| index)
             .collect()
+    }
+    /// Получает статистику кэша
+    pub fn get_cache_stats(&self) -> Option<crate::cache_utils::CacheStats> {
+        self.cache.get_stats()
     }
 }
 /// Статистика по GPU в системе
