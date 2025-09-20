@@ -14,6 +14,7 @@ A cross-platform Rust library for retrieving GPU information and monitoring metr
 - **Unified provider interface for all GPU vendors**
 - **Reduced code duplication through common utilities**
 - **Enhanced extensibility with modular architecture**
+- **Asynchronous API for non-blocking operations**
 
 ## Supported Metrics
 
@@ -227,6 +228,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+### Using Async API
+
+```rust
+use gpu_info::{get_async, get_all_async};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Get primary GPU information asynchronously
+    let gpu = get_async().await?;
+    println!("Primary GPU: {}", gpu.format_name_gpu());
+    println!("Temperature: {}°C", gpu.format_temperature());
+    println!("Utilization: {}%", gpu.format_utilization());
+
+    // Get all GPUs information asynchronously
+    let gpus = get_all_async().await?;
+    println!("Found {} GPU(s)", gpus.len());
+    for (i, gpu) in gpus.iter().enumerate() {
+        println!("GPU {}: {}", i, gpu.format_name_gpu());
+        println!("  Temperature: {}°C", gpu.format_temperature());
+        println!("  Utilization: {}%", gpu.format_utilization());
+        println!("  Power Usage: {}W", gpu.format_power_usage());
+    }
+
+    Ok(())
+}
+```
+
 ## Examples
 
 Run the detailed example:
@@ -242,6 +270,11 @@ cargo run --example cache
 Run the provider manager example:
 ```bash
 cargo run --example provider_manager
+```
+
+Run the async API example:
+```bash
+cargo run --example async_example
 ```
 
 ## Dependencies

@@ -16,10 +16,12 @@ pub mod ffi_utils;
 pub mod nvml_api;
 pub mod adl_api;
 pub mod cache_utils;
+pub mod async_api;
 pub use provider_manager::GpuProviderManager;
 pub use gpu_manager::{GpuManager, GpuStatistics};
 pub use extended_info::{ExtendedGpuInfo, GpuInfoExtensions};
 pub use monitoring::{GpuMonitor, MonitorConfig, GpuThresholds, AlertType};
+pub use async_api::{get_async, get_all_async, update_gpu_async};
 
 #[allow(missing_debug_implementations, missing_docs, unsafe_code)]
 #[cfg(target_os = "linux")]
