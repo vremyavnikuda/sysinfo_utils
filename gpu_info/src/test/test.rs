@@ -783,7 +783,6 @@ mod linux_nvidia_test {
             ..Default::default()
         };
         let mut mock_client = MockNvmlClient::new();
-        // refactor:task_1:todo: Качество_кода - дублирование мок объектов с NVML_SUCCESS паттерном
         mock_client.expect_init().returning(|| NVML_SUCCESS);
         mock_client.expect_shutdown().returning(|| NVML_SUCCESS);
         mock_client.expect_get_count().returning(|count| unsafe {

@@ -417,7 +417,6 @@ impl GpuMonitor {
             }
         }
     }
-    // refactor:task_1:todo: Качество_кода - дублирование логики проверки пороговых значений
     /// Проверяет алерты
     fn check_alerts(
         gpus: &[GpuInfo],

@@ -134,7 +134,6 @@ impl MacOSGpuProvider {
         }
         gpus
     }
-    // refactor:task_1:todo: Качество_кода - дублирование логики определения vendor по имени
     /// Определение производителя по имени GPU
     fn determine_vendor(name: &str) -> Vendor {
         let name_lower = name.to_lowercase();

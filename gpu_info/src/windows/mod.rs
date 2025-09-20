@@ -7,7 +7,6 @@ pub mod intel;
 pub mod nvidia;
 /// Returns information about the GPU.
 /// Automatically detects GPU vendor and returns appropriate information.
-// refactor:task_1:todo: Качество_кода - дублирование логики определения типа GPU по vendor
 pub fn info_gpu() -> GpuInfo {
     match detect_gpu_vendor() {
         Some(Vendor::Nvidia) => match nvidia::detect_nvidia_gpus() {
@@ -47,7 +46,6 @@ pub fn info_gpu() -> GpuInfo {
     error!("Failed to get GPU information");
     GpuInfo::unknown()
 }
-// refactor:task_1:todo: Качество_кода - дублирование логики определения vendor через PowerShell
 fn detect_gpu_vendor() -> Option<Vendor> {
     let output = Command::new("powershell")
         .args([

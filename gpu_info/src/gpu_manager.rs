@@ -76,7 +76,6 @@ impl GpuManager {
             self.select_primary_gpu();
         }
     }
-    // refactor:task_1:todo: Качество_кода - дублирование логики обнаружения GPU по платформам
     #[cfg(target_os = "windows")]
     fn detect_windows_gpus(&mut self) {
         use crate::providers::{amd, intel, nvidia};
@@ -239,7 +238,6 @@ impl GpuManager {
     pub fn refresh_primary_gpu(&mut self) -> Result<()> {
         self.refresh_gpu(self.primary_gpu_index)
     }
-    // refactor:task_1:todo: Качество_кода - дублирование логики обновления GPU по vendor
     /// Внутренняя функция обновления одного GPU
     fn update_single_gpu_static(gpu: &mut GpuInfo) -> Result<()> {
         // Use the new provider interface when available

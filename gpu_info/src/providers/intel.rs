@@ -11,11 +11,9 @@ impl IntelProvider {
     pub fn new() -> Self {
         Self
     }
-    // refactor:task_1:todo: Качество_кода - дублирование логики определения типа GPU
     fn determine_intel_gpu_type(&self, name: &str) -> IntelGpuType {
         crate::vendor::determine_intel_gpu_type_from_name(name)
     }
-    // refactor:task_1:todo: Качество_кода - дублирование логики PowerShell запросов
     fn get_intel_gpu_info(&self) -> Result<String> {
         let output = Command::new("powershell")
             .args([
@@ -38,7 +36,6 @@ impl IntelProvider {
         Ok(String::from_utf8_lossy(&output.stdout).into_owned())
     }
     fn parse_gpu_info(&self, output_str: &str) -> Option<GpuInfo> {
-        // refactor:task_1:todo: Качество_кода - дублирование логики парсинга PowerShell вывода
         let gpu_name = output_str
             .lines()
             .find(|line| line.contains("Name"))
@@ -81,7 +78,6 @@ impl IntelProvider {
         if let Some(max_clock) = max_clock_speed {
             info!("Max clock speed: {} MHz", max_clock);
         }
-        // refactor:task_1:todo: Качество_кода - дублирование логики создания GpuInfo структуры
         Some(GpuInfo {
             name_gpu: Some(gpu_name),
             vendor: Vendor::Intel(gpu_type),
