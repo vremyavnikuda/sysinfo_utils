@@ -1,8 +1,6 @@
 use std::fmt::{Debug, Display, Formatter};
 use std::time::Duration;
-
 use crate::vendor::Vendor;
-
 #[derive(Debug, thiserror::Error)]
 pub enum GpuError {
     #[error("Invalid temperature value: {0}")]
@@ -22,41 +20,36 @@ pub enum GpuError {
     #[error("GPU not active")]
     GpuNotActive,
 }
-
 pub type Result<T> = std::result::Result<T, GpuError>;
-
 /// Trait for unified GPU provider interface
 pub trait GpuProvider: Send + Sync {
     /// Detect all GPUs provided by this provider
     fn detect_gpus(&self) -> Result<Vec<GpuInfo>>;
-    
     /// Update the information for a specific GPU
     fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()>;
-    
     /// Get the vendor associated with this provider
     fn get_vendor(&self) -> Vendor;
 }
-
 /// Handle empty vector result by converting to Result
-/// 
+///
 /// This function eliminates duplication in provider implementations where
 /// they need to convert an empty Vec to a GpuError::GpuNotFound error.
-/// 
+///
 /// # Arguments
 /// * `items` - Vector of items to check
-/// 
+///
 /// # Returns
 /// * `Ok(Vec<T>)` - If vector is not empty
 /// * `Err(GpuError::GpuNotFound)` - If vector is empty
-/// 
+///
 /// # Example
 /// ```rust
 /// use gpu_info::gpu_info::{handle_empty_result, Result, GpuError};
-/// 
+///
 /// let items = vec![1, 2, 3];
 /// let result: Result<Vec<i32>> = handle_empty_result(items);
 /// assert!(result.is_ok());
-/// 
+///
 /// let empty_items: Vec<i32> = vec![];
 /// let result: Result<Vec<i32>> = handle_empty_result(empty_items);
 /// assert!(matches!(result, Err(GpuError::GpuNotFound)));
@@ -68,24 +61,23 @@ pub fn handle_empty_result<T>(items: Vec<T>) -> Result<Vec<T>> {
         Ok(items)
     }
 }
-
 /// Update GPU information using the common pattern
-/// 
+///
 /// This function eliminates duplication in provider implementations where
 /// they need to update a single GPU from a list of GPUs obtained from API.
-/// 
+///
 /// # Arguments
 /// * `gpu` - Mutable reference to GPU to update
 /// * `api_gpus_fn` - Function that returns a vector of GPUs from API
-/// 
+///
 /// # Returns
 /// * `Ok(())` - If GPU was successfully updated
 /// * `Err(GpuError)` - If update failed
-/// 
+///
 /// # Example
 /// ```rust
 /// use gpu_info::gpu_info::{update_gpu_from_api, GpuInfo, Result};
-/// 
+///
 /// fn update_example(gpu: &mut GpuInfo) -> Result<()> {
 ///     update_gpu_from_api(gpu, || vec![GpuInfo::unknown()])
 /// }
@@ -102,12 +94,10 @@ where
         Err(GpuError::GpuNotActive)
     }
 }
-
 /// Trait fmt_string (форматируем результат<T> в строковое представление)  defines a method for formatting GPU information.
 pub trait Formattable: Debug {
     fn fmt_string(&self) -> String;
 }
-
 /// All information gathered from the system about the current GPU.
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -139,7 +129,6 @@ pub struct GpuInfo {
     /// The maximum clock speed of the GPU in MHz.
     pub max_clock_speed: Option<u32>, // maximum GPU clock speed (MHz)
 }
-
 /// Макрос для реализации Formattable для Option<T> типов
 macro_rules! impl_formattable_for_option {
     ($type:ty) => {
@@ -153,7 +142,6 @@ macro_rules! impl_formattable_for_option {
         }
     };
 }
-
 /// Реализация Formattable для Option<f32> с форматированием до одного знака после запятой
 impl Formattable for Option<f32> {
     fn fmt_string(&self) -> String {
@@ -163,12 +151,10 @@ impl Formattable for Option<f32> {
         }
     }
 }
-
 // Используем макрос для реализации Formattable для других Option<T> типов
 impl_formattable_for_option!(u32);
 impl_formattable_for_option!(bool);
 impl_formattable_for_option!(String);
-
 impl Formattable for Option<&str> {
     fn fmt_string(&self) -> String {
         match self {
@@ -177,7 +163,6 @@ impl Formattable for Option<&str> {
         }
     }
 }
-
 impl Formattable for String {
     /// Formats the string value into a string representation.
     ///
@@ -187,7 +172,6 @@ impl Formattable for String {
         self.clone()
     }
 }
-
 /// A struct representing the GPU information.
 impl GpuInfo {
     /// Creates a `GpuInfo` instance with all fields set to unknown or default values.
@@ -220,7 +204,6 @@ impl GpuInfo {
             max_clock_speed: None,
         };
     }
-
     /// Creates a new `GpuInfo` instance with the specified GPU vendor.
     ///
     /// This function initializes a `GpuInfo` struct with the given `vendor`
@@ -248,7 +231,6 @@ impl GpuInfo {
             ..GpuInfo::default()
         }
     }
-
     /// Returns the vendor of the GPU.
     ///
     /// # Returns
@@ -271,7 +253,6 @@ impl GpuInfo {
     pub fn vendor(&self) -> Vendor {
         self.vendor
     }
-
     /// Returns the full name of the GPU.
     ///
     /// This function retrieves the GPU's marketing name as reported by the driver.
@@ -299,7 +280,6 @@ impl GpuInfo {
     pub fn name_gpu(&self) -> Option<&str> {
         self.name_gpu.as_deref()
     }
-
     /// Returns the current temperature of the GPU.
     ///
     /// This function retrieves the GPU's current temperature as reported by the driver.
@@ -334,7 +314,6 @@ impl GpuInfo {
     pub fn temperature(&self) -> Option<f32> {
         self.temperature
     }
-
     /// Returns the current power usage of the GPU.
     ///
     /// # Returns
@@ -349,7 +328,6 @@ impl GpuInfo {
     pub fn utilization(&self) -> Option<f32> {
         self.utilization
     }
-
     /// Returns the current power usage of the GPU.
     ///
     /// # Returns
@@ -364,7 +342,6 @@ impl GpuInfo {
     pub fn power_usage(&self) -> Option<f32> {
         self.power_usage
     }
-
     /// Returns the current core clock speed of the GPU.
     ///
     /// # Returns
@@ -379,7 +356,6 @@ impl GpuInfo {
     pub fn core_clock(&self) -> Option<u32> {
         self.core_clock
     }
-
     /// Returns the current memory utilization of the GPU as a percentage.
     ///
     /// # Returns
@@ -394,7 +370,6 @@ impl GpuInfo {
     pub fn memory_util(&self) -> Option<f32> {
         self.memory_util
     }
-
     /// Returns the current memory clock speed of the GPU.
     ///
     /// # Returns
@@ -409,7 +384,6 @@ impl GpuInfo {
     pub fn memory_clock(&self) -> Option<u32> {
         self.memory_clock
     }
-
     /// Returns whether the GPU is currently active.
     ///
     /// # Returns
@@ -425,7 +399,6 @@ impl GpuInfo {
     pub fn active(&self) -> Option<bool> {
         self.active
     }
-
     /// Returns the power limit of the GPU in watts.
     ///
     /// # Returns
@@ -440,7 +413,6 @@ impl GpuInfo {
     pub fn power_limit(&self) -> Option<f32> {
         self.power_limit
     }
-
     /// Returns the total memory of the GPU in megabytes.
     ///
     /// # Returns
@@ -455,7 +427,6 @@ impl GpuInfo {
     pub fn memory_total(&self) -> Option<u32> {
         self.memory_total
     }
-
     /// Returns the driver version of the GPU.
     ///
     /// # Returns
@@ -470,7 +441,6 @@ impl GpuInfo {
     pub fn driver_version(&self) -> Option<&str> {
         self.driver_version.as_deref()
     }
-
     /// Returns the maximum clock speed of the GPU in MHz.
     ///
     /// # Returns
@@ -485,7 +455,6 @@ impl GpuInfo {
     pub fn max_clock_speed(&self) -> Option<u32> {
         self.max_clock_speed
     }
-
     /// Returns formated the name of the GPU.
     ///
     /// If the name of the GPU is unknown, returns "Unknown GPU".
@@ -503,7 +472,6 @@ impl GpuInfo {
             .as_ref()
             .map_or_else(|| "Unknown GPU".to_string(), |s| s.clone())
     }
-
     /// Returns formatted utilization of the GPU.
     ///
     /// If the utilization of the GPU is unknown, returns 0.0.
@@ -527,7 +495,6 @@ impl GpuInfo {
     pub fn format_utilization(&self) -> f32 {
         self.utilization.unwrap_or(0.0)
     }
-
     /// Returns formatted power usage of the GPU.
     ///
     /// If the power usage of the GPU is unknown, returns 0.0.
@@ -551,7 +518,6 @@ impl GpuInfo {
     pub fn format_power_usage(&self) -> f32 {
         self.power_usage.unwrap_or(0.0)
     }
-
     /// Returns formatted core clock of the GPU.
     ///
     /// If the core clock of the GPU is unknown, returns 0.
@@ -575,7 +541,6 @@ impl GpuInfo {
     pub fn format_core_clock(&self) -> u32 {
         self.core_clock.unwrap_or(0)
     }
-
     /// Returns formatted memory utilization of the GPU.
     ///
     /// If the memory utilization of the GPU is unknown, returns 0.0.
@@ -599,7 +564,6 @@ impl GpuInfo {
     pub fn format_memory_util(&self) -> f32 {
         self.memory_util.unwrap_or(0.0)
     }
-
     /// Returns formatted memory clock of the GPU.
     ///
     /// If the memory clock of the GPU is unknown, returns 0.
@@ -623,7 +587,6 @@ impl GpuInfo {
     pub fn format_memory_clock(&self) -> u32 {
         self.memory_clock.unwrap_or(0)
     }
-
     /// Returns formatted power limit of the GPU.
     ///
     /// If the power limit of the GPU is unknown, returns 0.0.
@@ -647,7 +610,6 @@ impl GpuInfo {
     pub fn format_power_limit(&self) -> f32 {
         self.power_limit.unwrap_or(0.0)
     }
-
     /// Returns formatted total memory of the GPU.
     ///
     /// If the total memory of the GPU is unknown, returns 0.
@@ -671,7 +633,6 @@ impl GpuInfo {
     pub fn format_memory_total(&self) -> u32 {
         self.memory_total.unwrap_or(0)
     }
-
     /// Returns the maximum clock speed of the GPU in MHz
     ///
     /// If the maximum clock speed is not available, returns 0.
@@ -696,7 +657,6 @@ impl GpuInfo {
     pub fn format_max_clock_speed(&self) -> u32 {
         self.max_clock_speed.unwrap_or(0)
     }
-
     /// Returns formatted driver version of the GPU.
     ///
     /// If the driver version of the GPU is unknown, returns "Unknown Driver Version".
@@ -722,7 +682,6 @@ impl GpuInfo {
             .as_ref()
             .map_or_else(|| "Unknown Driver Version".to_string(), |s| s.clone())
     }
-
     /// Returns formatted temperature of the GPU.
     ///
     /// If the temperature of the GPU is unknown, returns 0.0.
@@ -747,7 +706,6 @@ impl GpuInfo {
     pub fn format_temperature(&self) -> f32 {
         self.temperature.unwrap_or(0.0)
     }
-
     /// Returns formatted active status of the GPU.
     ///
     /// If the active status of the GPU is unknown, returns "Unknown".
@@ -774,7 +732,6 @@ impl GpuInfo {
             "Inactive".to_string()
         }
     }
-
     pub fn validate(&self) -> Result<()> {
         if let Some(temp) = self.temperature {
             if !(0.0..=1000.0).contains(&temp) {
@@ -803,12 +760,10 @@ impl GpuInfo {
         }
         Ok(())
     }
-
     pub fn is_valid(&self) -> bool {
         self.validate().is_ok()
     }
 }
-
 impl Default for GpuInfo {
     /// Creates a new `GpuInfo` instance with all fields set to their default values.
     ///
@@ -818,7 +773,6 @@ impl Default for GpuInfo {
         Self::unknown()
     }
 }
-
 impl Display for GpuInfo {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "GPU Information:")?;
@@ -834,36 +788,35 @@ impl Display for GpuInfo {
         writeln!(f, "  Power Limit: {}", self.power_limit.fmt_string())?;
         writeln!(f, "  Memory Total: {}", self.memory_total.fmt_string())?;
         writeln!(f, "  Driver Version: {}", self.driver_version.fmt_string())?;
-        writeln!(f, "  Max Clock Speed: {}", self.max_clock_speed.fmt_string())?;
+        writeln!(
+            f,
+            "  Max Clock Speed: {}",
+            self.max_clock_speed.fmt_string()
+        )?;
         Ok(())
     }
 }
-
 // Кэширование результатов
 /// GPU information cache that uses unified caching utilities
-/// 
+///
 /// This cache eliminates duplication by using the common caching infrastructure.
 pub struct GpuInfoCache {
     /// Underlying cache implementation
     cache: crate::cache_utils::GpuInfoCache,
 }
-
 impl GpuInfoCache {
     pub fn new(ttl: Duration) -> Self {
         Self {
             cache: crate::cache_utils::GpuInfoCache::new(ttl),
         }
     }
-
     pub fn get(&self) -> Option<GpuInfo> {
         self.cache.get()
     }
-
     pub fn set(&self, info: GpuInfo) {
         self.cache.set(info);
     }
 }
-
 impl Default for GpuInfoCache {
     fn default() -> Self {
         Self::new(Duration::from_secs(1))

@@ -1,12 +1,13 @@
 //! Example demonstrating the use of the new GPU provider manager on different platforms
-
-use gpu_info::{GpuProviderManager, providers::{NvidiaProvider, AmdProvider, IntelProvider}};
 #[cfg(target_os = "linux")]
-use gpu_info::providers::linux::{NvidiaLinuxProvider, AmdLinuxProvider};
+use gpu_info::providers::linux::{AmdLinuxProvider, NvidiaLinuxProvider};
 #[cfg(target_os = "macos")]
 use gpu_info::providers::macos::MacosProvider;
 use gpu_info::vendor::Vendor;
-
+use gpu_info::{
+    providers::{AmdProvider, IntelProvider, NvidiaProvider},
+    GpuProviderManager,
+};
 fn main() {
     println!("GPU Provider Manager Example");
     let mut provider_manager = GpuProviderManager::new();
@@ -17,14 +18,12 @@ fn main() {
         provider_manager.register_provider(Vendor::Amd, AmdProvider::new());
         provider_manager.register_provider(Vendor::Intel(Default::default()), IntelProvider::new());
     }
-    
     #[cfg(target_os = "linux")]
     {
         println!("Registering Linux GPU providers...");
         provider_manager.register_provider(Vendor::Nvidia, NvidiaLinuxProvider::new());
         provider_manager.register_provider(Vendor::Amd, AmdLinuxProvider::new());
     }
-    
     #[cfg(target_os = "macos")]
     {
         println!("Registering macOS GPU providers...");
@@ -49,19 +48,34 @@ fn main() {
         }
     }
     println!("\nProvider Manager Capabilities:");
-    println!("  - Supports NVIDIA: {}", provider_manager.is_vendor_supported(&Vendor::Nvidia));
-    println!("  - Supports AMD: {}", provider_manager.is_vendor_supported(&Vendor::Amd));
+    println!(
+        "  - Supports NVIDIA: {}",
+        provider_manager.is_vendor_supported(&Vendor::Nvidia)
+    );
+    println!(
+        "  - Supports AMD: {}",
+        provider_manager.is_vendor_supported(&Vendor::Amd)
+    );
     #[cfg(target_os = "windows")]
     {
         match Vendor::Intel(Default::default()) {
             intel_vendor => {
-                println!("  - Supports Intel: {}", provider_manager.is_vendor_supported(&intel_vendor));
+                println!(
+                    "  - Supports Intel: {}",
+                    provider_manager.is_vendor_supported(&intel_vendor)
+                );
             }
         }
     }
     #[cfg(target_os = "linux")]
     {
-        println!("  - Supports Linux NVIDIA: {}", provider_manager.is_vendor_supported(&Vendor::Nvidia));
-        println!("  - Supports Linux AMD: {}", provider_manager.is_vendor_supported(&Vendor::Amd));
+        println!(
+            "  - Supports Linux NVIDIA: {}",
+            provider_manager.is_vendor_supported(&Vendor::Nvidia)
+        );
+        println!(
+            "  - Supports Linux AMD: {}",
+            provider_manager.is_vendor_supported(&Vendor::Amd)
+        );
     }
 }

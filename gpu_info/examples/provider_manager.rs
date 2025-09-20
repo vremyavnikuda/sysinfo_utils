@@ -1,8 +1,9 @@
 //! Example demonstrating the use of the new GPU provider manager
-
-use gpu_info::{GpuProviderManager, providers::{NvidiaProvider, AmdProvider, IntelProvider}};
 use gpu_info::vendor::Vendor;
-
+use gpu_info::{
+    providers::{AmdProvider, IntelProvider, NvidiaProvider},
+    GpuProviderManager,
+};
 fn main() {
     println!("GPU Provider Manager Example");
     let mut provider_manager = GpuProviderManager::new();
@@ -27,13 +28,22 @@ fn main() {
         }
     }
     println!("\nProvider Manager Capabilities:");
-    println!("  - Supports NVIDIA: {}", provider_manager.is_vendor_supported(&Vendor::Nvidia));
-    println!("  - Supports AMD: {}", provider_manager.is_vendor_supported(&Vendor::Amd));
+    println!(
+        "  - Supports NVIDIA: {}",
+        provider_manager.is_vendor_supported(&Vendor::Nvidia)
+    );
+    println!(
+        "  - Supports AMD: {}",
+        provider_manager.is_vendor_supported(&Vendor::Amd)
+    );
     #[cfg(target_os = "windows")]
     {
         match Vendor::Intel(Default::default()) {
             intel_vendor => {
-                println!("  - Supports Intel: {}", provider_manager.is_vendor_supported(&intel_vendor));
+                println!(
+                    "  - Supports Intel: {}",
+                    provider_manager.is_vendor_supported(&intel_vendor)
+                );
             }
         }
     }

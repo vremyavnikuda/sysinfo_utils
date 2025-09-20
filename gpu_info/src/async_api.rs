@@ -1,24 +1,22 @@
 //! Asynchronous API for GPU information retrieval
-//! 
+//!
 //! This module provides async versions of the main GPU information functions,
 //! allowing non-blocking operations for better performance in async contexts.
-
-use crate::{GpuInfo};
-use crate::gpu_info::{Result, GpuError};
-
+use crate::gpu_info::{GpuError, Result};
+use crate::GpuInfo;
 /// Asynchronously gets the primary GPU information
-/// 
+///
 /// This function runs the GPU detection in a blocking task to avoid blocking
 /// the async runtime, making it suitable for use in async contexts.
-/// 
+///
 /// # Returns
 /// * `Ok(GpuInfo)` - The primary GPU information
 /// * `Err(GpuError)` - If GPU detection fails
-/// 
+///
 /// # Example
 /// ```rust
 /// use gpu_info::async_api::get_async;
-/// 
+///
 /// #[tokio::main]
 /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let gpu = get_async().await?;
@@ -35,20 +33,19 @@ pub async fn get_async() -> Result<GpuInfo> {
         Err(_) => Err(GpuError::GpuNotActive),
     }
 }
-
 /// Asynchronously gets all available GPUs in the system
-/// 
+///
 /// This function runs the GPU detection in a blocking task to avoid blocking
 /// the async runtime, making it suitable for use in async contexts.
-/// 
+///
 /// # Returns
 /// * `Ok(Vec<GpuInfo>)` - Vector of all detected GPU information
 /// * `Err(GpuError)` - If GPU detection fails
-/// 
+///
 /// # Example
 /// ```rust
 /// use gpu_info::async_api::get_all_async;
-/// 
+///
 /// #[tokio::main]
 /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let gpus = get_all_async().await?;
@@ -67,23 +64,22 @@ pub async fn get_all_async() -> Result<Vec<GpuInfo>> {
         Err(_) => Err(GpuError::GpuNotActive),
     }
 }
-
 /// Asynchronously updates GPU information
-/// 
+///
 /// This function updates the information for a specific GPU using the appropriate
 /// provider in a blocking task to avoid blocking the async runtime.
-/// 
+///
 /// # Arguments
 /// * `gpu` - Mutable reference to GPU to update
-/// 
+///
 /// # Returns
 /// * `Ok(())` - If GPU was successfully updated
 /// * `Err(GpuError)` - If update failed
-/// 
+///
 /// # Example
 /// ```rust
 /// use gpu_info::{async_api::update_gpu_async, get};
-/// 
+///
 /// #[tokio::main]
 /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let mut gpu = get();
@@ -95,7 +91,6 @@ pub async fn get_all_async() -> Result<Vec<GpuInfo>> {
 pub async fn update_gpu_async(gpu: &mut GpuInfo) -> Result<()> {
     // Clone the GPU for the blocking task
     let gpu_clone = gpu.clone();
-    
     // Run the update in a blocking task
     let result = tokio::task::spawn_blocking(move || {
         // Since we can't access the private update_single_gpu_static function directly,
@@ -107,14 +102,14 @@ pub async fn update_gpu_async(gpu: &mut GpuInfo) -> Result<()> {
                 // If refresh succeeded, we can try to get the updated info
                 // For now, we'll just return success
                 Ok(gpu_clone)
-            },
+            }
             Err(_) => {
                 // If refresh failed, return the original GPU unchanged
                 Ok(gpu_clone)
             }
         }
-    }).await;
-
+    })
+    .await;
     match result {
         Ok(Ok(updated_gpu)) => {
             *gpu = updated_gpu;
@@ -124,11 +119,9 @@ pub async fn update_gpu_async(gpu: &mut GpuInfo) -> Result<()> {
         Err(_) => Err(GpuError::GpuNotActive),
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
     #[tokio::test]
     async fn test_get_async() {
         let result = get_async().await;
@@ -136,7 +129,6 @@ mod tests {
         // but we can check that the function doesn't panic
         assert!(result.is_ok() || result.is_err());
     }
-
     #[tokio::test]
     async fn test_get_all_async() {
         let result = get_all_async().await;
@@ -144,7 +136,6 @@ mod tests {
         // but we can check that the function doesn't panic
         assert!(result.is_ok() || result.is_err());
     }
-
     #[tokio::test]
     async fn test_update_gpu_async() {
         let mut gpu = GpuInfo::unknown();

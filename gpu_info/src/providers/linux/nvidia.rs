@@ -1,35 +1,28 @@
 //! Linux NVIDIA GPU provider implementation
-//! 
+//!
 //! This module implements the GpuProvider trait for NVIDIA GPUs on Linux using the NVML API.
-
-use crate::gpu_info::{GpuInfo, Result, GpuProvider};
+use crate::gpu_info::{GpuInfo, GpuProvider, Result};
 use crate::vendor::Vendor;
 use libloading::{Library, Symbol};
 use log::{debug, error};
 use std::{env, os::raw::c_char, ptr};
-
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 struct NvmlDevice {
     _private: [u8; 0],
 }
-
 #[allow(non_camel_case_types)]
 type NvmlDevice_t = *mut NvmlDevice;
-
 #[allow(non_camel_case_types)]
 type nvmlReturn_t = i32;
-
 const NVML_SUCCESS: nvmlReturn_t = 0;
 const NVML_TEMPERATURE_GPU: u32 = 0;
-
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 struct NvmlUtilization {
     gpu: u32,
     memory: u32,
 }
-
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 struct NvmlMemory {
@@ -37,48 +30,37 @@ struct NvmlMemory {
     free: u64,
     used: u64,
 }
-
 type NvmlInitFn = unsafe extern "C" fn() -> nvmlReturn_t;
 type NvmlShutdownFn = unsafe extern "C" fn() -> nvmlReturn_t;
-type NvmlDeviceGetHandleByIndexFn =
-    unsafe extern "C" fn(u32, *mut NvmlDevice_t) -> nvmlReturn_t;
-type NvmlDeviceGetTemperatureFn =
-    unsafe extern "C" fn(NvmlDevice_t, u32, *mut u32) -> nvmlReturn_t;
+type NvmlDeviceGetHandleByIndexFn = unsafe extern "C" fn(u32, *mut NvmlDevice_t) -> nvmlReturn_t;
+type NvmlDeviceGetTemperatureFn = unsafe extern "C" fn(NvmlDevice_t, u32, *mut u32) -> nvmlReturn_t;
 type NvmlDeviceGetNameFn = unsafe extern "C" fn(NvmlDevice_t, *mut c_char, u32) -> nvmlReturn_t;
 type NvmlDeviceGetUtilizationRatesFn =
     unsafe extern "C" fn(NvmlDevice_t, *mut NvmlUtilization) -> nvmlReturn_t;
 type NvmlDeviceGetPowerUsageFn = unsafe extern "C" fn(NvmlDevice_t, *mut u32) -> nvmlReturn_t;
-type NvmlDeviceGetClockInfoFn =
-    unsafe extern "C" fn(NvmlDevice_t, u32, *mut u32) -> nvmlReturn_t;
+type NvmlDeviceGetClockInfoFn = unsafe extern "C" fn(NvmlDevice_t, u32, *mut u32) -> nvmlReturn_t;
 type NvmlDeviceGetMemoryInfoFn =
     unsafe extern "C" fn(NvmlDevice_t, *mut NvmlMemory) -> nvmlReturn_t;
-
 const NVML_CLOCK_GRAPHICS: u32 = 0;
-
 /// NVIDIA GPU provider for Linux
 pub struct NvidiaLinuxProvider;
-
 impl NvidiaLinuxProvider {
     pub fn new() -> Self {
         Self
     }
 }
-
 impl Default for NvidiaLinuxProvider {
     fn default() -> Self {
         Self::new()
     }
 }
-
 impl GpuProvider for NvidiaLinuxProvider {
     /// Detect all NVIDIA GPUs on Linux using dynamic NVML loading
     fn detect_gpus(&self) -> Result<Vec<GpuInfo>> {
         debug!("Detecting NVIDIA GPUs using dynamic NVML loading on Linux");
-        
         unsafe {
             let nvml_lib_path = env::var("NVML_LIB_PATH")
                 .unwrap_or_else(|_| "/usr/lib/libnvidia-ml.so.1".to_string());
-
             let lib = match Library::new(&nvml_lib_path) {
                 Ok(lib) => lib,
                 Err(e) => {
@@ -86,7 +68,6 @@ impl GpuProvider for NvidiaLinuxProvider {
                     return Err(crate::gpu_info::GpuError::DriverNotInstalled);
                 }
             };
-
             let init: Symbol<NvmlInitFn> = match lib.get(b"nvmlInit_v2") {
                 Ok(symbol) => symbol,
                 Err(e) => {
@@ -132,21 +113,22 @@ impl GpuProvider for NvidiaLinuxProvider {
                         return Err(crate::gpu_info::GpuError::DriverNotInstalled);
                     }
                 };
-            let get_power: Symbol<NvmlDeviceGetPowerUsageFn> = match lib.get(b"nvmlDeviceGetPowerUsage")
-            {
-                Ok(symbol) => symbol,
-                Err(e) => {
-                    error!("Failed to get nvmlDeviceGetPowerUsage symbol: {}", e);
-                    return Err(crate::gpu_info::GpuError::DriverNotInstalled);
-                }
-            };
-            let get_clock: Symbol<NvmlDeviceGetClockInfoFn> = match lib.get(b"nvmlDeviceGetClockInfo") {
-                Ok(symbol) => symbol,
-                Err(e) => {
-                    error!("Failed to get nvmlDeviceGetClockInfo symbol: {}", e);
-                    return Err(crate::gpu_info::GpuError::DriverNotInstalled);
-                }
-            };
+            let get_power: Symbol<NvmlDeviceGetPowerUsageFn> =
+                match lib.get(b"nvmlDeviceGetPowerUsage") {
+                    Ok(symbol) => symbol,
+                    Err(e) => {
+                        error!("Failed to get nvmlDeviceGetPowerUsage symbol: {}", e);
+                        return Err(crate::gpu_info::GpuError::DriverNotInstalled);
+                    }
+                };
+            let get_clock: Symbol<NvmlDeviceGetClockInfoFn> =
+                match lib.get(b"nvmlDeviceGetClockInfo") {
+                    Ok(symbol) => symbol,
+                    Err(e) => {
+                        error!("Failed to get nvmlDeviceGetClockInfo symbol: {}", e);
+                        return Err(crate::gpu_info::GpuError::DriverNotInstalled);
+                    }
+                };
             let get_meminfo: Symbol<NvmlDeviceGetMemoryInfoFn> =
                 match lib.get(b"nvmlDeviceGetMemoryInfo") {
                     Ok(symbol) => symbol,
@@ -155,7 +137,6 @@ impl GpuProvider for NvidiaLinuxProvider {
                         return Err(crate::gpu_info::GpuError::DriverNotInstalled);
                     }
                 };
-
             init();
             let mut device: NvmlDevice_t = ptr::null_mut();
             if get_device_handle(0, &mut device) != NVML_SUCCESS {
@@ -208,7 +189,6 @@ impl GpuProvider for NvidiaLinuxProvider {
                 None
             };
             shutdown();
-            
             let gpu_info = GpuInfo {
                 vendor: Vendor::Nvidia,
                 name_gpu: name,
@@ -224,11 +204,9 @@ impl GpuProvider for NvidiaLinuxProvider {
                 memory_total,
                 driver_version: None,
             };
-            
             Ok(vec![gpu_info])
         }
     }
-    
     /// Update NVIDIA GPU information on Linux
     fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
         // For simplicity, we'll just re-detect the GPU
@@ -239,17 +217,14 @@ impl GpuProvider for NvidiaLinuxProvider {
         }
         Ok(())
     }
-    
     /// Get the vendor for this provider
     fn get_vendor(&self) -> Vendor {
         Vendor::Nvidia
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    
     #[test]
     fn test_nvidia_linux_provider_vendor() {
         let provider = NvidiaLinuxProvider::new();

@@ -2,7 +2,6 @@ use crate::gpu_info::{GpuError, GpuInfo, Result};
 use crate::vendor::{IntelGpuType, Vendor};
 use log::{error, info, warn};
 use std::process::Command;
-
 // refactor:task_1:todo: Качество_кода - дублирование логики определения типа GPU
 fn determine_intel_gpu_type(name: &str) -> IntelGpuType {
     let name = name.to_lowercase();
@@ -17,7 +16,6 @@ fn determine_intel_gpu_type(name: &str) -> IntelGpuType {
         IntelGpuType::Unknown
     }
 }
-
 // refactor:task_1:todo: Качество_кода - дублирование логики PowerShell запросов
 fn get_intel_gpu_info() -> Result<String> {
     let output = Command::new("powershell")
@@ -38,10 +36,8 @@ fn get_intel_gpu_info() -> Result<String> {
             error!("Failed to execute PowerShell command: {}", e);
             GpuError::DriverNotInstalled
         })?;
-
     Ok(String::from_utf8_lossy(&output.stdout).into_owned())
 }
-
 fn parse_gpu_info(output_str: &str) -> Option<GpuInfo> {
     // refactor:task_1:todo: Качество_кода - дублирование логики парсинга PowerShell вывода
     let gpu_name = output_str
@@ -52,34 +48,27 @@ fn parse_gpu_info(output_str: &str) -> Option<GpuInfo> {
             warn!("Failed to get GPU name, using default");
             "Intel GPU".to_string()
         });
-
     let gpu_type = determine_intel_gpu_type(&gpu_name);
-
     let driver_version = output_str
         .lines()
         .find(|line| line.contains("DriverVersion"))
         .map(|line| line.split(":").nth(1).unwrap_or("").trim().to_string());
-
     let memory_total = output_str
         .lines()
         .find(|line| line.contains("AdapterRAM"))
         .and_then(|line| line.split(":").nth(1)?.trim().parse::<u32>().ok());
-
     let core_clock = output_str
         .lines()
         .find(|line| line.contains("CurrentRefreshRate"))
         .and_then(|line| line.split(":").nth(1)?.trim().parse::<u32>().ok());
-
     let max_clock_speed = output_str
         .lines()
         .find(|line| line.contains("MaxRefreshRate"))
         .and_then(|line| line.split(":").nth(1)?.trim().parse::<u32>().ok());
-
     let status = output_str
         .lines()
         .find(|line| line.contains("Status"))
         .map(|line| line.split(":").nth(1).unwrap_or("").trim() == "OK");
-
     info!("Found Intel GPU: {} (Type: {:?})", gpu_name, gpu_type);
     if let Some(ver) = &driver_version {
         info!("Driver version: {}", ver);
@@ -93,7 +82,6 @@ fn parse_gpu_info(output_str: &str) -> Option<GpuInfo> {
     if let Some(max_clock) = max_clock_speed {
         info!("Max clock speed: {} MHz", max_clock);
     }
-
     // refactor:task_1:todo: Качество_кода - дублирование логики создания GpuInfo структуры
     Some(GpuInfo {
         name_gpu: Some(gpu_name),
@@ -111,7 +99,6 @@ fn parse_gpu_info(output_str: &str) -> Option<GpuInfo> {
         memory_clock: None,
     })
 }
-
 pub fn detect_intel_gpus() -> Vec<GpuInfo> {
     let mut gpus = Vec::new();
     info!("Starting Intel GPU detection");
@@ -136,7 +123,6 @@ pub fn detect_intel_gpus() -> Vec<GpuInfo> {
     }
     gpus
 }
-
 pub fn update_intel_info(gpu: &mut GpuInfo) -> Result<()> {
     info!("Updating Intel GPU information");
     let output_str = get_intel_gpu_info()?;

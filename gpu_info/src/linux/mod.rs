@@ -2,29 +2,23 @@ use crate::{gpu_info::GpuInfo, vendor::Vendor};
 use libloading::{Library, Symbol};
 use log::{debug, error};
 use std::{env, os::raw::c_char, ptr};
-
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct NvmlDevice {
     _private: [u8; 0],
 }
-
 #[allow(non_camel_case_types)]
 pub type NvmlDevice_t = *mut NvmlDevice;
-
 #[allow(non_camel_case_types)]
 pub type nvmlReturn_t = i32;
-
 pub const NVML_SUCCESS: nvmlReturn_t = 0;
 pub const NVML_TEMPERATURE_GPU: u32 = 0;
-
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct NvmlUtilization {
     gpu: u32,
     memory: u32,
 }
-
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct NvmlMemory {
@@ -32,7 +26,6 @@ pub struct NvmlMemory {
     free: u64,
     used: u64,
 }
-
 pub type NvmlInitFn = unsafe extern "C" fn() -> nvmlReturn_t;
 pub type NvmlShutdownFn = unsafe extern "C" fn() -> nvmlReturn_t;
 pub type NvmlDeviceGetHandleByIndexFn =
@@ -47,9 +40,7 @@ pub type NvmlDeviceGetClockInfoFn =
     unsafe extern "C" fn(NvmlDevice_t, u32, *mut u32) -> nvmlReturn_t;
 pub type NvmlDeviceGetMemoryInfoFn =
     unsafe extern "C" fn(NvmlDevice_t, *mut NvmlMemory) -> nvmlReturn_t;
-
 pub const NVML_CLOCK_GRAPHICS: u32 = 0;
-
 /// Fetches detailed information about the first detected NVIDIA GPU using dynamic NVML loading.
 ///
 /// This function loads the NVML shared library and calls various functions to fetch information
@@ -64,11 +55,9 @@ pub const NVML_CLOCK_GRAPHICS: u32 = 0;
 /// information.
 pub fn info_gpu() -> GpuInfo {
     debug!("Fetching GPU info using dynamic NVML loading");
-
     unsafe {
         let nvml_lib_path =
             env::var("NVML_LIB_PATH").unwrap_or_else(|_| "/usr/lib/libnvidia-ml.so.1".to_string());
-
         let lib = match Library::new(&nvml_lib_path) {
             Ok(lib) => lib,
             Err(e) => {
@@ -76,7 +65,6 @@ pub fn info_gpu() -> GpuInfo {
                 return GpuInfo::default();
             }
         };
-
         let init: Symbol<NvmlInitFn> = match lib.get(b"nvmlInit_v2") {
             Ok(symbol) => symbol,
             Err(e) => {
@@ -145,7 +133,6 @@ pub fn info_gpu() -> GpuInfo {
                     return GpuInfo::default();
                 }
             };
-
         init();
         let mut device: NvmlDevice_t = ptr::null_mut();
         if get_device_handle(0, &mut device) != NVML_SUCCESS {

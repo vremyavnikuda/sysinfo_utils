@@ -1,25 +1,20 @@
 //! Intel GPU provider implementation
-//! 
+//!
 //! This module implements the GpuProvider trait for Intel GPUs using WMI queries.
-
-use crate::gpu_info::{GpuInfo, Result, GpuProvider};
+use crate::gpu_info::{GpuInfo, GpuProvider, Result};
 use crate::vendor::{IntelGpuType, Vendor};
 use log::{error, info, warn};
 use std::process::Command;
-
 /// Intel GPU provider
 pub struct IntelProvider;
-
 impl IntelProvider {
     pub fn new() -> Self {
         Self
     }
-    
     // refactor:task_1:todo: Качество_кода - дублирование логики определения типа GPU
     fn determine_intel_gpu_type(&self, name: &str) -> IntelGpuType {
         crate::vendor::determine_intel_gpu_type_from_name(name)
     }
-
     // refactor:task_1:todo: Качество_кода - дублирование логики PowerShell запросов
     fn get_intel_gpu_info(&self) -> Result<String> {
         let output = Command::new("powershell")
@@ -40,10 +35,8 @@ impl IntelProvider {
                 error!("Failed to execute PowerShell command: {}", e);
                 crate::gpu_info::GpuError::DriverNotInstalled
             })?;
-
         Ok(String::from_utf8_lossy(&output.stdout).into_owned())
     }
-
     fn parse_gpu_info(&self, output_str: &str) -> Option<GpuInfo> {
         // refactor:task_1:todo: Качество_кода - дублирование логики парсинга PowerShell вывода
         let gpu_name = output_str
@@ -54,34 +47,27 @@ impl IntelProvider {
                 warn!("Failed to get GPU name, using default");
                 "Intel GPU".to_string()
             });
-
         let gpu_type = self.determine_intel_gpu_type(&gpu_name);
-
         let driver_version = output_str
             .lines()
             .find(|line| line.contains("DriverVersion"))
             .map(|line| line.split(":").nth(1).unwrap_or("").trim().to_string());
-
         let memory_total = output_str
             .lines()
             .find(|line| line.contains("AdapterRAM"))
             .and_then(|line| line.split(":").nth(1)?.trim().parse::<u32>().ok());
-
         let core_clock = output_str
             .lines()
             .find(|line| line.contains("CurrentRefreshRate"))
             .and_then(|line| line.split(":").nth(1)?.trim().parse::<u32>().ok());
-
         let max_clock_speed = output_str
             .lines()
             .find(|line| line.contains("MaxRefreshRate"))
             .and_then(|line| line.split(":").nth(1)?.trim().parse::<u32>().ok());
-
         let status = output_str
             .lines()
             .find(|line| line.contains("Status"))
             .map(|line| line.split(":").nth(1).unwrap_or("").trim() == "OK");
-
         info!("Found Intel GPU: {} (Type: {:?})", gpu_name, gpu_type);
         if let Some(ver) = &driver_version {
             info!("Driver version: {}", ver);
@@ -95,7 +81,6 @@ impl IntelProvider {
         if let Some(max_clock) = max_clock_speed {
             info!("Max clock speed: {} MHz", max_clock);
         }
-
         // refactor:task_1:todo: Качество_кода - дублирование логики создания GpuInfo структуры
         Some(GpuInfo {
             name_gpu: Some(gpu_name),
@@ -114,13 +99,11 @@ impl IntelProvider {
         })
     }
 }
-
 impl Default for IntelProvider {
     fn default() -> Self {
         Self::new()
     }
 }
-
 impl GpuProvider for IntelProvider {
     /// Detect Intel GPUs using PowerShell WMI queries
     fn detect_gpus(&self) -> Result<Vec<GpuInfo>> {
@@ -131,7 +114,6 @@ impl GpuProvider for IntelProvider {
         };
         crate::gpu_info::handle_empty_result(gpus)
     }
-    
     /// Update the information for a specific Intel GPU
     fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
         info!("Updating Intel GPU information");
@@ -139,22 +121,18 @@ impl GpuProvider for IntelProvider {
         if let Some(updated_gpu) = self.parse_gpu_info(&output_str) {
             *gpu = updated_gpu;
         }
-        
         if !gpu.is_valid() {
             warn!("GPU data validation failed");
             return Err(crate::gpu_info::GpuError::GpuNotActive);
         }
-        
         info!("Successfully updated Intel GPU information");
         Ok(())
     }
-    
     /// Get the vendor for this provider
     fn get_vendor(&self) -> Vendor {
         Vendor::Intel(IntelGpuType::Unknown)
     }
 }
-
 // Backwards compatibility functions
 pub fn detect_intel_gpus() -> Vec<GpuInfo> {
     let provider = IntelProvider::new();
@@ -163,16 +141,13 @@ pub fn detect_intel_gpus() -> Vec<GpuInfo> {
         Err(_) => Vec::new(),
     }
 }
-
 pub fn update_intel_info(gpu: &mut GpuInfo) -> Result<()> {
     let provider = IntelProvider::new();
     provider.update_gpu(gpu)
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    
     #[test]
     fn test_intel_provider_vendor() {
         let provider = IntelProvider::new();

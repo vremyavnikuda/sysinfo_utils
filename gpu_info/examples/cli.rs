@@ -1,5 +1,4 @@
 use gpu_info::gpu_info::Formattable;
-
 /// The main function demonstrating the usage of the `gpu_info` library.
 ///
 /// This function retrieves GPU information using the `gpu_info` library
@@ -7,7 +6,6 @@ use gpu_info::gpu_info::Formattable;
 fn main() {
     // Create a GPU manager instance
     let gpu = gpu_info::get();
-
     // Print the GPU vendor
     println!("Vendor: {:?}", gpu.vendor());
     // Print the GPU name

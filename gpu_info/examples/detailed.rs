@@ -1,33 +1,26 @@
 use gpu_info::{vendor::Vendor, Result};
 use std::thread;
 use std::time::Duration;
-
 fn main() -> Result<()> {
     let mut gpu = gpu_info::get();
-
     println!("Vendor: {}", gpu.vendor);
     println!("Name GPU: {}", gpu.format_name_gpu());
     println!("Driver: {}", gpu.format_driver_version());
-
     println!("Temperature: {}°C", gpu.format_temperature());
     println!("Utilization: {}%", gpu.format_utilization());
     println!("Core Clock: {} MHz", gpu.format_core_clock());
     println!("Memory Clock: {} MHz", gpu.format_memory_clock());
     println!("Max Clock Speed: {} MHz", gpu.format_max_clock_speed());
-
     println!("Memory Usage: {}%", gpu.format_memory_util());
     println!("Total Memory: {} GB", gpu.format_memory_total());
-
     println!("Current Usage: {} W", gpu.format_power_usage());
     println!("Power Limit: {} W", gpu.format_power_limit());
-
     println!("Active: {}", gpu.format_active());
-
     // refactor:task_1:todo: Качество_кода - дублирование match логики обновления GPU по vendor
     for i in 0..5 {
         #[cfg(target_os = "windows")]
         {
-            use gpu_info::providers::{nvidia, amd, intel};
+            use gpu_info::providers::{amd, intel, nvidia};
             match gpu.vendor {
                 Vendor::Nvidia => {
                     if let Err(e) = nvidia::update_nvidia_info(&mut gpu) {
@@ -62,19 +55,16 @@ fn main() -> Result<()> {
                 _ => {}
             }
         }
-
         println!("\nMeasurement #{}", i + 1);
         println!("Temperature: {}°C", gpu.format_temperature());
         println!("Utilization: {}%", gpu.format_utilization());
         println!("Core Clock: {} MHz", gpu.format_core_clock());
         thread::sleep(Duration::from_secs(1));
     }
-
     if gpu.is_valid() {
         println!("GPU data is okay");
     } else {
         println!("GPU data has problems");
     }
-
     Ok(())
 }

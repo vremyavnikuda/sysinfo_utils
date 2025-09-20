@@ -1,20 +1,16 @@
 //! macOS GPU provider implementation
-//! 
+//!
 //! This module implements the GpuProvider trait for GPUs on macOS using system utilities.
-
-use crate::gpu_info::{GpuInfo, Result, GpuProvider};
+use crate::gpu_info::{GpuInfo, GpuProvider, Result};
 use crate::vendor::Vendor;
 use log::{debug, info, warn};
 use std::process::Command;
-
 /// GPU provider for macOS
 pub struct MacosProvider;
-
 impl MacosProvider {
     pub fn new() -> Self {
         Self
     }
-    
     /// Получает список всех GPU в системе macOS
     fn detect_all_gpus(&self) -> Vec<GpuInfo> {
         let mut gpus = Vec::new();
@@ -25,10 +21,8 @@ impl MacosProvider {
                 gpus.push(apple_gpu);
             }
         }
-        
         gpus
     }
-    
     /// Базовая информация через system_profiler
     fn get_basic_gpu_info(&self) -> Vec<GpuInfo> {
         let mut gpus = Vec::new();
@@ -41,10 +35,8 @@ impl MacosProvider {
         } else {
             warn!("Failed to invoke system_profiler for GPU info.");
         }
-        
         gpus
     }
-    
     /// Парсинг вывода system_profiler
     fn parse_system_profiler_output(&self, xml_output: &str) -> Vec<GpuInfo> {
         let mut gpus = Vec::new();
@@ -62,11 +54,9 @@ impl MacosProvider {
         if gpus.is_empty() {
             gpus.extend(self.simple_parse_system_profiler(xml_output));
         }
-        
         info!("Found {} GPU(s) via system_profiler", gpus.len());
         gpus
     }
-    
     /// Парсинг словаря GPU из XML
     fn parse_gpu_dict(&self, lines: &[&str], index: &mut usize) -> Option<GpuInfo> {
         let mut gpu = GpuInfo::unknown();
@@ -100,14 +90,12 @@ impl MacosProvider {
             }
             *index += 1;
         }
-        
         if found_gpu_info {
             Some(gpu)
         } else {
             None
         }
     }
-    
     /// Извлечение строкового значения из XML тега
     fn extract_string_value(&self, line: &str) -> Option<String> {
         if line.starts_with("<string>") && line.ends_with("</string>") {
@@ -120,7 +108,6 @@ impl MacosProvider {
             None
         }
     }
-    
     /// Простой парсинг для обратной совместимости
     fn simple_parse_system_profiler(&self, xml_output: &str) -> Vec<GpuInfo> {
         let mut gpus = Vec::new();
@@ -138,7 +125,6 @@ impl MacosProvider {
                         .trim_start_matches("<string>")
                         .trim_end_matches("</string>")
                         .to_string();
-                    
                     current_gpu.name_gpu = Some(name.clone());
                     current_gpu.vendor = self.determine_vendor(&name);
                     current_gpu.active = Some(true);
@@ -149,35 +135,35 @@ impl MacosProvider {
                 }
             }
         }
-        
         gpus
     }
-    
     /// Определение производителя по имени GPU
     fn determine_vendor(&self, name: &str) -> Vendor {
         crate::vendor::determine_vendor_from_name(name)
     }
-    
     /// Извлечение информации о VRAM из названия GPU
     fn extract_vram_from_name(&self, name: &str) -> Option<u32> {
         let words: Vec<&str> = name.split_whitespace().collect();
         for word in words {
             if word.ends_with("GB") || word.ends_with("gb") {
-                if let Ok(size) = word.trim_end_matches("GB").trim_end_matches("gb").parse::<u32>() {
+                if let Ok(size) = word
+                    .trim_end_matches("GB")
+                    .trim_end_matches("gb")
+                    .parse::<u32>()
+                {
                     return Some(size);
                 }
             }
         }
         None
     }
-    
     /// Парсинг строки VRAM (например, "4096 MB", "8 GB")
     fn parse_vram_string(&self, vram_str: &str) -> Option<u32> {
         let vram_lower = vram_str.to_lowercase();
         if let Some(mb_pos) = vram_lower.find("mb") {
             let number_part = &vram_str[..mb_pos].trim();
             if let Ok(mb_value) = number_part.parse::<u32>() {
-                return Some((mb_value + 512) / 1024); 
+                return Some((mb_value + 512) / 1024);
             }
         }
         if let Some(gb_pos) = vram_lower.find("gb") {
@@ -186,10 +172,8 @@ impl MacosProvider {
                 return Some(gb_value);
             }
         }
-        
         None
     }
-    
     /// Парсинг частоты (например, "1200 MHz", "2.5 GHz")
     fn parse_clock_speed(&self, speed_str: &str) -> Option<u32> {
         let speed_lower = speed_str.to_lowercase();
@@ -205,18 +189,14 @@ impl MacosProvider {
                 return Some((ghz_value * 1000.0) as u32); // Конвертация GHz в MHz
             }
         }
-        
         None
     }
-    
     /// Детекция Apple Silicon GPU
     fn detect_apple_silicon_gpu(&self) -> Option<GpuInfo> {
         let cpu_output = Command::new("sysctl")
             .args(["-n", "machdep.cpu.brand_string"])
             .output();
-        let arch_output = Command::new("uname")
-            .args(["-m"])
-            .output();
+        let arch_output = Command::new("uname").args(["-m"]).output();
         let mut is_apple_silicon = false;
         let mut cpu_info = String::new();
         if let Ok(arch_out) = arch_output {
@@ -247,7 +227,6 @@ impl MacosProvider {
         }
         None
     }
-    
     /// Определение информации о Apple GPU
     fn determine_apple_gpu_info(&self, cpu_info: &str) -> (String, Option<u32>) {
         if cpu_info.contains("M3") {
@@ -278,7 +257,6 @@ impl MacosProvider {
             ("Apple Silicon GPU".to_string(), None)
         }
     }
-    
     /// Оценка частоты Apple GPU
     fn estimate_apple_gpu_clock(&self, cpu_info: &str) -> Option<u32> {
         // Оценка основанная на типе чипа
@@ -292,14 +270,12 @@ impl MacosProvider {
             Some(1000) // Общая оценка
         }
     }
-    
     /// Получение использования Apple GPU
     fn get_apple_gpu_utilization(&self) -> Option<f32> {
         // Попытаемся получить через powermetrics (если доступно)
         let output = Command::new("powermetrics")
             .args(["-n", "1", "-s", "gpu_power", "--show-initial-usage"])
             .output();
-            
         if let Ok(out) = output {
             let stdout = String::from_utf8_lossy(&out.stdout);
             if let Some(usage) = self.parse_gpu_usage_from_powermetrics(&stdout) {
@@ -308,13 +284,9 @@ impl MacosProvider {
         }
         None
     }
-    
     /// Получение температуры Apple GPU
     fn get_apple_gpu_temperature(&self) -> Option<f32> {
-        let output = Command::new("sysctl")
-            .args(["-a"])
-            .output();
-            
+        let output = Command::new("sysctl").args(["-a"]).output();
         if let Ok(out) = output {
             let stdout = String::from_utf8_lossy(&out.stdout);
             for line in stdout.lines() {
@@ -327,7 +299,6 @@ impl MacosProvider {
         }
         None
     }
-    
     /// Парсинг использования GPU из powermetrics
     fn parse_gpu_usage_from_powermetrics(&self, output: &str) -> Option<f32> {
         for line in output.lines() {
@@ -344,7 +315,6 @@ impl MacosProvider {
         }
         None
     }
-    
     /// Парсинг температуры из sysctl
     fn parse_temperature_from_sysctl(&self, line: &str) -> Option<f32> {
         if let Some(colon_pos) = line.find(':') {
@@ -359,13 +329,9 @@ impl MacosProvider {
         }
         None
     }
-    
     /// Получение размера unified memory для Apple Silicon
     fn get_unified_memory_size(&self) -> Option<u32> {
-        let output = Command::new("sysctl")
-            .args(["-n", "hw.memsize"])
-            .output();
-            
+        let output = Command::new("sysctl").args(["-n", "hw.memsize"]).output();
         if let Ok(out) = output {
             let mem_str = String::from_utf8_lossy(&out.stdout);
             if let Ok(mem_bytes) = mem_str.trim().parse::<u64>() {
@@ -374,7 +340,6 @@ impl MacosProvider {
         }
         None
     }
-    
     /// Расширение информации через дополнительные системные вызовы
     fn enhance_with_additional_info(&self, gpus: &mut Vec<GpuInfo>) {
         debug!("Attempting to enhance GPU information via additional system calls");
@@ -387,34 +352,29 @@ impl MacosProvider {
             }
         }
     }
-    
     /// Примерная оценка загрузки GPU
     fn get_gpu_utilization_estimate(&self) -> Option<f32> {
-        let output = Command::new("vm_stat")
-            .output();
+        let output = Command::new("vm_stat").output();
         if let Ok(out) = output {
             let stdout = String::from_utf8_lossy(&out.stdout);
             if stdout.contains("Pages") {
-                return Some(5.0); 
+                return Some(5.0);
             }
         }
         None
     }
 }
-
 impl Default for MacosProvider {
     fn default() -> Self {
         Self::new()
     }
 }
-
 impl GpuProvider for MacosProvider {
     /// Detect all GPUs on macOS
     fn detect_gpus(&self) -> Result<Vec<GpuInfo>> {
         debug!("Detecting GPUs on macOS");
         Ok(self.detect_all_gpus())
     }
-    
     /// Update GPU information on macOS
     fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
         debug!("Updating macOS GPU information for {:?}", gpu.name_gpu);
@@ -433,19 +393,16 @@ impl GpuProvider for MacosProvider {
         }
         Ok(())
     }
-    
     /// Get the vendor for this provider
     fn get_vendor(&self) -> Vendor {
         // This is a generic provider that can detect multiple vendors
         Vendor::Unknown
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::vendor::Vendor;
-    
     #[test]
     fn test_macos_provider_vendor() {
         let provider = MacosProvider::new();

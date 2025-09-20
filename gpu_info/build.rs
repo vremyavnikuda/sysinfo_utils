@@ -3,7 +3,6 @@ fn main() {
     {
         let project_path = std::env::var("CARGO_MANIFEST_DIR").unwrap();
         let lib_path = format!("{}/src/libs", project_path);
-
         // Проверяем наличие локальной библиотеки
         let dll_path = format!("{}/nvml.dll", lib_path);
         if std::path::Path::new(&dll_path).exists() {

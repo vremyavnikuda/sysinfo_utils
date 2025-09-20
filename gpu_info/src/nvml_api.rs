@@ -2,7 +2,6 @@
 //!
 //! This module provides a clean abstraction over NVML (NVIDIA Management Library)
 //! using the common FFI utilities to reduce code duplication.
-
 use crate::ffi_utils::{
     ApiResult, ApiTable, DynamicLibrary, LibraryLoader, NvmlResult, SymbolResolver,
 };
@@ -11,15 +10,12 @@ use crate::vendor::Vendor;
 use log::error;
 use std::ffi::{c_char, c_uint, CStr};
 use std::ptr;
-
 #[cfg(unix)]
 use libloading::Symbol;
-
 /// NVML constants
 pub const NVML_SUCCESS: i32 = 0;
 pub const NVML_TEMPERATURE_GPU: i32 = 0;
 pub const NVML_CLOCK_GRAPHICS: i32 = 0;
-
 /// NVML device handle
 #[allow(non_camel_case_types)]
 #[repr(C)]
@@ -27,7 +23,6 @@ pub const NVML_CLOCK_GRAPHICS: i32 = 0;
 pub struct nvmlDevice_st {
     _private: [u8; 0],
 }
-
 /// NVML utilization structure
 #[allow(non_camel_case_types)]
 #[repr(C)]
@@ -36,7 +31,6 @@ pub struct nvmlUtilization_t {
     pub gpu: c_uint,
     pub memory: c_uint,
 }
-
 /// NVML memory information structure
 #[allow(non_camel_case_types)]
 #[repr(C)]
@@ -46,7 +40,6 @@ pub struct nvmlMemory_t {
     pub free: u64,
     pub used: u64,
 }
-
 /// NVML function pointer types
 #[cfg(windows)]
 pub struct NvmlFunctions {
@@ -67,7 +60,6 @@ pub struct NvmlFunctions {
     pub device_get_memory_info: unsafe extern "C" fn(*mut nvmlDevice_st, *mut nvmlMemory_t) -> i32,
     pub system_get_driver_version: unsafe extern "C" fn(*mut c_char, c_uint) -> i32,
 }
-
 /// Unix function pointer types
 #[cfg(unix)]
 pub struct NvmlFunctions<'a> {
@@ -88,13 +80,11 @@ pub struct NvmlFunctions<'a> {
     pub device_get_memory_info:
         Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, *mut nvmlMemory_t) -> i32>,
 }
-
 /// NVML API client that abstracts library loading and function calls
 pub struct NvmlClient {
     _library: DynamicLibrary,
     api_table: ApiTable<NvmlFunctions>,
 }
-
 impl NvmlClient {
     /// Load NVML library and initialize API table
     #[cfg(windows)]
@@ -108,7 +98,6 @@ impl NvmlClient {
                 error!("Failed to load NVML library: {}", e);
             })
             .ok()?;
-
         let resolver = SymbolResolver::new(&library);
         // Resolve all NVML functions
         let functions = NvmlFunctions {
@@ -132,7 +121,6 @@ impl NvmlClient {
             api_table: ApiTable::new(functions),
         })
     }
-
     /// Load NVML library on Unix systems
     #[cfg(unix)]
     pub fn new() -> Option<Self> {
@@ -164,7 +152,6 @@ impl NvmlClient {
             api_table: ApiTable::new(functions),
         })
     }
-
     #[cfg(windows)]
     fn get_local_nvml_path() -> String {
         std::env::var("CARGO_MANIFEST_DIR")
@@ -241,7 +228,6 @@ impl NvmlClient {
         };
         NvmlResult { code, value: name }
     }
-
     /// Get device temperature
     pub fn get_device_temperature(&self, device: *mut nvmlDevice_st) -> NvmlResult<f32> {
         let mut temp = 0u32;
@@ -263,13 +249,11 @@ impl NvmlClient {
                 )
             }
         };
-
         NvmlResult {
             code,
             value: temp as f32,
         }
     }
-
     /// Get device utilization rates
     pub fn get_device_utilization(&self, device: *mut nvmlDevice_st) -> NvmlResult<(f32, f32)> {
         let mut util = nvmlUtilization_t { gpu: 0, memory: 0 };
@@ -280,7 +264,6 @@ impl NvmlClient {
             value: (util.gpu as f32, util.memory as f32),
         }
     }
-
     /// Get device power usage
     pub fn get_device_power_usage(&self, device: *mut nvmlDevice_st) -> NvmlResult<f32> {
         let mut power = 0u32;
@@ -291,7 +274,6 @@ impl NvmlClient {
             value: (power as f32) / 1000.0, // Convert mW to W
         }
     }
-
     /// Get device clock info
     pub fn get_device_clock_info(&self, device: *mut nvmlDevice_st) -> NvmlResult<u32> {
         let mut clock = 0u32;
@@ -313,10 +295,8 @@ impl NvmlClient {
                 )
             }
         };
-
         NvmlResult { code, value: clock }
     }
-
     /// Get device memory info
     pub fn get_device_memory_info(
         &self,
@@ -334,7 +314,6 @@ impl NvmlClient {
             value: (memory.total, memory.free, memory.used),
         }
     }
-
     /// Create GpuInfo from NVML device
     pub fn create_gpu_info(&self, device: *mut nvmlDevice_st) -> Option<GpuInfo> {
         use crate::handle_api_result;
@@ -376,7 +355,6 @@ impl NvmlClient {
         })
     }
 }
-
 /// Convenience function to get all NVIDIA GPUs using the new abstraction
 pub fn get_nvidia_gpus() -> Vec<GpuInfo> {
     let client = match NvmlClient::new() {
@@ -411,7 +389,6 @@ pub fn get_nvidia_gpus() -> Vec<GpuInfo> {
         client.shutdown();
         gpus
     }
-
     #[cfg(unix)]
     {
         // On Unix, we typically just get the first device
@@ -421,7 +398,6 @@ pub fn get_nvidia_gpus() -> Vec<GpuInfo> {
                 return vec![gpu_info];
             }
         }
-
         client.shutdown();
         Vec::new()
     }

@@ -1,10 +1,7 @@
 //! Example of using the async API for GPU information retrieval
-
-use gpu_info::{get_async, get_all_async};
-
+use gpu_info::{get_all_async, get_async};
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Get primary GPU information asynchronously
     println!("Getting primary GPU info...");
     match get_async().await {
         Ok(gpu) => {
@@ -14,8 +11,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Err(e) => println!("Error getting primary GPU: {}", e),
     }
-
-    // Get all GPUs information asynchronously
     println!("\nGetting all GPUs info...");
     match get_all_async().await {
         Ok(gpus) => {
@@ -29,6 +24,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Err(e) => println!("Error getting all GPUs: {}", e),
     }
-
     Ok(())
 }
