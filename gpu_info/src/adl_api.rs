@@ -29,7 +29,6 @@ pub struct AdapterInfo {
     pub strPNPString: [u8; ADL_MAX_PATH],
     pub iExist: i32,
     pub strUDID: [u8; ADL_MAX_PATH],
-    // Simplified structure - in real ADL this has many more clock fields
     pub iMemorySize: i32,
     pub iMemoryType: i32,
     pub iCoreClock: i32,
@@ -77,9 +76,8 @@ impl AdlClient {
     /// Load ADL library and initialize API table
     #[cfg(windows)]
     pub fn new() -> Option<Self> {
-        // Try to load ADL library with fallback paths
         let library = LibraryLoader::new("atiadlxx.dll")
-            .with_fallback_path("atiadlxy.dll") // Alternative ADL library name
+            .with_fallback_path("atiadlxy.dll")
             .with_fallback_path("C:\\Windows\\System32\\atiadlxx.dll")
             .load()
             .map_err(|e| {
@@ -114,8 +112,8 @@ impl AdlClient {
         }
         let code = unsafe {
             (self.api_table.functions().main_control_create)(
-                Some(Self::adl_malloc), // Memory allocation callback
-                1,                      // ADL version
+                Some(Self::adl_malloc),
+                1,
             )
         };
         let result = AdlResult { code, value: () };
@@ -153,7 +151,7 @@ impl AdlClient {
     /// Get adapter information for all adapters
     pub fn get_adapter_info(&self, count: i32) -> AdlResult<Vec<AdapterInfo>> {
         let mut adapters = vec![unsafe { std::mem::zeroed::<AdapterInfo>() }; count as usize];
-        let buffer_size = count * std::mem::size_of::<AdapterInfo>() as i32;
+        let buffer_size = count * (std::mem::size_of::<AdapterInfo>() as i32);
         let code = unsafe {
             (self.api_table.functions().adapter_adapter_info_get)(
                 adapters.as_mut_ptr(),
@@ -174,13 +172,13 @@ impl AdlClient {
         let code = unsafe {
             (self.api_table.functions().overdrive5_temperature_get)(
                 adapter_index,
-                0, // Thermal controller index
+                0,
                 &mut temperature,
             )
         };
         AdlResult {
             code,
-            value: temperature.temperature as f32 / 1000.0, // Convert from millidegrees
+            value: (temperature.temperature as f32) / 1000.0,
         }
     }
     /// Get adapter activity
@@ -226,16 +224,13 @@ impl AdlClient {
     }
     /// Create GpuInfo from ADL adapter
     pub fn create_gpu_info(&self, adapter: &AdapterInfo) -> Option<GpuInfo> {
-        // Extract adapter name
         let name = std::ffi::CStr::from_bytes_until_nul(&adapter.strAdapterName)
             .ok()?
             .to_string_lossy()
             .to_string();
-        // Get temperature
         let temperature = self
             .get_adapter_temperature(adapter.iAdapterIndex)
             .to_option();
-        // Get activity information
         let activity = self.get_adapter_activity(adapter.iAdapterIndex).to_option();
         let (utilization, core_clock, memory_clock) = if let Some(act) = activity {
             (
@@ -246,7 +241,6 @@ impl AdlClient {
         } else {
             (None, None, None)
         };
-        // Get power information (optional)
         let _power_info = self
             .get_adapter_power_info(adapter.iAdapterIndex)
             .to_option();
@@ -258,13 +252,13 @@ impl AdlClient {
             core_clock,
             memory_clock,
             memory_total: if adapter.iMemorySize > 0 {
-                Some((adapter.iMemorySize as u32 / 1024).max(1)) // Convert MB to GB, minimum 1GB
+                Some(((adapter.iMemorySize as u32) / 1024).max(1))
             } else {
                 None
             },
-            memory_util: None, // Not easily available from ADL
+            memory_util: None,
             active: Some(true),
-            power_usage: None, // Could be added with power control info
+            power_usage: None,
             power_limit: None,
             driver_version: None,
             max_clock_speed: None,
@@ -300,9 +294,7 @@ pub fn get_amd_gpus() -> Vec<GpuInfo> {
     );
     let mut gpus = Vec::new();
     for adapter in &adapters {
-        // Only include active adapters
         if adapter.iExist != 0 && adapter.iVendorID == 0x1002 {
-            // AMD vendor ID
             if let Some(gpu_info) = client.create_gpu_info(adapter) {
                 gpus.push(gpu_info);
             }

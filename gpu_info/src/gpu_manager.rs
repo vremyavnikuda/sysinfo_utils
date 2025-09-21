@@ -102,22 +102,32 @@ impl GpuManager {
     }
     #[cfg(target_os = "linux")]
     fn detect_linux_gpus(&mut self) {
-        use crate::linux;
+        use crate::gpu_info::GpuProvider;
+        use crate::providers::linux::{AmdLinuxProvider, NvidiaLinuxProvider};
         // NVIDIA GPUs
-        if let Ok(nvidia_gpus) = linux::nvidia::detect_nvidia_gpus() {
-            for gpu in nvidia_gpus {
-                info!("Found NVIDIA GPU: {:?}", gpu.name_gpu);
-                self.gpus.push(gpu);
+        let nvidia_provider = NvidiaLinuxProvider::new();
+        match nvidia_provider.detect_gpus() {
+            Ok(nvidia_gpus) => {
+                for gpu in nvidia_gpus {
+                    info!("Found NVIDIA GPU: {:?}", gpu.name_gpu);
+                    self.gpus.push(gpu);
+                }
+            }
+            Err(e) => {
+                warn!("Failed to detect NVIDIA GPUs: {}", e);
             }
         }
-        // AMD GPUs (если реализовано)
-        #[cfg(feature = "linux_amd")]
-        {
-            if let Ok(amd_gpus) = linux::amd::detect_amd_gpus() {
+        // AMD GPUs
+        let amd_provider = AmdLinuxProvider::new();
+        match amd_provider.detect_gpus() {
+            Ok(amd_gpus) => {
                 for gpu in amd_gpus {
                     info!("Found AMD GPU: {:?}", gpu.name_gpu);
                     self.gpus.push(gpu);
                 }
+            }
+            Err(e) => {
+                warn!("Failed to detect AMD GPUs: {}", e);
             }
         }
     }
@@ -240,7 +250,6 @@ impl GpuManager {
     }
     /// Внутренняя функция обновления одного GPU
     fn update_single_gpu_static(gpu: &mut GpuInfo) -> Result<()> {
-        // Use the new provider interface when available
         #[cfg(target_os = "windows")]
         {
             use crate::providers::{amd, intel, nvidia};
@@ -256,8 +265,17 @@ impl GpuManager {
         }
         #[cfg(target_os = "linux")]
         {
+            use crate::gpu_info::GpuProvider;
+            use crate::providers::linux::{AmdLinuxProvider, NvidiaLinuxProvider};
             match gpu.vendor {
-                Vendor::Nvidia => crate::linux::nvidia::update_nvidia_info(gpu),
+                Vendor::Nvidia => {
+                    let nvidia_provider = NvidiaLinuxProvider::new();
+                    nvidia_provider.update_gpu(gpu)
+                }
+                Vendor::Amd => {
+                    let amd_provider = AmdLinuxProvider::new();
+                    amd_provider.update_gpu(gpu)
+                }
                 _ => {
                     warn!("GPU update not implemented for vendor: {:?}", gpu.vendor);
                     Ok(())
@@ -280,7 +298,6 @@ impl GpuManager {
             debug!("Returning cached GPU #{}", index);
             return Some(cached_gpu);
         }
-        // If not in cache, get from source and populate cache
         if let Some(gpu) = self.get_gpu_by_index_owned(index) {
             self.cache.set(index, gpu.clone());
             debug!("Populated cache for GPU #{}", index);

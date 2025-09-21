@@ -209,8 +209,6 @@ impl GpuProvider for NvidiaLinuxProvider {
     }
     /// Update NVIDIA GPU information on Linux
     fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
-        // For simplicity, we'll just re-detect the GPU
-        // In a more sophisticated implementation, we'd maintain device handles
         let gpus = self.detect_gpus()?;
         if let Some(updated_gpu) = gpus.first() {
             *gpu = updated_gpu.clone();

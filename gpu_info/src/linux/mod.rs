@@ -1,3 +1,11 @@
+//! Legacy Linux GPU detection implementation
+//!
+//! This module provides backward compatibility for the main `get()` API function.
+//! It only supports NVIDIA GPUs through direct NVML loading.
+//!
+//! For full multi-GPU support, use the modern provider system:
+//! - `crate::providers::linux::NvidiaLinuxProvider`
+//! - `crate::providers::linux::AmdLinuxProvider`
 use crate::{gpu_info::GpuInfo, vendor::Vendor};
 use libloading::{Library, Symbol};
 use log::{debug, error};
