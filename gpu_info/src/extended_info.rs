@@ -272,7 +272,15 @@ impl ExtendedGpuInfo {
     }
     /// Создает неизвестный ExtendedGpuInfo
     pub fn unknown() -> Self {
-        Self::default()
+        Self {
+            base_info: GpuInfo::unknown(),
+            fan_info: FanInfo::default(),
+            encoder_info: EncoderInfo::default(),
+            memory_info: MemoryInfo::default(),
+            connection_info: ConnectionInfo::default(),
+            thermal_info: ThermalInfo::default(),
+            performance_info: PerformanceInfo::default(),
+        }
     }
     /// Возвращает базовую информацию
     pub fn base(&self) -> &GpuInfo {

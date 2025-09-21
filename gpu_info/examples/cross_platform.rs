@@ -41,10 +41,10 @@ fn main() {
         println!("Found {} GPU(s):", gpus.len());
         for (i, gpu) in gpus.iter().enumerate() {
             println!("- GPU #{}: {} ({})", i, gpu.format_name_gpu(), gpu.vendor);
-            println!("  - Temperature: {}°C", gpu.format_temperature());
-            println!("  - Utilization: {}%", gpu.format_utilization());
-            println!("  - Power Usage: {}W", gpu.format_power_usage());
-            println!("  - Memory: {}GB", gpu.format_memory_total());
+            println!("-- Temperature: {}°C", gpu.format_temperature());
+            println!("-- Utilization: {}%", gpu.format_utilization());
+            println!("-- Power Usage: {}W", gpu.format_power_usage());
+            println!("-- Memory: {}GB", gpu.format_memory_total());
         }
     }
     println!("Provider Manager Capabilities:");

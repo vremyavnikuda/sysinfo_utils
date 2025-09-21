@@ -91,6 +91,7 @@ macro_rules! handle_api_result_vec {
     };
 }
 /// Cross-platform dynamic library wrapper
+#[derive(Debug)]
 pub enum DynamicLibrary {
     #[cfg(windows)]
     Windows(HMODULE),

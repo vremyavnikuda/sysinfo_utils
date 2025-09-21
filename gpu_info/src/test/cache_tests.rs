@@ -9,7 +9,6 @@ mod cache_utils_tests {
     use crate::vendor::Vendor;
     use std::thread;
     use std::time::Duration;
-    // Helper function to create a test GPU info
     fn create_test_gpu(vendor: Vendor) -> GpuInfo {
         GpuInfo::write_vendor(vendor)
     }
@@ -27,9 +26,7 @@ mod cache_utils_tests {
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         let entry = CacheEntry::new(gpu_info);
         let ttl = Duration::from_millis(100);
-        // Should be valid immediately
         assert!(entry.is_valid(ttl));
-        // Wait and check again
         thread::sleep(Duration::from_millis(150));
         assert!(!entry.is_valid(ttl));
     }
@@ -52,7 +49,6 @@ mod cache_utils_tests {
         let before_access = entry.last_accessed.elapsed();
         entry.record_access();
         assert_eq!(entry.access_count, 1);
-        // Check that last_accessed was updated (should be much newer than before_access)
         assert!(entry.last_accessed.elapsed() < before_access);
     }
     #[test]
@@ -166,7 +162,6 @@ mod cache_utils_tests {
         assert_eq!(cache.get(&key), Some(gpu_info));
         thread::sleep(Duration::from_millis(20));
         assert_eq!(cache.get(&key), None);
-        // Expired entries should be automatically removed
         assert!(!cache.has_entry(&key));
     }
     #[test]
@@ -215,11 +210,8 @@ mod cache_utils_tests {
         let key3 = 2;
         cache.set(key1, gpu_info1.clone());
         cache.set(key2, gpu_info2.clone());
-        // Access the first entry to make it more recently used
         assert_eq!(cache.get(&key1), Some(gpu_info1.clone()));
-        // Add a third entry, which should trigger LRU eviction
         cache.set(key3, gpu_info3.clone());
-        // The second entry (least recently used) should be evicted
         assert_eq!(cache.len(), 2);
         assert!(!cache.has_entry(&key2));
         assert!(cache.has_entry(&key1));
@@ -231,11 +223,8 @@ mod cache_utils_tests {
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         let key = 0;
         cache.set(key, gpu_info.clone());
-        // First access
         assert_eq!(cache.get(&key), Some(gpu_info.clone()));
-        // Second access
         assert_eq!(cache.get(&key), Some(gpu_info.clone()));
-        // Check stats
         let stats = cache.get_stats().unwrap();
         assert_eq!(stats.total_entries, 1);
         assert_eq!(stats.total_accesses, 2);
@@ -249,7 +238,6 @@ mod cache_utils_tests {
         let key2 = 1;
         cache.set(key1, gpu_info1.clone());
         cache.set(key2, gpu_info2.clone());
-        // Access entries
         assert_eq!(cache.get(&key1), Some(gpu_info1.clone()));
         assert_eq!(cache.get(&key1), Some(gpu_info1.clone()));
         assert_eq!(cache.get(&key2), Some(gpu_info2.clone()));
@@ -272,14 +260,12 @@ mod cache_utils_tests {
     #[test]
     fn test_adaptive_gpu_cache_creation() {
         let _cache = AdaptiveGpuCache::new();
-        // Just test that it can be created without panicking
-        assert!(true); // Placeholder - actual functionality is #[allow(dead_code)]
+        assert!(true);
     }
     #[test]
     fn test_adaptive_gpu_cache_default() {
         let _cache = AdaptiveGpuCache::default();
-        // Just test that it can be created without panicking
-        assert!(true); // Placeholder - actual functionality is #[allow(dead_code)]
+        assert!(true);
     }
     #[test]
     fn test_adaptive_gpu_cache_with_settings() {
@@ -289,17 +275,13 @@ mod cache_utils_tests {
             Duration::from_secs(10),
             0.2,
         );
-        // Just test that it can be created without panicking
-        assert!(true); // Placeholder - actual functionality is #[allow(dead_code)]
+        assert!(true);
     }
-    // Error handling tests
     #[test]
     fn test_gpu_info_cache_concurrent_access() {
         let cache = GpuInfoCache::new(Duration::from_secs(1));
         let gpu_info = create_test_gpu(Vendor::Nvidia);
-        // Set value
         cache.set(gpu_info.clone());
-        // Multiple reads should work
         let result1 = cache.get();
         let result2 = cache.get();
         assert_eq!(result1, Some(gpu_info.clone()));
@@ -310,9 +292,7 @@ mod cache_utils_tests {
         let cache = MultiGpuInfoCache::new(Duration::from_secs(1));
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         let key = 0;
-        // Set value
         cache.set(key, gpu_info.clone());
-        // Multiple reads should work
         let result1 = cache.get(&key);
         let result2 = cache.get(&key);
         assert_eq!(result1, Some(gpu_info.clone()));
@@ -323,7 +303,6 @@ mod cache_utils_tests {
         let cache = GpuInfoCache::new(Duration::from_secs(0));
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         cache.set(gpu_info.clone());
-        // Should be expired immediately
         assert_eq!(cache.get(), None);
     }
     #[test]
@@ -332,19 +311,18 @@ mod cache_utils_tests {
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         let key = 0;
         cache.set(key, gpu_info.clone());
-        // Should be expired immediately
         assert_eq!(cache.get(&key), None);
     }
     #[test]
     fn test_cache_with_large_ttl() {
-        let cache = GpuInfoCache::new(Duration::from_secs(3600)); // 1 hour
+        let cache = GpuInfoCache::new(Duration::from_secs(3600));
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         cache.set(gpu_info.clone());
         assert_eq!(cache.get(), Some(gpu_info));
     }
     #[test]
     fn test_multi_cache_with_large_ttl() {
-        let cache = MultiGpuInfoCache::new(Duration::from_secs(3600)); // 1 hour
+        let cache = MultiGpuInfoCache::new(Duration::from_secs(3600));
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         let key = 0;
         cache.set(key, gpu_info.clone());
@@ -352,7 +330,6 @@ mod cache_utils_tests {
     }
     #[test]
     fn test_cache_edge_cases() {
-        // Test with very large key values
         let cache = MultiGpuInfoCache::new(Duration::from_secs(1));
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         let large_key = usize::MAX;
@@ -361,7 +338,6 @@ mod cache_utils_tests {
     }
     #[test]
     fn test_cache_empty_string_values() {
-        // Test with GPU info that has empty string fields
         let mut gpu_info = create_test_gpu(Vendor::Nvidia);
         gpu_info.name_gpu = Some("".to_string());
         let cache = GpuInfoCache::new(Duration::from_secs(1));

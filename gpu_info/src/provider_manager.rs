@@ -39,9 +39,7 @@ impl GpuProviderManager {
     }
     /// Update a specific GPU using the appropriate provider
     pub fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
-        // Find the provider for this GPU's vendor
         for (vendor, provider) in &self.providers {
-            // For Intel vendor, we need to match the type specifically
             let is_match = match (vendor, &gpu.vendor) {
                 (Vendor::Intel(_), Vendor::Intel(_)) => true,
                 _ => std::mem::discriminant(vendor) == std::mem::discriminant(&gpu.vendor),
@@ -50,15 +48,7 @@ impl GpuProviderManager {
                 return provider.update_gpu(gpu);
             }
         }
-        // If we don't have a specific provider, try to update with any available one
-        // This is a fallback for cases where vendor detection might be incomplete
-        for provider in self.providers.values() {
-            if let Ok(()) = provider.update_gpu(gpu) {
-                return Ok(());
-            }
-        }
-        // If all providers fail, return an error
-        warn!("GPU update not implemented for vendor: {:?}", gpu.vendor);
+        warn!("No provider registered for vendor: {:?}", gpu.vendor);
         Err(crate::gpu_info::GpuError::GpuNotActive)
     }
     /// Get all registered vendors
@@ -79,7 +69,6 @@ impl Default for GpuProviderManager {
 mod tests {
     use super::*;
     use crate::vendor::Vendor;
-    // Mock provider for testing
     struct MockProvider;
     impl MockProvider {
         fn new() -> Self {

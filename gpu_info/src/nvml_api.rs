@@ -89,7 +89,6 @@ impl NvmlClient {
     /// Load NVML library and initialize API table
     #[cfg(windows)]
     pub fn new() -> Option<Self> {
-        // Try to load NVML library with fallback paths
         let library = LibraryLoader::new("nvml.dll")
             .with_fallback_path(&Self::get_local_nvml_path())
             .with_fallback_path("C:\\Program Files\\NVIDIA Corporation\\NVSMI\\nvml.dll")
@@ -99,7 +98,6 @@ impl NvmlClient {
             })
             .ok()?;
         let resolver = SymbolResolver::new(&library);
-        // Resolve all NVML functions
         let functions = NvmlFunctions {
             init: resolver.resolve("nvmlInit_v2")?,
             shutdown: resolver.resolve("nvmlShutdown")?,

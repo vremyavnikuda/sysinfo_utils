@@ -17,9 +17,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Found {} GPU(s)", gpus.len());
             for (i, gpu) in gpus.iter().enumerate() {
                 println!("GPU {}: {}", i, gpu.format_name_gpu());
-                println!("- Temperature: {}°C", gpu.format_temperature());
-                println!("- Utilization: {}%", gpu.format_utilization());
-                println!("- Power Usage: {}W", gpu.format_power_usage());
+                println!("-- Temperature: {}°C", gpu.format_temperature());
+                println!("-- Utilization: {}%", gpu.format_utilization());
+                println!("-- Power Usage: {}W", gpu.format_power_usage());
             }
         }
         Err(e) => println!("Error getting all GPUs: {}", e),
