@@ -29,11 +29,27 @@
 //! ```
 
 use crate::gpu_info::{GpuInfo, Result};
-use crate::vendor::{IntelGpuType, Vendor};
-use log::{debug, warn};
 
 #[cfg(not(feature = "macos-iokit"))]
 use crate::gpu_info::GpuError;
+use crate::vendor::{IntelGpuType, Vendor};
+use log::{debug, warn};
+
+#[cfg(feature = "macos-iokit")]
+mod ffi {
+    #[allow(dead_code)]
+    pub const K_IO_MASTER_PORT_DEFAULT: u32 = 0;
+    #[allow(dead_code)]
+    pub const K_IO_PCI_CLASS_CODE_DISPLAY: u32 = 0x0300;
+
+    pub type IoIterator = u32;
+    pub type IoService = u32;
+
+    #[allow(dead_code)]
+    pub const fn io_service_is_valid(service: IoService) -> bool {
+        service != 0
+    }
+}
 
 /// PCI information for a GPU device
 ///
@@ -154,13 +170,105 @@ impl IOKitBackend {
     pub fn detect_gpus(&self) -> Result<Vec<GpuInfo>> {
         debug!("Detecting GPUs via IOKit");
 
-        // TODO: Implement actual IOKit PCI scanning
-        // For now, return empty vector with proper error handling
-        
-        // This will be implemented in the next iteration with actual IOKit FFI calls
-        warn!("IOKit GPU detection not yet fully implemented");
-        
-        Ok(Vec::new())
+        let gpus = self.scan_pci_devices()?;
+
+        if gpus.is_empty() {
+            warn!("No GPUs detected via IOKit");
+        } else {
+            debug!("Detected {} GPU(s) via IOKit", gpus.len());
+        }
+
+        Ok(gpus)
+    }
+
+    /// Scans PCI bus for display controller devices
+    ///
+    /// This is the main internal method that coordinates GPU detection.
+    fn scan_pci_devices(&self) -> Result<Vec<GpuInfo>> {
+        debug!("Scanning PCI devices for display controllers");
+
+        let mut gpus = Vec::new();
+
+        match self.enumerate_display_controllers() {
+            Ok(devices) => {
+                for pci_info in devices {
+                    match self.create_gpu_info_from_pci(&pci_info) {
+                        Ok(gpu_info) => {
+                            debug!(
+                                "Found GPU: vendor={:04x}, device={:04x}",
+                                pci_info.vendor_id, pci_info.device_id
+                            );
+                            gpus.push(gpu_info);
+                        }
+                        Err(e) => {
+                            warn!(
+                                "Failed to create GpuInfo for device {:04x}:{:04x}: {}",
+                                pci_info.vendor_id, pci_info.device_id, e
+                            );
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                warn!("Failed to enumerate display controllers: {}", e);
+                return Err(e);
+            }
+        }
+
+        Ok(gpus)
+    }
+
+    fn enumerate_display_controllers(&self) -> Result<Vec<PciInfo>> {
+        let mut devices = Vec::new();
+
+        match self.get_matching_services() {
+            Ok(iterator) => {
+                while let Some(pci_info) = self.next_device(iterator) {
+                    devices.push(pci_info);
+                }
+            }
+            Err(e) => {
+                warn!("Failed to get matching services: {}", e);
+                return Err(e);
+            }
+        }
+
+        Ok(devices)
+    }
+
+    /// Gets an iterator for PCI display controller devices
+    ///
+    /// TODO: Implement actual IOKit FFI calls
+    /// This requires:
+    /// 1. IOServiceMatching() to create matching dictionary
+    /// 2. IOServiceGetMatchingServices() to get iterator
+    /// 3. Proper error handling for IOKit return codes
+    fn get_matching_services(&self) -> Result<ffi::IoIterator> {
+        warn!("IOKit FFI not yet implemented - returning mock iterator");
+        Ok(0)
+    }
+
+    /// Gets next PCI device from iterator
+    ///
+    /// TODO: Implement actual IOKit FFI calls
+    /// This requires:
+    /// 1. IOIteratorNext() to get next service
+    /// 2. Read PCI properties (vendor-id, device-id, bus, device, function)
+    /// 3. IOObjectRelease() to release service
+    fn next_device(&self, _iterator: ffi::IoIterator) -> Option<PciInfo> {
+        None
+    }
+
+    fn create_gpu_info_from_pci(&self, pci_info: &PciInfo) -> Result<GpuInfo> {
+        let mut gpu = GpuInfo::default();
+
+        gpu.vendor = pci_info.vendor();
+        gpu.name_gpu = Some(format!(
+            "Unknown GPU {:04x}:{:04x}",
+            pci_info.vendor_id, pci_info.device_id
+        ));
+
+        Ok(gpu)
     }
 
     /// Updates dynamic GPU metrics
@@ -189,7 +297,7 @@ impl IOKitBackend {
 
         // TODO: Implement SMC temperature reading
         // For now, leave metrics unchanged
-        
+
         Ok(())
     }
 
