@@ -21,6 +21,10 @@ default = ["serde", "serde_json"]
 nvidia = []
 intel = []
 amd = []
+# macOS-specific features
+macos-iokit = ["core-foundation", "io-kit-sys"]
+macos-metal = ["metal-rs"]
+macos-full = ["macos-iokit", "macos-metal"]
 
 [dependencies]
 log = "0.4"
@@ -57,3 +61,8 @@ windows = { version = "0.52", features = [
     "Win32_Foundation",
     "Win32_System_LibraryLoader",
 ] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-foundation = { version = "0.9", optional = true }
+io-kit-sys = { version = "0.4", optional = true }
+metal-rs = { version = "0.27", optional = true, package = "metal" }
