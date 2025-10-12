@@ -159,8 +159,7 @@ impl MacosBackend {
             Self::Metal => true,
             Self::PowerMetrics => {
                 // Check if powermetrics command exists
-                std::process::Command
-                    ::new("which")
+                std::process::Command::new("which")
                     .arg("powermetrics")
                     .output()
                     .map(|output| output.status.success())
@@ -216,9 +215,8 @@ mod tests {
     fn test_backend_serialization() {
         let backend = MacosBackend::Hybrid;
         let json = serde_json::to_string(&backend).expect("Failed to serialize");
-        let deserialized: MacosBackend = serde_json
-            ::from_str(&json)
-            .expect("Failed to deserialize");
+        let deserialized: MacosBackend =
+            serde_json::from_str(&json).expect("Failed to deserialize");
         assert_eq!(backend, deserialized);
     }
 }
