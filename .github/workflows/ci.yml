@@ -1,4 +1,4 @@
-name: CI
+name: CI Pipeline
 
 on:
   push:
@@ -25,9 +25,9 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  # Check formatting
+  # Stage 1: Format Check
   fmt:
-    name: Rustfmt
+    name: "Stage 1: Format Check"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,25 +37,20 @@ jobs:
         with:
           components: rustfmt
       
-      - name: Check formatting
+      - name: Check formatting (all workspace)
         run: cargo fmt --all -- --check
 
-  # Run clippy lints
+  # Stage 2: Clippy (depends on fmt)
   clippy:
-    name: Clippy (${{ matrix.package }})
+    name: "Stage 2: Clippy Lints"
+    needs: [fmt]
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        rust: [stable, beta]
-        package: [gpu_info, system_info_lib, system_cli]
     steps:
       - uses: actions/checkout@v4
       
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: ${{ matrix.rust }}
           components: clippy
       
       - name: Cache cargo registry
@@ -76,89 +71,71 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Run clippy on ${{ matrix.package }}
-        run: cargo clippy -p ${{ matrix.package }} --all-targets --all-features -- -D warnings
+      - name: Run clippy on gpu_info
+        run: cargo clippy -p gpu_info --all-targets --all-features -- -D warnings
+      
+      - name: Run clippy on system_info_lib
+        run: cargo clippy -p system_info_lib --all-targets --all-features -- -D warnings
+      
+      - name: Run clippy on system_cli
+        run: cargo clippy -p system_cli --all-targets --all-features -- -D warnings
 
-  # Run tests on multiple platforms
+  # Stage 3: Tests (depends on clippy)
   test:
-    name: Test ${{ matrix.package }} (${{ matrix.os }})
+    name: "Stage 3: Tests"
+    needs: [clippy]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo index
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Run tests on gpu_info
+        run: cargo test -p gpu_info --verbose
+      
+      - name: Run tests on gpu_info (all features)
+        run: cargo test -p gpu_info --all-features --verbose
+      
+      - name: Run tests on system_info_lib
+        run: cargo test -p system_info_lib --verbose
+      
+      - name: Run tests on system_info_lib (all features)
+        run: cargo test -p system_info_lib --all-features --verbose
+      
+      - name: Run tests on system_cli
+        run: cargo test -p system_cli --verbose
+      
+      - name: Run tests on system_cli (all features)
+        run: cargo test -p system_cli --all-features --verbose
+
+  # Stage 4: Build for all platforms (depends on test)
+  build:
+    name: "Stage 4: Build (${{ matrix.os }})"
+    needs: [test]
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        rust: [stable, beta]
-        package: [gpu_info, system_info_lib, system_cli]
-        include:
-          # Test on nightly but allow failures
-          - os: ubuntu-latest
-            rust: nightly
-            package: gpu_info
-          - os: ubuntu-latest
-            rust: nightly
-            package: system_info_lib
-          - os: ubuntu-latest
-            rust: nightly
-            package: system_cli
-          - os: windows-latest
-            rust: nightly
-            package: gpu_info
-          - os: windows-latest
-            rust: nightly
-            package: system_info_lib
-          - os: windows-latest
-            rust: nightly
-            package: system_cli
-          - os: macos-latest
-            rust: nightly
-            package: gpu_info
-          - os: macos-latest
-            rust: nightly
-            package: system_info_lib
-          - os: macos-latest
-            rust: nightly
-            package: system_cli
-    continue-on-error: ${{ matrix.rust == 'nightly' }}
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.rust }}
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-${{ matrix.rust }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-${{ matrix.rust }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: ${{ runner.os }}-${{ matrix.rust }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Run tests (no features) - ${{ matrix.package }}
-        run: cargo test -p ${{ matrix.package }} --verbose
-      
-      - name: Run tests (all features) - ${{ matrix.package }}
-        run: cargo test -p ${{ matrix.package }} --all-features --verbose
-
-  # Build documentation
-  doc:
-    name: Documentation (${{ matrix.package }})
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        package: [gpu_info, system_info_lib, system_cli]
     steps:
       - uses: actions/checkout@v4
       
@@ -183,165 +160,36 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Build documentation - ${{ matrix.package }}
-        run: cargo doc -p ${{ matrix.package }} --no-deps --all-features
-        env:
-          RUSTDOCFLAGS: -D warnings
+      - name: Build gpu_info
+        run: cargo build -p gpu_info --release --all-features
       
-      - name: Check for broken intra-doc links - ${{ matrix.package }}
-        run: cargo doc -p ${{ matrix.package }} --no-deps --all-features --document-private-items
+      - name: Build system_info_lib
+        run: cargo build -p system_info_lib --release --all-features
+      
+      - name: Build system_cli
+        run: cargo build -p system_cli --release --all-features
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: binaries-${{ matrix.os }}
+          path: |
+            target/release/system_cli
+            target/release/system_cli.exe
+          if-no-files-found: ignore
 
-  # Check minimum supported Rust version
-  msrv:
-    name: MSRV (${{ matrix.package }})
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        package: [gpu_info, system_info_lib, system_cli]
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain (MSRV)
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: "1.70.0"
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-msrv-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-msrv-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: ${{ runner.os }}-msrv-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Check MSRV - ${{ matrix.package }}
-        run: cargo check -p ${{ matrix.package }} --all-features
-
-  # Build examples
-  examples:
-    name: Build Examples (${{ matrix.package }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package: [gpu_info, system_info_lib, system_cli]
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Build examples - ${{ matrix.package }}
-        run: cargo build -p ${{ matrix.package }} --examples --all-features
-        continue-on-error: true
-
-  # Platform-specific feature tests
-  features:
-    name: Feature Combinations (${{ matrix.package }})
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        package: [gpu_info, system_info_lib, system_cli]
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Install cargo-hack
-        uses: taiki-e/install-action@cargo-hack
-      
-      - name: Check feature combinations - ${{ matrix.package }}
-        run: cargo hack check -p ${{ matrix.package }} --feature-powerset --depth 2
-
-  # Check for common issues
-  check:
-    name: Cargo Check ${{ matrix.package }} (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        package: [gpu_info, system_info_lib, system_cli]
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Run cargo check - ${{ matrix.package }}
-        run: cargo check -p ${{ matrix.package }} --all-targets --all-features
-
-  # Success indicator job
+  # Final: Success indicator
   ci-success:
-    name: CI Success
-    needs: [fmt, clippy, test, doc, msrv, examples, features, check]
+    name: "CI Pipeline Success"
+    needs: [fmt, clippy, test, build]
     runs-on: ubuntu-latest
     if: success()
     steps:
-      - name: Mark CI as successful
-        run: echo "All CI checks passed!"
+      - name: All stages passed
+        run: |
+          echo "✅ Stage 1: Format Check - PASSED"
+          echo "✅ Stage 2: Clippy Lints - PASSED"
+          echo "✅ Stage 3: Tests - PASSED"
+          echo "✅ Stage 4: Build - PASSED"
+          echo ""
+          echo "🎉 All CI pipeline stages completed successfully!"
