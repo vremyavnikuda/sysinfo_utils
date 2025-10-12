@@ -1,212 +1,138 @@
 //! Legacy Linux GPU detection implementation
 //!
 //! This module provides backward compatibility for the main `get()` API function.
-//! It only supports NVIDIA GPUs through direct NVML loading.
+//! Now refactored to use the modern provider system internally.
 //!
-//! For full multi-GPU support, use the modern provider system:
+//! For full multi-GPU support, use the modern provider system directly:
 //! - `crate::providers::linux::NvidiaLinuxProvider`
 //! - `crate::providers::linux::AmdLinuxProvider`
-use crate::{gpu_info::GpuInfo, vendor::Vendor};
-use libloading::{Library, Symbol};
-use log::{debug, error};
-use std::{env, os::raw::c_char, ptr};
-#[repr(C)]
-#[derive(Debug, Clone, Copy)]
-pub struct NvmlDevice {
-    _private: [u8; 0],
+//!
+//! # Deprecation Notice
+//!
+//! This legacy API is maintained for backward compatibility but internally delegates
+//! to the provider system. Consider using `GpuManager` or providers directly.
+use crate::{
+    gpu_info::{GpuInfo, GpuProvider},
+    providers::linux::{AmdLinuxProvider, NvidiaLinuxProvider},
+    vendor::Vendor,
+};
+use log::{debug, warn};
+use std::{fs, path::Path};
+/// Detect GPU vendor by reading sysfs
+///
+/// Returns the detected vendor or Vendor::Unknown if detection fails.
+/// This function reads `/sys/class/drm/card0/device/vendor` to identify the GPU vendor.
+fn detect_vendor() -> Vendor {
+    let vendor_path = Path::new("/sys/class/drm/card0/device/vendor");
+    
+    if let Ok(vendor_id) = fs::read_to_string(vendor_path) {
+        let vendor_id = vendor_id.trim();
+        match vendor_id {
+            "0x10de" => return Vendor::Nvidia,
+            "0x1002" => return Vendor::Amd,
+            "0x8086" => return Vendor::Intel(crate::vendor::IntelGpuType::Unknown),
+            _ => debug!("Unknown vendor ID: {}", vendor_id),
+        }
+    }
+    
+    // Fallback: check if NVIDIA libraries are available
+    if Path::new("/usr/lib/libnvidia-ml.so.1").exists() 
+        || Path::new("/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1").exists() {
+        return Vendor::Nvidia;
+    }
+    
+    Vendor::Unknown
 }
-#[allow(non_camel_case_types)]
-pub type NvmlDevice_t = *mut NvmlDevice;
-#[allow(non_camel_case_types)]
-pub type nvmlReturn_t = i32;
-pub const NVML_SUCCESS: nvmlReturn_t = 0;
-pub const NVML_TEMPERATURE_GPU: u32 = 0;
-#[repr(C)]
-#[derive(Debug, Clone, Copy)]
-pub struct NvmlUtilization {
-    gpu: u32,
-    memory: u32,
-}
-#[repr(C)]
-#[derive(Debug, Clone, Copy)]
-pub struct NvmlMemory {
-    total: u64,
-    free: u64,
-    used: u64,
-}
-pub type NvmlInitFn = unsafe extern "C" fn() -> nvmlReturn_t;
-pub type NvmlShutdownFn = unsafe extern "C" fn() -> nvmlReturn_t;
-pub type NvmlDeviceGetHandleByIndexFn =
-    unsafe extern "C" fn(u32, *mut NvmlDevice_t) -> nvmlReturn_t;
-pub type NvmlDeviceGetTemperatureFn =
-    unsafe extern "C" fn(NvmlDevice_t, u32, *mut u32) -> nvmlReturn_t;
-pub type NvmlDeviceGetNameFn = unsafe extern "C" fn(NvmlDevice_t, *mut c_char, u32) -> nvmlReturn_t;
-pub type NvmlDeviceGetUtilizationRatesFn =
-    unsafe extern "C" fn(NvmlDevice_t, *mut NvmlUtilization) -> nvmlReturn_t;
-pub type NvmlDeviceGetPowerUsageFn = unsafe extern "C" fn(NvmlDevice_t, *mut u32) -> nvmlReturn_t;
-pub type NvmlDeviceGetClockInfoFn =
-    unsafe extern "C" fn(NvmlDevice_t, u32, *mut u32) -> nvmlReturn_t;
-pub type NvmlDeviceGetMemoryInfoFn =
-    unsafe extern "C" fn(NvmlDevice_t, *mut NvmlMemory) -> nvmlReturn_t;
-pub const NVML_CLOCK_GRAPHICS: u32 = 0;
-/// Fetches detailed information about the first detected NVIDIA GPU using dynamic NVML loading.
+/// Fetches detailed information about the primary GPU.
 ///
-/// This function loads the NVML shared library and calls various functions to fetch information
-/// about the first detected NVIDIA GPU. It returns a `GpuInfo` struct containing the information
-/// fetched.
+/// This function now uses the modern provider system internally to detect and query GPUs.
+/// It automatically detects the GPU vendor and uses the appropriate provider.
 ///
-/// Note that this function is only available on Linux.
+/// # Returns
 ///
-/// # Panics
+/// Returns a `GpuInfo` struct with information about the primary GPU, or a default
+/// `GpuInfo` with `Vendor::Unknown` if no supported GPU is found.
 ///
-/// This function will panic if it fails to load the NVML library or if it fails to fetch the
-/// information.
+/// # Note
+///
+/// For multi-GPU systems or more control, use `GpuManager` or providers directly.
+/// This function only returns information about the first detected GPU.
+///
+/// # Example
+///
+/// ```no_run
+/// use gpu_info::linux;
+/// let gpu = linux::info_gpu();
+/// println!("GPU: {:?}", gpu.name_gpu);
+/// ```
 pub fn info_gpu() -> GpuInfo {
-    debug!("Fetching GPU info using dynamic NVML loading");
-    unsafe {
-        let nvml_lib_path =
-            env::var("NVML_LIB_PATH").unwrap_or_else(|_| "/usr/lib/libnvidia-ml.so.1".to_string());
-        let lib = match Library::new(&nvml_lib_path) {
-            Ok(lib) => lib,
-            Err(e) => {
-                error!("Failed to load NVML from {}: {e}", nvml_lib_path);
-                return GpuInfo::default();
-            }
-        };
-        let init: Symbol<NvmlInitFn> = match lib.get(b"nvmlInit_v2") {
-            Ok(symbol) => symbol,
-            Err(e) => {
-                error!("Failed to get nvmlInit_v2 symbol: {}", e);
-                return GpuInfo::default();
-            }
-        };
-        let shutdown: Symbol<NvmlShutdownFn> = match lib.get(b"nvmlShutdown") {
-            Ok(symbol) => symbol,
-            Err(e) => {
-                error!("Failed to get nvmlShutdown symbol: {}", e);
-                return GpuInfo::default();
-            }
-        };
-        let get_device_handle: Symbol<NvmlDeviceGetHandleByIndexFn> =
-            match lib.get(b"nvmlDeviceGetHandleByIndex_v2") {
-                Ok(symbol) => symbol,
-                Err(e) => {
-                    error!("Failed to get nvmlDeviceGetHandleByIndex_v2 symbol: {}", e);
-                    return GpuInfo::default();
-                }
-            };
-        let get_temp: Symbol<NvmlDeviceGetTemperatureFn> =
-            match lib.get(b"nvmlDeviceGetTemperature") {
-                Ok(symbol) => symbol,
-                Err(e) => {
-                    error!("Failed to get nvmlDeviceGetTemperature symbol: {}", e);
-                    return GpuInfo::default();
-                }
-            };
-        let get_name: Symbol<NvmlDeviceGetNameFn> = match lib.get(b"nvmlDeviceGetName") {
-            Ok(symbol) => symbol,
-            Err(e) => {
-                error!("Failed to get nvmlDeviceGetName symbol: {}", e);
-                return GpuInfo::default();
-            }
-        };
-        let get_util: Symbol<NvmlDeviceGetUtilizationRatesFn> =
-            match lib.get(b"nvmlDeviceGetUtilizationRates") {
-                Ok(symbol) => symbol,
-                Err(e) => {
-                    error!("Failed to get nvmlDeviceGetUtilizationRates symbol: {}", e);
-                    return GpuInfo::default();
-                }
-            };
-        let get_power: Symbol<NvmlDeviceGetPowerUsageFn> = match lib.get(b"nvmlDeviceGetPowerUsage")
-        {
-            Ok(symbol) => symbol,
-            Err(e) => {
-                error!("Failed to get nvmlDeviceGetPowerUsage symbol: {}", e);
-                return GpuInfo::default();
-            }
-        };
-        let get_clock: Symbol<NvmlDeviceGetClockInfoFn> = match lib.get(b"nvmlDeviceGetClockInfo") {
-            Ok(symbol) => symbol,
-            Err(e) => {
-                error!("Failed to get nvmlDeviceGetClockInfo symbol: {}", e);
-                return GpuInfo::default();
-            }
-        };
-        let get_meminfo: Symbol<NvmlDeviceGetMemoryInfoFn> =
-            match lib.get(b"nvmlDeviceGetMemoryInfo") {
-                Ok(symbol) => symbol,
-                Err(e) => {
-                    error!("Failed to get nvmlDeviceGetMemoryInfo symbol: {}", e);
-                    return GpuInfo::default();
-                }
-            };
-        init();
-        let mut device: NvmlDevice_t = ptr::null_mut();
-        if get_device_handle(0, &mut device) != NVML_SUCCESS {
-            error!("Failed to get NVML device handle");
-            shutdown();
+    debug!("Fetching primary GPU info using provider system");
+    
+    let vendor = detect_vendor();
+    debug!("Detected GPU vendor: {:?}", vendor);
+    
+    let gpus = match vendor {
+        Vendor::Nvidia => {
+            let provider = NvidiaLinuxProvider::new();
+            provider.detect_gpus()
+        },
+        Vendor::Amd => {
+            let provider = AmdLinuxProvider::new();
+            provider.detect_gpus()
+        },
+        _ => {
+            warn!("No supported GPU vendor detected, returning default GpuInfo");
             return GpuInfo::default();
         }
-        let mut temp = 0u32;
-        let temperature = if get_temp(device, NVML_TEMPERATURE_GPU, &mut temp) == NVML_SUCCESS {
-            Some(temp as f32)
-        } else {
-            None
-        };
-        let mut name_buf = [0i8; 64];
-        let name = if get_name(device, name_buf.as_mut_ptr(), 64) == NVML_SUCCESS {
-            Some(
-                std::ffi::CStr::from_ptr(name_buf.as_ptr())
-                    .to_string_lossy()
-                    .to_string(),
-            )
-        } else {
-            Some("NVIDIA GPU".to_string())
-        };
-        let mut util = NvmlUtilization { gpu: 0, memory: 0 };
-        let (gpu_util, mem_util) = if get_util(device, &mut util) == NVML_SUCCESS {
-            (Some(util.gpu as f32), Some(util.memory as f32))
-        } else {
-            (None, None)
-        };
-        let mut power = 0u32;
-        let power_usage = if get_power(device, &mut power) == NVML_SUCCESS {
-            Some((power as f32) / 1000.0)
-        } else {
-            None
-        };
-        let mut clock = 0u32;
-        let core_clock = if get_clock(device, NVML_CLOCK_GRAPHICS, &mut clock) == NVML_SUCCESS {
-            Some(clock)
-        } else {
-            None
-        };
-        let mut mem_info = NvmlMemory {
-            total: 0,
-            free: 0,
-            used: 0,
-        };
-        let memory_total = if get_meminfo(device, &mut mem_info) == NVML_SUCCESS {
-            Some((mem_info.total / 1024 / 1024) as u32)
-        } else {
-            None
-        };
-        shutdown();
-        GpuInfo {
-            vendor: Vendor::Nvidia,
-            name_gpu: name,
-            temperature,
-            utilization: gpu_util,
-            memory_util: mem_util,
-            power_usage,
-            core_clock,
-            memory_clock: None,
-            max_clock_speed: None,
-            active: Some(true),
-            power_limit: None,
-            memory_total,
-            driver_version: None,
+    };
+    
+    match gpus {
+        Ok(mut gpu_list) if !gpu_list.is_empty() => {
+            debug!("Successfully detected {} GPU(s)", gpu_list.len());
+            gpu_list.remove(0)
+        },
+        Ok(_) => {
+            warn!("Provider detected 0 GPUs");
+            GpuInfo::default()
+        },
+        Err(e) => {
+            warn!("Failed to detect GPUs: {:?}", e);
+            GpuInfo::default()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_detect_vendor_returns_valid_vendor() {
+        let vendor = detect_vendor();
+        // Should return either a valid vendor or Unknown
+        // We can't test exact value as it depends on the system
+        assert!(matches!(
+            vendor,
+            Vendor::Nvidia | Vendor::Amd | Vendor::Intel(_) | Vendor::Unknown
+        ));
+    }
+
+    #[test]
+    fn test_info_gpu_returns_gpuinfo() {
+        // Should always return GpuInfo, never panic
+        let gpu = info_gpu();
+        // Verify it's a valid GpuInfo struct
+        assert!(matches!(
+            gpu.vendor,
+            Vendor::Nvidia | Vendor::Amd | Vendor::Intel(_) | Vendor::Unknown
+        ));
+    }
+
+    #[test]
+    fn test_info_gpu_does_not_panic_without_gpu() {
+        // This test ensures backward compatibility
+        // Even without GPU, should return default GpuInfo, not panic
+        let _gpu = info_gpu();
+        // If we reached here, no panic occurred
     }
 }
