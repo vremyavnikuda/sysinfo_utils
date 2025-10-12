@@ -1,6 +1,41 @@
 //! macOS GPU provider implementation
 //!
 //! This module implements the GpuProvider trait for GPUs on macOS using system utilities.
+//!
+//! # Implementation Details
+//!
+//! The macOS provider uses `system_profiler` to detect GPUs and gather basic information.
+//! For Apple Silicon (M1/M2/M3), it provides additional support for unified memory
+//! and estimated GPU metrics.
+//!
+//! ## Limitations
+//!
+//! - Real-time metrics require `sudo` access for `powermetrics`
+//! - `system_profiler` is relatively slow (500-1000ms per call)
+//! - Some metrics are estimated rather than measured directly
+//! - Metal API integration would require Objective-C bindings
+//!
+//! ## Performance Considerations
+//!
+//! To minimize overhead, the provider caches basic GPU information and only
+//! updates dynamic metrics (utilization, temperature) during `update_gpu()` calls.
+//!
+//! # Example
+//!
+//! ```no_run
+//! # #[cfg(target_os = "macos")]
+//! # {
+//! use gpu_info::providers::macos::MacosProvider;
+//! use gpu_info::gpu_info::GpuProvider;
+//!
+//! let provider = MacosProvider::new();
+//! if let Ok(gpus) = provider.detect_gpus() {
+//!     for gpu in gpus {
+//!         println!("Found GPU: {:?}", gpu.name_gpu);
+//!     }
+//! }
+//! # }
+//! ```
 use crate::gpu_info::{GpuInfo, GpuProvider, Result};
 use crate::vendor::Vendor;
 use log::{debug, info, warn};
@@ -403,10 +438,232 @@ impl GpuProvider for MacosProvider {
 mod tests {
     use super::*;
     use crate::vendor::Vendor;
+
+    #[test]
+    fn test_macos_provider_creation() {
+        let provider = MacosProvider::new();
+        let default_provider = MacosProvider::default();
+        // Ensure both creation methods work
+        assert_eq!(provider.get_vendor(), Vendor::Unknown);
+        assert_eq!(default_provider.get_vendor(), Vendor::Unknown);
+    }
+
     #[test]
     fn test_macos_provider_vendor() {
         let provider = MacosProvider::new();
         // For macOS provider, we return Unknown as it can detect multiple vendors
         assert_eq!(provider.get_vendor(), Vendor::Unknown);
+    }
+
+    #[test]
+    fn test_parse_vram_string() {
+        let provider = MacosProvider::new();
+
+        // Test megabytes parsing
+        assert_eq!(provider.parse_vram_string("4096 MB"), Some(4));
+        assert_eq!(provider.parse_vram_string("8192 MB"), Some(8));
+        assert_eq!(provider.parse_vram_string("512 MB"), Some(1)); // Rounds up
+
+        // Test gigabytes parsing
+        assert_eq!(provider.parse_vram_string("8 GB"), Some(8));
+        assert_eq!(provider.parse_vram_string("16 GB"), Some(16));
+
+        // Test invalid inputs
+        assert_eq!(provider.parse_vram_string("invalid"), None);
+        assert_eq!(provider.parse_vram_string(""), None);
+    }
+
+    #[test]
+    fn test_parse_clock_speed() {
+        let provider = MacosProvider::new();
+
+        // Test MHz parsing
+        assert_eq!(provider.parse_clock_speed("1200 MHz"), Some(1200));
+        assert_eq!(provider.parse_clock_speed("2400 MHz"), Some(2400));
+
+        // Test GHz parsing
+        assert_eq!(provider.parse_clock_speed("1.5 GHz"), Some(1500));
+        assert_eq!(provider.parse_clock_speed("2.0 GHz"), Some(2000));
+
+        // Test invalid inputs
+        assert_eq!(provider.parse_clock_speed("invalid"), None);
+        assert_eq!(provider.parse_clock_speed(""), None);
+    }
+
+    #[test]
+    fn test_extract_vram_from_name() {
+        let provider = MacosProvider::new();
+
+        // Test various GPU name formats
+        assert_eq!(
+            provider.extract_vram_from_name("NVIDIA GeForce RTX 3080 10GB"),
+            Some(10)
+        );
+        assert_eq!(
+            provider.extract_vram_from_name("AMD Radeon Pro 8GB"),
+            Some(8)
+        );
+        assert_eq!(
+            provider.extract_vram_from_name("Intel Iris Plus Graphics 2gb"),
+            Some(2)
+        );
+
+        // Test names without VRAM info
+        assert_eq!(provider.extract_vram_from_name("Intel HD Graphics"), None);
+        assert_eq!(provider.extract_vram_from_name(""), None);
+    }
+
+    #[test]
+    fn test_determine_vendor() {
+        let provider = MacosProvider::new();
+
+        // Test NVIDIA detection
+        let nvidia_vendor = provider.determine_vendor("NVIDIA GeForce GTX 1080");
+        assert_eq!(nvidia_vendor, Vendor::Nvidia);
+
+        // Test AMD detection
+        let amd_vendor = provider.determine_vendor("AMD Radeon Pro 5500M");
+        assert_eq!(amd_vendor, Vendor::Amd);
+
+        // Test Apple detection
+        let apple_vendor = provider.determine_vendor("Apple M1 GPU");
+        assert_eq!(apple_vendor, Vendor::Apple);
+
+        // Test unknown vendor
+        let unknown_vendor = provider.determine_vendor("Unknown GPU");
+        assert_eq!(unknown_vendor, Vendor::Unknown);
+    }
+
+    #[test]
+    fn test_determine_apple_gpu_info() {
+        let provider = MacosProvider::new();
+
+        // Test M3 variants
+        let (m3_name, m3_cores) = provider.determine_apple_gpu_info("Apple M3");
+        assert!(m3_name.contains("M3"));
+        assert!(m3_cores.is_some());
+
+        let (m3_pro_name, m3_pro_cores) = provider.determine_apple_gpu_info("Apple M3 Pro");
+        assert!(m3_pro_name.contains("M3 Pro"));
+        assert_eq!(m3_pro_cores, Some(18));
+
+        let (m3_max_name, m3_max_cores) = provider.determine_apple_gpu_info("Apple M3 Max");
+        assert!(m3_max_name.contains("M3 Max"));
+        assert_eq!(m3_max_cores, Some(40));
+
+        // Test M2 variants
+        let (m2_name, _) = provider.determine_apple_gpu_info("Apple M2");
+        assert!(m2_name.contains("M2"));
+
+        // Test M1 variants
+        let (m1_name, _) = provider.determine_apple_gpu_info("Apple M1");
+        assert!(m1_name.contains("M1"));
+
+        // Test unknown Apple chip
+        let (unknown_name, unknown_cores) = provider.determine_apple_gpu_info("Apple Unknown");
+        assert_eq!(unknown_name, "Apple Silicon GPU");
+        assert_eq!(unknown_cores, None);
+    }
+
+    #[test]
+    fn test_estimate_apple_gpu_clock() {
+        let provider = MacosProvider::new();
+
+        // Test M3 clock estimation
+        assert_eq!(provider.estimate_apple_gpu_clock("Apple M3"), Some(1400));
+        assert_eq!(
+            provider.estimate_apple_gpu_clock("Apple M3 Pro"),
+            Some(1400)
+        );
+
+        // Test M2 clock estimation
+        assert_eq!(provider.estimate_apple_gpu_clock("Apple M2"), Some(1300));
+
+        // Test M1 clock estimation
+        assert_eq!(provider.estimate_apple_gpu_clock("Apple M1"), Some(1200));
+
+        // Test unknown chip
+        assert_eq!(
+            provider.estimate_apple_gpu_clock("Apple Unknown"),
+            Some(1000)
+        );
+    }
+
+    #[test]
+    fn test_extract_string_value() {
+        let provider = MacosProvider::new();
+
+        // Test valid XML string
+        assert_eq!(
+            provider.extract_string_value("<string>Test Value</string>"),
+            Some("Test Value".to_string())
+        );
+
+        // Test invalid format
+        assert_eq!(provider.extract_string_value("<int>123</int>"), None);
+        assert_eq!(provider.extract_string_value(""), None);
+        assert_eq!(provider.extract_string_value("Plain text"), None);
+    }
+
+    #[test]
+    fn test_parse_temperature_from_sysctl() {
+        let provider = MacosProvider::new();
+
+        // Test Celsius temperature
+        assert_eq!(
+            provider.parse_temperature_from_sysctl("thermal.gpu: 45.5"),
+            Some(45.5)
+        );
+
+        // Test Kelvin temperature (should convert to Celsius)
+        assert_eq!(
+            provider.parse_temperature_from_sysctl("thermal.gpu: 318.15"),
+            Some(45.0)
+        );
+
+        // Test invalid format
+        assert_eq!(
+            provider.parse_temperature_from_sysctl("thermal.gpu invalid"),
+            None
+        );
+        assert_eq!(provider.parse_temperature_from_sysctl(""), None);
+    }
+
+    #[test]
+    fn test_detect_gpus_returns_result() {
+        let provider = MacosProvider::new();
+        // Should always return Ok, even if no GPUs found
+        let result = provider.detect_gpus();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_update_gpu_does_not_panic() {
+        let provider = MacosProvider::new();
+        let mut gpu = GpuInfo::unknown();
+
+        // Should not panic even with unknown GPU
+        let result = provider.update_gpu(&mut gpu);
+        assert!(result.is_ok());
+        assert_eq!(gpu.active, Some(true)); // Should set active to true
+    }
+
+    #[test]
+    fn test_update_gpu_preserves_existing_info() {
+        let provider = MacosProvider::new();
+        let mut gpu = GpuInfo {
+            vendor: Vendor::Apple,
+            name_gpu: Some("Apple M1 GPU".to_string()),
+            memory_total: Some(8),
+            ..Default::default()
+        };
+
+        let _ = provider.update_gpu(&mut gpu);
+
+        // Should preserve existing information
+        assert_eq!(gpu.vendor, Vendor::Apple);
+        assert_eq!(gpu.name_gpu, Some("Apple M1 GPU".to_string()));
+        assert_eq!(gpu.memory_total, Some(8));
+        assert_eq!(gpu.active, Some(true));
     }
 }
