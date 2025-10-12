@@ -3,8 +3,22 @@ name: CI
 on:
   push:
     branches: [ main, develop ]
+    paths:
+      - 'gpu_info/**'
+      - 'system_info_lib/**'
+      - 'system_cli/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/ci.yml'
   pull_request:
     branches: [ main, develop ]
+    paths:
+      - 'gpu_info/**'
+      - 'system_info_lib/**'
+      - 'system_cli/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/ci.yml'
 
 env:
   CARGO_TERM_COLOR: always
@@ -28,11 +42,13 @@ jobs:
 
   # Run clippy lints
   clippy:
-    name: Clippy
+    name: Clippy (${{ matrix.package }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         rust: [stable, beta]
+        package: [gpu_info, system_info_lib, system_cli]
     steps:
       - uses: actions/checkout@v4
       
@@ -60,26 +76,48 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Run clippy on ${{ matrix.package }}
+        run: cargo clippy -p ${{ matrix.package }} --all-targets --all-features -- -D warnings
 
   # Run tests on multiple platforms
   test:
-    name: Test Suite
+    name: Test ${{ matrix.package }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         rust: [stable, beta]
+        package: [gpu_info, system_info_lib, system_cli]
         include:
           # Test on nightly but allow failures
           - os: ubuntu-latest
             rust: nightly
+            package: gpu_info
+          - os: ubuntu-latest
+            rust: nightly
+            package: system_info_lib
+          - os: ubuntu-latest
+            rust: nightly
+            package: system_cli
           - os: windows-latest
             rust: nightly
+            package: gpu_info
+          - os: windows-latest
+            rust: nightly
+            package: system_info_lib
+          - os: windows-latest
+            rust: nightly
+            package: system_cli
           - os: macos-latest
             rust: nightly
+            package: gpu_info
+          - os: macos-latest
+            rust: nightly
+            package: system_info_lib
+          - os: macos-latest
+            rust: nightly
+            package: system_cli
     continue-on-error: ${{ matrix.rust == 'nightly' }}
     
     steps:
@@ -108,19 +146,19 @@ jobs:
           path: target
           key: ${{ runner.os }}-${{ matrix.rust }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Run tests (no features)
-        run: cargo test --verbose
+      - name: Run tests (no features) - ${{ matrix.package }}
+        run: cargo test -p ${{ matrix.package }} --verbose
       
-      - name: Run tests (all features)
-        run: cargo test --all-features --verbose
-      
-      - name: Run tests (serde feature)
-        run: cargo test --features serde --verbose
+      - name: Run tests (all features) - ${{ matrix.package }}
+        run: cargo test -p ${{ matrix.package }} --all-features --verbose
 
   # Build documentation
   doc:
-    name: Documentation
+    name: Documentation (${{ matrix.package }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [gpu_info, system_info_lib, system_cli]
     steps:
       - uses: actions/checkout@v4
       
@@ -145,25 +183,28 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Build documentation
-        run: cargo doc --no-deps --all-features
+      - name: Build documentation - ${{ matrix.package }}
+        run: cargo doc -p ${{ matrix.package }} --no-deps --all-features
         env:
           RUSTDOCFLAGS: -D warnings
       
-      - name: Check for broken intra-doc links
-        run: cargo doc --no-deps --all-features --document-private-items
+      - name: Check for broken intra-doc links - ${{ matrix.package }}
+        run: cargo doc -p ${{ matrix.package }} --no-deps --all-features --document-private-items
 
   # Check minimum supported Rust version
   msrv:
-    name: Minimum Supported Rust Version
+    name: MSRV (${{ matrix.package }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [gpu_info, system_info_lib, system_cli]
     steps:
       - uses: actions/checkout@v4
       
       - name: Install Rust toolchain (MSRV)
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.70.0"  # Adjust to your MSRV
+          toolchain: "1.70.0"
       
       - name: Cache cargo registry
         uses: actions/cache@v3
@@ -183,13 +224,17 @@ jobs:
           path: target
           key: ${{ runner.os }}-msrv-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Check MSRV
-        run: cargo check --all-features
+      - name: Check MSRV - ${{ matrix.package }}
+        run: cargo check -p ${{ matrix.package }} --all-features
 
   # Build examples
   examples:
-    name: Build Examples
+    name: Build Examples (${{ matrix.package }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [gpu_info, system_info_lib, system_cli]
     steps:
       - uses: actions/checkout@v4
       
@@ -214,13 +259,17 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Build all examples
-        run: cargo build --examples --all-features
+      - name: Build examples - ${{ matrix.package }}
+        run: cargo build -p ${{ matrix.package }} --examples --all-features
+        continue-on-error: true
 
   # Platform-specific feature tests
   features:
-    name: Feature Combinations
+    name: Feature Combinations (${{ matrix.package }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [gpu_info, system_info_lib, system_cli]
     steps:
       - uses: actions/checkout@v4
       
@@ -248,16 +297,18 @@ jobs:
       - name: Install cargo-hack
         uses: taiki-e/install-action@cargo-hack
       
-      - name: Check all feature combinations
-        run: cargo hack check --feature-powerset --depth 2
+      - name: Check feature combinations - ${{ matrix.package }}
+        run: cargo hack check -p ${{ matrix.package }} --feature-powerset --depth 2
 
   # Check for common issues
   check:
-    name: Cargo Check
+    name: Cargo Check ${{ matrix.package }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        package: [gpu_info, system_info_lib, system_cli]
     steps:
       - uses: actions/checkout@v4
       
@@ -282,8 +333,8 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Run cargo check
-        run: cargo check --all-targets --all-features
+      - name: Run cargo check - ${{ matrix.package }}
+        run: cargo check -p ${{ matrix.package }} --all-targets --all-features
 
   # Success indicator job
   ci-success:

@@ -3,8 +3,22 @@ name: rust fmt check
 on:
   push:
     branches: [main, master]
+    paths:
+      - 'gpu_info/**'
+      - 'system_info_lib/**'
+      - 'system_cli/**'
+      - '**.rs'
+      - 'Cargo.toml'
+      - '.github/workflows/rust_fmt.yml'
   pull_request:
     branches: [main, master]
+    paths:
+      - 'gpu_info/**'
+      - 'system_info_lib/**'
+      - 'system_cli/**'
+      - '**.rs'
+      - 'Cargo.toml'
+      - '.github/workflows/rust_fmt.yml'
 
 jobs:
   check:
@@ -18,4 +32,4 @@ jobs:
           profile: minimal
           override: true
       - name: cargo fmt --check
-        run: cargo fmt --check
+        run: cargo fmt --all -- --check

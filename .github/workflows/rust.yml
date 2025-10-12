@@ -3,8 +3,22 @@ name: rust build --release
 on:
   push:
     branches: [main, master]
+    paths:
+      - 'gpu_info/**'
+      - 'system_info_lib/**'
+      - 'system_cli/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/rust.yml'
   pull_request:
     branches: [main, master]
+    paths:
+      - 'gpu_info/**'
+      - 'system_info_lib/**'
+      - 'system_cli/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/rust.yml'
 
 jobs:
   check:
@@ -18,4 +32,4 @@ jobs:
           profile: minimal
           override: true
       - name: cargo build 
-        run: cargo build --release
+        run: cargo build --workspace --release
