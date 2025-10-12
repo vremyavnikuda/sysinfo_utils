@@ -7,7 +7,6 @@ pub mod ffi_utils;
 pub mod gpu_info;
 pub mod gpu_manager;
 pub mod integration_tests;
-pub mod linux;
 pub mod macos;
 pub mod monitoring;
 pub mod nvml_api;
@@ -53,7 +52,18 @@ pub mod test;
 ///
 /// This function is not supported on other platforms.
 pub fn get() -> GpuInfo {
-    imp::info_gpu()
+    #[cfg(target_os = "linux")]
+    {
+        linux::info_gpu()
+    }
+    #[cfg(target_os = "windows")]
+    {
+        imp::info_gpu()
+    }
+    #[cfg(target_os = "macos")]
+    {
+        imp::info_gpu()
+    }
 }
 /// Enhanced API: Get all available GPUs in the system
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))]

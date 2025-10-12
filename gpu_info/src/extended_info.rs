@@ -1,4 +1,5 @@
 use crate::gpu_info::{GpuInfo, Result};
+#[cfg(target_os = "windows")]
 use crate::vendor::Vendor;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -293,7 +294,7 @@ impl ExtendedGpuInfo {
             self.fan_info.fan_speed_percent,
         ) {
             if fan_speed > 0.0 {
-                Some(100.0 - (temp * fan_speed / 100.0))
+                Some(100.0 - (temp * fan_speed) / 100.0)
             } else {
                 None
             }

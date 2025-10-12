@@ -54,8 +54,10 @@ mod monitoring_tests {
         let monitor = GpuMonitor::new(config.clone());
         assert!(!monitor.is_monitoring());
         assert_eq!(monitor.get_stats().total_measurements, 0);
-        println!("Monitor created with config: polling_interval={:?}, history_size={}", 
-                 config.polling_interval, config.history_size);
+        println!(
+            "Monitor created with config: polling_interval={:?}, history_size={}",
+            config.polling_interval, config.history_size
+        );
     }
 
     /// Test monitor with custom configuration
@@ -80,7 +82,10 @@ mod monitoring_tests {
         };
         let monitor = GpuMonitor::new(config.clone());
         assert!(!monitor.is_monitoring());
-        println!("Custom monitor created with fast polling: {:?}", config.polling_interval);
+        println!(
+            "Custom monitor created with fast polling: {:?}",
+            config.polling_interval
+        );
     }
 
     /// Test alert handler registration
@@ -114,16 +119,43 @@ mod monitoring_tests {
         let handler = LogAlertHandler;
         assert_eq!(handler.name(), "LogAlertHandler");
         let test_alerts = vec![
-            AlertType::HighTemperature { gpu_index: 0, temperature: 80.0 },
-            AlertType::CriticalTemperature { gpu_index: 0, temperature: 90.0 },
-            AlertType::HighMemoryUsage { gpu_index: 1, usage: 85.0 },
-            AlertType::CriticalMemoryUsage { gpu_index: 1, usage: 98.0 },
-            AlertType::HighPowerUsage { gpu_index: 0, power: 280.0 },
-            AlertType::CriticalPowerUsage { gpu_index: 0, power: 320.0 },
-            AlertType::HighUtilization { gpu_index: 1, utilization: 98.0 },
-            AlertType::LowFanSpeed { gpu_index: 0, fan_speed: 5.0 },
+            AlertType::HighTemperature {
+                gpu_index: 0,
+                temperature: 80.0,
+            },
+            AlertType::CriticalTemperature {
+                gpu_index: 0,
+                temperature: 90.0,
+            },
+            AlertType::HighMemoryUsage {
+                gpu_index: 1,
+                usage: 85.0,
+            },
+            AlertType::CriticalMemoryUsage {
+                gpu_index: 1,
+                usage: 98.0,
+            },
+            AlertType::HighPowerUsage {
+                gpu_index: 0,
+                power: 280.0,
+            },
+            AlertType::CriticalPowerUsage {
+                gpu_index: 0,
+                power: 320.0,
+            },
+            AlertType::HighUtilization {
+                gpu_index: 1,
+                utilization: 98.0,
+            },
+            AlertType::LowFanSpeed {
+                gpu_index: 0,
+                fan_speed: 5.0,
+            },
             AlertType::GpuInactive { gpu_index: 2 },
-            AlertType::CollectionError { gpu_index: 0, error: "Test error".to_string() },
+            AlertType::CollectionError {
+                gpu_index: 0,
+                error: "Test error".to_string(),
+            },
         ];
         for alert in test_alerts {
             let result = handler.handle_alert(&alert);
@@ -150,13 +182,18 @@ mod monitoring_tests {
         assert!(!monitor.is_monitoring());
         sleep(Duration::from_millis(50)).await;
         let stats = monitor.get_stats();
-        println!("Monitoring stats: measurements={}, errors={}", 
-                 stats.total_measurements, stats.total_errors);
+        println!(
+            "Monitoring stats: measurements={}, errors={}",
+            stats.total_measurements, stats.total_errors
+        );
         // Should have attempted at least one measurement or recorded errors
         // In test environment, GPUs might not be available, so errors are acceptable
-        assert!(stats.total_measurements > 0 || stats.total_errors > 0,
-                "Expected either measurements or errors, got measurements={}, errors={}",
-                stats.total_measurements, stats.total_errors);
+        assert!(
+            stats.total_measurements > 0 || stats.total_errors > 0,
+            "Expected either measurements or errors, got measurements={}, errors={}",
+            stats.total_measurements,
+            stats.total_errors
+        );
     }
 
     /// Test monitoring performance in constrained environments
@@ -175,11 +212,16 @@ mod monitoring_tests {
         println!("  Total measurements: {}", stats.total_measurements);
         println!("  Total errors: {}", stats.total_errors);
         println!("  Average collection time: {:?}", stats.avg_collection_time);
-        assert!(stats.total_measurements > 0 || stats.total_errors > 0,
-                "Some monitoring activity should occur");
+        assert!(
+            stats.total_measurements > 0 || stats.total_errors > 0,
+            "Some monitoring activity should occur"
+        );
         if stats.total_measurements > 0 {
-            assert!(stats.avg_collection_time < Duration::from_secs(10),
-                    "Collection time extremely high: {:?}", stats.avg_collection_time);
+            assert!(
+                stats.avg_collection_time < Duration::from_secs(10),
+                "Collection time extremely high: {:?}",
+                stats.avg_collection_time
+            );
         }
     }
 
@@ -201,16 +243,22 @@ mod monitoring_tests {
         println!("  Total measurements: {}", stats.total_measurements);
         println!("  Total errors: {}", stats.total_errors);
         println!("  Average collection time: {:?}", stats.avg_collection_time);
-        assert!(stats.total_measurements > 0 || stats.total_errors > 0,
-                "No monitoring activity detected: measurements={}, errors={}",
-                stats.total_measurements, stats.total_errors);
+        assert!(
+            stats.total_measurements > 0 || stats.total_errors > 0,
+            "No monitoring activity detected: measurements={}, errors={}",
+            stats.total_measurements,
+            stats.total_errors
+        );
         // In test environments, GPU operations can be slower due to:
         // - No real hardware available
         // - FFI library timeouts
         // - Virtualized environments
         if stats.total_measurements > 0 {
-            assert!(stats.avg_collection_time < Duration::from_secs(5),
-                    "Collection time too high: {:?}", stats.avg_collection_time);
+            assert!(
+                stats.avg_collection_time < Duration::from_secs(5),
+                "Collection time too high: {:?}",
+                stats.avg_collection_time
+            );
             let collection_ms = stats.avg_collection_time.as_millis();
             if collection_ms > 1000 {
                 println!("Note: Collection time is high ({:.1}s) - this may indicate no real GPUs in test environment", 
@@ -229,8 +277,10 @@ mod monitoring_tests {
         config.enable_alerts = true;
         let monitor = GpuMonitor::new(config);
         let mock_handler = Arc::new(MockAlertHandler::new());
-        let handler_clone = mock_handler.clone();
-        monitor.add_alert_handler(Box::new(MockAlertHandler::new())).unwrap();
+        let _handler_clone = mock_handler.clone();
+        monitor
+            .add_alert_handler(Box::new(MockAlertHandler::new()))
+            .unwrap();
         monitor.start_monitoring().unwrap();
         sleep(Duration::from_millis(300)).await;
         monitor.stop_monitoring().unwrap();
@@ -265,10 +315,17 @@ mod monitoring_tests {
         assert!(final_stats.start_time.is_some());
         assert!(final_stats.total_measurements > 0 || final_stats.total_errors > 0);
         let runtime = final_stats.start_time.unwrap().elapsed();
-        assert!(runtime >= run_duration * 8 / 10,
-                "Runtime too short: {:?} < {:?}", runtime, run_duration * 8 / 10);
-        assert!(runtime <= Duration::from_secs(3),
-                "Runtime too long: {:?} > 3s", runtime);
+        assert!(
+            runtime >= run_duration * 8 / 10,
+            "Runtime too short: {:?} < {:?}",
+            runtime,
+            run_duration * 8 / 10
+        );
+        assert!(
+            runtime <= Duration::from_secs(3),
+            "Runtime too long: {:?} > 3s",
+            runtime
+        );
     }
 
     /// Test concurrent monitoring operations
@@ -299,16 +356,22 @@ mod monitoring_tests {
                     if stop_result.is_ok() {
                         successful_stops += 1;
                     }
-                    println!("Task {} completed: start={}, stop={}", 
-                             task_id, start_result.is_ok(), stop_result.is_ok());
+                    println!(
+                        "Task {} completed: start={}, stop={}",
+                        task_id,
+                        start_result.is_ok(),
+                        stop_result.is_ok()
+                    );
                 }
                 Err(e) => {
                     println!("Task failed: {}", e);
                 }
             }
         }
-        println!("Concurrent test results: {} starts, {} stops", 
-                 successful_starts, successful_stops);
+        println!(
+            "Concurrent test results: {} starts, {} stops",
+            successful_starts, successful_stops
+        );
         assert!(successful_starts > 0);
         assert!(successful_stops > 0);
     }
@@ -332,9 +395,16 @@ mod monitoring_tests {
                 println!("Completed {} start/stop cycles", i + 1);
             }
         }
-        println!("Rapid cycles test: {}/{} successful", successful_cycles, cycles);
-        assert!(successful_cycles > cycles / 2, 
-                "Too many cycle failures: {}/{}", successful_cycles, cycles);
+        println!(
+            "Rapid cycles test: {}/{} successful",
+            successful_cycles, cycles
+        );
+        assert!(
+            successful_cycles > cycles / 2,
+            "Too many cycle failures: {}/{}",
+            successful_cycles,
+            cycles
+        );
         assert!(!monitor.is_monitoring());
     }
 
@@ -359,14 +429,18 @@ mod monitoring_tests {
         config.log_metrics = false;
         let monitor = GpuMonitor::new(config);
         let mock_handler = MockAlertHandler::new();
-        let handler_ref = Arc::new(Mutex::new(mock_handler));
-        monitor.add_alert_handler(Box::new(LogAlertHandler)).unwrap();
+        let _handler_ref = Arc::new(Mutex::new(mock_handler));
+        monitor
+            .add_alert_handler(Box::new(LogAlertHandler))
+            .unwrap();
         assert!(monitor.start_monitoring().is_ok());
         assert!(monitor.is_monitoring());
         sleep(Duration::from_millis(200)).await;
         let intermediate_stats = monitor.get_stats();
-        println!("Intermediate stats: measurements={}, errors={}", 
-                 intermediate_stats.total_measurements, intermediate_stats.total_errors);
+        println!(
+            "Intermediate stats: measurements={}, errors={}",
+            intermediate_stats.total_measurements, intermediate_stats.total_errors
+        );
         sleep(Duration::from_millis(200)).await;
         assert!(monitor.stop_monitoring().is_ok());
         assert!(!monitor.is_monitoring());
@@ -375,7 +449,10 @@ mod monitoring_tests {
         println!("  Total measurements: {}", final_stats.total_measurements);
         println!("  Total alerts: {}", final_stats.total_alerts);
         println!("  Total errors: {}", final_stats.total_errors);
-        println!("  Average collection time: {:?}", final_stats.avg_collection_time);
+        println!(
+            "  Average collection time: {:?}",
+            final_stats.avg_collection_time
+        );
         assert!(final_stats.total_measurements > 0 || final_stats.total_errors > 0);
         assert!(final_stats.start_time.is_some());
         println!("Full monitoring workflow test completed successfully");

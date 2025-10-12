@@ -6,8 +6,9 @@
 #[cfg(test)]
 mod extended_info_tests {
     use crate::extended_info::{
-        ConnectionInfo, EncoderInfo, ExtendedGpuInfo, FanInfo, GpuInfoExtensions, IndividualFanInfo,
-        MemoryInfo, OverclockingInfo, PerformanceState, ThermalInfo, ThrottleReason,
+        ConnectionInfo, EncoderInfo, ExtendedGpuInfo, FanInfo, GpuInfoExtensions,
+        IndividualFanInfo, MemoryInfo, OverclockingInfo, PerformanceState, ThermalInfo,
+        ThrottleReason,
     };
     use crate::gpu_info::GpuInfo;
     use crate::vendor::Vendor;
@@ -44,7 +45,11 @@ mod extended_info_tests {
         extended_gpu.memory_info.ecc_errors = Some(0);
         let health_score = extended_gpu.health_score();
         println!("Health score with good conditions: {:.1}%", health_score);
-        assert!(health_score >= 90.0, "Expected high health score, got {:.1}%", health_score);
+        assert!(
+            health_score >= 90.0,
+            "Expected high health score, got {:.1}%",
+            health_score
+        );
         assert!(!extended_gpu.needs_attention());
     }
 
@@ -58,7 +63,11 @@ mod extended_info_tests {
         extended_gpu.memory_info.ecc_errors = Some(5);
         let health_score = extended_gpu.health_score();
         println!("Health score with poor conditions: {:.1}%", health_score);
-        assert!(health_score < 50.0, "Expected low health score, got {:.1}%", health_score);
+        assert!(
+            health_score < 50.0,
+            "Expected low health score, got {:.1}%",
+            health_score
+        );
         assert!(extended_gpu.needs_attention());
     }
 
@@ -72,8 +81,11 @@ mod extended_info_tests {
         extended_gpu.memory_info.ecc_errors = Some(0);
         let health_score = extended_gpu.health_score();
         println!("Health score with mixed conditions: {:.1}%", health_score);
-        assert!(health_score >= 50.0 && health_score <= 90.0, 
-                "Expected moderate health score, got {:.1}%", health_score);
+        assert!(
+            health_score >= 50.0 && health_score <= 90.0,
+            "Expected moderate health score, got {:.1}%",
+            health_score
+        );
     }
 
     /// Test cooling efficiency calculation
@@ -244,7 +256,7 @@ mod extended_info_tests {
         assert!(display_string.contains("Name:"));
         assert!(display_string.contains("Vendor:"));
         assert!(display_string.contains("Health Score:"));
-        
+
         println!("Display output:\n{}", display_string);
     }
 
@@ -285,11 +297,18 @@ mod extended_info_tests {
         }
         let avg_health = total_health_score / INSTANCES as f32;
         println!("Load test results:");
-        println!("  Created {} extended GPU instances in {:?}", INSTANCES, creation_time);
+        println!(
+            "  Created {} extended GPU instances in {:?}",
+            INSTANCES, creation_time
+        );
         println!("  Average health score: {:.1}%", avg_health);
         println!("  High health count: {}", high_health_count);
         assert_eq!(extended_gpus.len(), INSTANCES);
-        assert!(creation_time.as_millis() < 1000, "Creation took too long: {:?}", creation_time);
+        assert!(
+            creation_time.as_millis() < 1000,
+            "Creation took too long: {:?}",
+            creation_time
+        );
     }
 
     /// Stress test: Health score calculation performance
@@ -308,7 +327,11 @@ mod extended_info_tests {
         println!("  {} calculations in {:?}", CALCULATIONS, calculation_time);
         println!("  Average score: {:.1}%", avg_score);
         println!("  Calculations per second: {:.0}", calculations_per_second);
-        assert!(calculations_per_second > 10_000.0, "Too slow: {:.0} calc/sec", calculations_per_second);
+        assert!(
+            calculations_per_second > 10_000.0,
+            "Too slow: {:.0} calc/sec",
+            calculations_per_second
+        );
     }
 
     /// Integration test: Full extended GPU workflow

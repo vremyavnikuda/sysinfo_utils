@@ -2,12 +2,13 @@
 //!
 //! This module provides a clean abstraction over ADL (AMD Display Library)
 //! using the common FFI utilities to reduce code duplication.
-use crate::ffi_utils::{
-    AdlResult, ApiResult, ApiTable, DynamicLibrary, LibraryLoader, SymbolResolver,
-};
+#[cfg(windows)]
+use crate::ffi_utils::{AdlResult, ApiResult, ApiTable, DynamicLibrary};
 use crate::gpu_info::GpuInfo;
+#[cfg(windows)]
 use crate::vendor::Vendor;
 use log::error;
+#[cfg(windows)]
 use std::ffi::c_void;
 /// ADL constants
 pub const ADL_OK: i32 = 0;
@@ -67,14 +68,16 @@ pub struct AdlFunctions {
     pub overdrive5_power_control_get: unsafe extern "C" fn(i32, *mut i32, *mut i32) -> i32,
 }
 /// ADL API client that abstracts library loading and function calls
+#[cfg(windows)]
 pub struct AdlClient {
     _library: DynamicLibrary,
     api_table: ApiTable<AdlFunctions>,
     initialized: bool,
 }
+
+#[cfg(windows)]
 impl AdlClient {
     /// Load ADL library and initialize API table
-    #[cfg(windows)]
     pub fn new() -> Option<Self> {
         let library = LibraryLoader::new("atiadlxx.dll")
             .with_fallback_path("atiadlxy.dll")
@@ -110,12 +113,8 @@ impl AdlClient {
                 value: (),
             };
         }
-        let code = unsafe {
-            (self.api_table.functions().main_control_create)(
-                Some(Self::adl_malloc),
-                1,
-            )
-        };
+        let code =
+            unsafe { (self.api_table.functions().main_control_create)(Some(Self::adl_malloc), 1) };
         let result = AdlResult { code, value: () };
         if result.is_success() {
             self.initialized = true;
@@ -265,6 +264,8 @@ impl AdlClient {
         })
     }
 }
+
+#[cfg(windows)]
 impl Drop for AdlClient {
     fn drop(&mut self) {
         if self.initialized {

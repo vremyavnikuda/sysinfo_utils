@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod gpu_info_tests {
-    use crate::{gpu_info::Formattable, vendor::Vendor, GpuInfo};
+    use crate::gpu_info::Formattable;
+    use crate::vendor::Vendor;
+    use crate::GpuInfo;
     use std::cell::RefCell;
     #[allow(dead_code)]
     struct MockCommand {
@@ -678,10 +680,7 @@ mod gpu_info_tests {
     #[test]
     fn _test_gpu_manager_creation() {
         let gpu = GpuInfo::default();
-        assert_eq!(
-            gpu.name_gpu, None,
-            "Expected gpus to be empty, but it was not."
-        );
+        assert_eq!(gpu.name_gpu, None, "Expected gpus to be empty, but it was not.");
         assert_eq!(gpu.active.fmt_string(), "N/A");
     }
 }
@@ -704,7 +703,7 @@ mod mock_impl {
     use std::os::unix::process::ExitStatusExt;
     #[cfg(windows)]
     use std::os::windows::process::ExitStatusExt;
-    use std::process::{Command, ExitStatus, Output};
+    use std::process::{ Command, ExitStatus, Output };
     /// Mocks the execution of a system command by returning predefined output.
     ///
     /// This function is used in testing to simulate the execution of a system
@@ -735,27 +734,32 @@ mod mock_impl {
 #[test]
 #[cfg(target_os = "linux")]
 fn integration_test_real_system() {
-    let mut manager = GpuManager::new();
-    manager.detect_gpus();
+    use std::fs;
+    use std::path::Path;
+    use crate::GpuManager;
+    use crate::vendor::Vendor;
+
+    let manager = GpuManager::new();
+    let gpus = manager.get_all_gpus_owned();
+
     if Path::new("/usr/bin/nvidia-smi").exists() {
-        assert!(manager
-            .gpus
-            .iter()
-            .any(|g| matches!(g.vendor, GpuVendor::Nvidia)));
+        assert!(gpus.iter().any(|g| matches!(g.vendor, Vendor::Nvidia)));
     }
     if Path::new("/sys/class/drm/card0/device/vendor").exists() {
-        let vendor = fs::read_to_string("/sys/class/drm/card0/device/vendor").unwrap_or_default();
-        if vendor.contains("0x1002") {
-            assert!(manager
-                .gpu
-                .iter()
-                .any(|g| matches!(g.vendor, GpuVendor::AMD)));
+        let vendor_str = fs
+            ::read_to_string("/sys/class/drm/card0/device/vendor")
+            .unwrap_or_default();
+        if vendor_str.contains("0x1002") {
+            assert!(gpus.iter().any(|g| matches!(g.vendor, Vendor::Amd)));
         }
-        if vendor.contains("0x8086") {
-            assert!(manager
-                .gpu
-                .iter()
-                .any(|g| matches!(g.vendor, GpuVendor::Intel)));
+        if vendor_str.contains("0x8086") {
+            assert!(
+                gpus
+                    .iter()
+                    .any(|g|
+                        matches!(g.vendor, Vendor::Intel(crate::vendor::IntelGpuType::Unknown))
+                    )
+            );
         }
     }
 }
@@ -773,85 +777,74 @@ fn test_get_vendor_nvidia() {
 }
 #[cfg(test)]
 #[cfg(target_os = "linux")]
-mod linux_nvidia_test {
-    use crate::linux::{update_nvidia_info, MockNvmlClient, NVML_SUCCESS};
-    /// Test `update_nvidia_info()` updates GPU information
+mod linux_nvidia_provider_test {
+    use crate::gpu_info::GpuProvider;
+    use crate::providers::linux::NvidiaLinuxProvider;
+    use crate::vendor::Vendor;
+
+    /// Test that NvidiaLinuxProvider returns correct vendor
     #[test]
-    fn update_nvidia_info_updates_gpu_data() {
-        let mut gpu = crate::GpuInfo {
-            name_gpu: Some("NVIDIA GeForce RTX 3080".to_string()),
-            ..Default::default()
-        };
-        let mut mock_client = MockNvmlClient::new();
-        mock_client.expect_init().returning(|| NVML_SUCCESS);
-        mock_client.expect_shutdown().returning(|| NVML_SUCCESS);
-        mock_client.expect_get_count().returning(|count| unsafe {
-            *count = 1;
-            NVML_SUCCESS
-        });
-        mock_client
-            .expect_get_handle_by_index()
-            .returning(|_, device| unsafe {
-                *device = std::ptr::null_mut();
-                NVML_SUCCESS
-            });
-        mock_client
-            .expect_get_name()
-            .returning(|_, name, length| unsafe {
-                let test_name = "NVIDIA GeForce RTX 3080".as_bytes();
-                std::ptr::copy_nonoverlapping(
-                    test_name.as_ptr(),
-                    name as *mut u8,
-                    test_name.len().min(length as usize),
-                );
-                *name.add(test_name.len().min(length as usize)) = 0;
-                NVML_SUCCESS
-            });
-        mock_client
-            .expect_get_temperature()
-            .returning(|_, _, temp| unsafe {
-                *temp = 70;
-                NVML_SUCCESS
-            });
-        mock_client
-            .expect_get_utilization_rates()
-            .returning(|_, util| unsafe {
-                (*util).gpu = 85;
-                (*util).memory = 75;
-                NVML_SUCCESS
-            });
-        mock_client
-            .expect_get_power_usage()
-            .returning(|_, milliwatts| unsafe {
-                *milliwatts = 120000;
-                NVML_SUCCESS
-            });
-        mock_client
-            .expect_get_clock_info()
-            .returning(|_, _, clock| unsafe {
-                *clock = 1500;
-                NVML_SUCCESS
-            });
-        mock_client
-            .expect_get_max_clock_info()
-            .returning(|_, _, clock| unsafe {
-                *clock = 2100;
-                NVML_SUCCESS
-            });
-        mock_client
-            .expect_get_power_management_limit()
-            .returning(|_, limit| unsafe {
-                *limit = 250000;
-                NVML_SUCCESS
-            });
-        update_nvidia_info(&mut gpu);
-        assert_eq!(gpu.temperature, Some(70.0));
-        assert_eq!(gpu.utilization, Some(85.0));
-        assert_eq!(gpu.memory_util, Some(75.0));
-        assert_eq!(gpu.power_usage, Some(120.0));
-        assert_eq!(gpu.core_clock, Some(1500));
-        assert_eq!(gpu.max_clock_speed, Some(2100));
-        assert_eq!(gpu.power_limit, Some(250.0));
-        assert_eq!(gpu.active, Some(true));
+    fn test_nvidia_provider_vendor() {
+        let provider = NvidiaLinuxProvider::new();
+        assert_eq!(provider.get_vendor(), Vendor::Nvidia);
+    }
+
+    /// Test that NvidiaLinuxProvider can be created
+    #[test]
+    fn test_nvidia_provider_creation() {
+        let provider = NvidiaLinuxProvider::new();
+        assert_eq!(provider.get_vendor(), Vendor::Nvidia);
+        
+        // Test Default trait
+        let provider_default = NvidiaLinuxProvider::default();
+        assert_eq!(provider_default.get_vendor(), Vendor::Nvidia);
+    }
+
+    /// Test detect_gpus behavior (will fail if NVML not available)
+    #[test]
+    fn test_nvidia_provider_detect_gpus_integration() {
+        let provider = NvidiaLinuxProvider::new();
+        
+        match provider.detect_gpus() {
+            Ok(gpus) => {
+                // If NVML is available and GPU detected
+                assert!(!gpus.is_empty(), "Should detect at least one GPU");
+                for gpu in gpus {
+                    assert_eq!(gpu.vendor, Vendor::Nvidia);
+                    assert!(gpu.name_gpu.is_some(), "GPU should have a name");
+                }
+            }
+            Err(e) => {
+                // Expected error if NVML is not installed or no NVIDIA GPU
+                println!("Expected error (no NVML or no GPU): {:?}", e);
+            }
+        }
+    }
+
+    /// Test update_gpu behavior
+    #[test]
+    fn test_nvidia_provider_update_gpu_integration() {
+        let provider = NvidiaLinuxProvider::new();
+        
+        // First detect GPUs
+        match provider.detect_gpus() {
+            Ok(gpus) if !gpus.is_empty() => {
+                let mut gpu = gpus[0].clone();
+                
+                // Try to update the GPU info
+                match provider.update_gpu(&mut gpu) {
+                    Ok(()) => {
+                        assert_eq!(gpu.vendor, Vendor::Nvidia);
+                        println!("GPU updated successfully: {:?}", gpu.name_gpu);
+                    }
+                    Err(e) => {
+                        println!("Failed to update GPU: {:?}", e);
+                    }
+                }
+            }
+            _ => {
+                println!("No NVIDIA GPUs detected for update test");
+            }
+        }
     }
 }

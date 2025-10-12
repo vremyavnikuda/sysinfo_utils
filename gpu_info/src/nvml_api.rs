@@ -81,13 +81,23 @@ pub struct NvmlFunctions<'a> {
         Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, *mut nvmlMemory_t) -> i32>,
 }
 /// NVML API client that abstracts library loading and function calls
+///
+/// This structure owns the DynamicLibrary to ensure proper lifetime management.
+/// On Unix, the Symbol<'a> types borrow from the library, so we must keep it alive.
+#[cfg(windows)]
 pub struct NvmlClient {
     _library: DynamicLibrary,
     api_table: ApiTable<NvmlFunctions>,
 }
+
+#[cfg(unix)]
+pub struct NvmlClient {
+    _library: DynamicLibrary,
+    api_table: ApiTable<NvmlFunctions<'static>>,
+}
+#[cfg(windows)]
 impl NvmlClient {
     /// Load NVML library and initialize API table
-    #[cfg(windows)]
     pub fn new() -> Option<Self> {
         let library = LibraryLoader::new("nvml.dll")
             .with_fallback_path(&Self::get_local_nvml_path())
@@ -119,8 +129,21 @@ impl NvmlClient {
             api_table: ApiTable::new(functions),
         })
     }
+
+    fn get_local_nvml_path() -> String {
+        std::env::var("CARGO_MANIFEST_DIR")
+            .map(|dir| format!("{}/src/libs/nvml.dll", dir))
+            .unwrap_or_else(|_| "nvml.dll".to_string())
+    }
+}
+
+#[cfg(unix)]
+impl NvmlClient {
     /// Load NVML library on Unix systems
-    #[cfg(unix)]
+    ///
+    /// Uses unsafe lifetime extension to store Symbol<'static> in the struct.
+    /// This is safe because the library is owned by the struct and will live
+    /// as long as the struct itself.
     pub fn new() -> Option<Self> {
         let nvml_path = std::env::var("NVML_LIB_PATH")
             .unwrap_or_else(|_| "/usr/lib/libnvidia-ml.so.1".to_string());
@@ -132,8 +155,9 @@ impl NvmlClient {
                 error!("Failed to load NVML library: {}", e);
             })
             .ok()?;
+
         let resolver = SymbolResolver::new(&library);
-        // Resolve all NVML functions
+
         let functions = NvmlFunctions {
             init: resolver.resolve(b"nvmlInit_v2")?,
             shutdown: resolver.resolve(b"nvmlShutdown")?,
@@ -145,17 +169,22 @@ impl NvmlClient {
             device_get_clock_info: resolver.resolve(b"nvmlDeviceGetClockInfo")?,
             device_get_memory_info: resolver.resolve(b"nvmlDeviceGetMemoryInfo")?,
         };
+
+        // SAFETY: We extend the lifetime of Symbol to 'static.
+        // This is safe because:
+        // 1. The library is owned by this struct
+        // 2. The library will live as long as this struct
+        // 3. The Symbol pointers are valid as long as the library is loaded
+        let functions_static: NvmlFunctions<'static> = unsafe { std::mem::transmute(functions) };
+
         Some(Self {
             _library: library,
-            api_table: ApiTable::new(functions),
+            api_table: ApiTable::new(functions_static),
         })
     }
-    #[cfg(windows)]
-    fn get_local_nvml_path() -> String {
-        std::env::var("CARGO_MANIFEST_DIR")
-            .map(|dir| format!("{}/src/libs/nvml.dll", dir))
-            .unwrap_or_else(|_| "nvml.dll".to_string())
-    }
+}
+
+impl NvmlClient {
     /// Initialize NVML
     pub fn initialize(&self) -> NvmlResult<()> {
         let code = unsafe { (self.api_table.functions().init)() };

@@ -31,7 +31,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("+ Synchronous get() average: {:?}", sync_avg);
     println!("+ Async get_async() average: {:?}", async_avg);
     if async_avg < sync_avg {
-        let improvement = ((sync_avg.as_nanos() - async_avg.as_nanos()) as f64 / sync_avg.as_nanos() as f64) * 100.0;
+        let improvement = ((sync_avg.as_nanos() - async_avg.as_nanos()) as f64
+            / sync_avg.as_nanos() as f64)
+            * 100.0;
         println!("Async is {:.1}% faster!", improvement);
     } else {
         println!("Both implementations show similar performance");

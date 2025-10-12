@@ -41,7 +41,7 @@ mod gpu_manager_tests {
         let cache_ttl = Duration::from_millis(100);
         let manager = GpuManager::with_cache_ttl(cache_ttl);
         println!("GPU Manager created with custom cache TTL: {:?}", cache_ttl);
-        
+
         // Verify the manager is functional
         let gpu_count = manager.gpu_count();
         let stats = manager.get_gpu_statistics();
@@ -55,20 +55,22 @@ mod gpu_manager_tests {
         let cache_ttl = Duration::from_millis(200);
         let max_entries = 50;
         let manager = GpuManager::with_cache_config(cache_ttl, max_entries);
-        println!("GPU Manager created with cache config: TTL={:?}, max_entries={}", 
-                 cache_ttl, max_entries);
-        
+        println!(
+            "GPU Manager created with cache config: TTL={:?}, max_entries={}",
+            cache_ttl, max_entries
+        );
+
         // Verify the manager is functional and cache settings work
         let gpu_count = manager.gpu_count();
         let all_gpus = manager.get_all_gpus();
         assert_eq!(gpu_count, all_gpus.len());
-        
+
         // Test cache functionality if GPUs are available
         if gpu_count > 0 {
             let cached_gpu = manager.get_gpu_cached(0);
             assert!(cached_gpu.is_some());
         }
-        
+
         println!("Manager with cache config detected {} GPUs", gpu_count);
     }
 
@@ -153,7 +155,10 @@ mod gpu_manager_tests {
         let refresh_primary_result = manager.refresh_primary_gpu();
         match refresh_primary_result {
             Ok(()) => println!("Successfully refreshed primary GPU"),
-            Err(e) => println!("Failed to refresh primary GPU (expected in test env): {}", e),
+            Err(e) => println!(
+                "Failed to refresh primary GPU (expected in test env): {}",
+                e
+            ),
         }
         let refresh_invalid_result = manager.refresh_gpu(9999);
         assert!(refresh_invalid_result.is_err());
@@ -181,8 +186,10 @@ mod gpu_manager_tests {
             println!("Primary GPU caching working correctly");
         }
         if let Some(cache_stats) = manager.get_cache_stats() {
-            println!("Cache stats: entries={}, accesses={}, age={:?}", 
-                     cache_stats.total_entries, cache_stats.total_accesses, cache_stats.oldest_entry_age);
+            println!(
+                "Cache stats: entries={}, accesses={}, age={:?}",
+                cache_stats.total_entries, cache_stats.total_accesses, cache_stats.oldest_entry_age
+            );
         }
     }
 
@@ -206,8 +213,11 @@ mod gpu_manager_tests {
             println!("  Total power consumption: {:.1}W", total_power);
             assert!(total_power >= 0.0);
         }
-        let vendor_sum = stats.nvidia_count + stats.amd_count + stats.intel_count + 
-                        stats.apple_count + stats.unknown_count;
+        let vendor_sum = stats.nvidia_count
+            + stats.amd_count
+            + stats.intel_count
+            + stats.apple_count
+            + stats.unknown_count;
         assert_eq!(vendor_sum, stats.total_gpus);
     }
 
@@ -241,8 +251,10 @@ mod gpu_manager_tests {
                 println!("Note: Slow creation detected - likely no real GPUs available");
             }
         }
-        println!("Lightweight load test: {}/{} managers created", 
-                 successful_creations, MANAGER_COUNT);
+        println!(
+            "Lightweight load test: {}/{} managers created",
+            successful_creations, MANAGER_COUNT
+        );
         assert_eq!(successful_creations, MANAGER_COUNT);
     }
 
@@ -273,13 +285,17 @@ mod gpu_manager_tests {
                     total_detections += gpu_count;
                     total_creation_time += creation_time;
                     if manager_id % 5 == 0 {
-                        println!("Manager #{}: {} GPUs detected in {:?}", 
-                                manager_id, gpu_count, creation_time);
+                        println!(
+                            "Manager #{}: {} GPUs detected in {:?}",
+                            manager_id, gpu_count, creation_time
+                        );
                     }
                     assert_eq!(gpu_count, stats_total);
                     if creation_time > Duration::from_secs(5) {
-                        println!("Warning: Manager #{} creation took {:?} (slow)", 
-                                manager_id, creation_time);
+                        println!(
+                            "Warning: Manager #{} creation took {:?} (slow)",
+                            manager_id, creation_time
+                        );
                     }
                 }
                 Err(e) => {
@@ -294,21 +310,32 @@ mod gpu_manager_tests {
             Duration::from_secs(0)
         };
         println!("Multiple managers load test results:");
-        println!("  Created {} managers in {:?}", successful_creations, total_time);
+        println!(
+            "  Created {} managers in {:?}",
+            successful_creations, total_time
+        );
         println!("  Average creation time: {:?}", avg_creation_time);
         println!("  Total GPU detections: {}", total_detections);
-        println!("  Test environment performance: {}", 
-                if avg_creation_time > Duration::from_secs(2) {
-                    "Slow (likely no real GPUs)"
-                } else {
-                    "Good"
-                });
+        println!(
+            "  Test environment performance: {}",
+            if avg_creation_time > Duration::from_secs(2) {
+                "Slow (likely no real GPUs)"
+            } else {
+                "Good"
+            }
+        );
         assert_eq!(successful_creations, MANAGER_COUNT);
-        assert!(avg_creation_time < Duration::from_secs(10), 
-                "Manager creation too slow: {:?} (may indicate no real GPUs)", avg_creation_time);
-        
-        assert!(total_time < Duration::from_secs(60), 
-                "Test took too long: {:?}", total_time);
+        assert!(
+            avg_creation_time < Duration::from_secs(10),
+            "Manager creation too slow: {:?} (may indicate no real GPUs)",
+            avg_creation_time
+        );
+
+        assert!(
+            total_time < Duration::from_secs(60),
+            "Test took too long: {:?}",
+            total_time
+        );
     }
 
     /// Stress test: Rapid cache access
@@ -334,8 +361,11 @@ mod gpu_manager_tests {
         println!("  {} accesses in {:?}", ACCESS_COUNT, access_time);
         println!("  Cache hits: {}", cache_hits);
         println!("  Accesses per second: {:.0}", accesses_per_second);
-        assert!(accesses_per_second > 100_000.0, 
-                "Cache access too slow: {:.0} accesses/sec", accesses_per_second);
+        assert!(
+            accesses_per_second > 100_000.0,
+            "Cache access too slow: {:.0} accesses/sec",
+            accesses_per_second
+        );
         assert!(cache_hits > 0);
     }
 
@@ -367,7 +397,7 @@ mod gpu_manager_tests {
                         let active_count = mgr.get_active_gpu_indices().len();
                         Ok(format!("GetActive: {} active", active_count))
                     }
-                    _ => unreachable!()
+                    _ => unreachable!(),
                 };
                 (i, result)
             });
@@ -375,26 +405,26 @@ mod gpu_manager_tests {
         let mut successful_ops = 0;
         while let Some(result) = join_set.join_next().await {
             match result {
-                Ok((op_id, operation_result)) => {
-                    match operation_result {
-                        Ok(description) => {
-                            successful_ops += 1;
-                            if op_id % 5 == 0 {
-                                println!("Operation #{}: {}", op_id, description);
-                            }
-                        }
-                        Err(e) => {
-                            println!("Operation #{} failed: {}", op_id, e);
+                Ok((op_id, operation_result)) => match operation_result {
+                    Ok(description) => {
+                        successful_ops += 1;
+                        if op_id % 5 == 0 {
+                            println!("Operation #{}: {}", op_id, description);
                         }
                     }
-                }
+                    Err(e) => {
+                        println!("Operation #{} failed: {}", op_id, e);
+                    }
+                },
                 Err(e) => {
                     println!("Task #{} join error: {}", 0, e);
                 }
             }
         }
-        println!("Concurrent operations test: {}/{} successful", 
-                 successful_ops, CONCURRENT_OPS);
+        println!(
+            "Concurrent operations test: {}/{} successful",
+            successful_ops, CONCURRENT_OPS
+        );
         assert_eq!(successful_ops, CONCURRENT_OPS);
     }
 
@@ -427,21 +457,42 @@ mod gpu_manager_tests {
             let _ = manager.get_gpu_cached(0);
         }
         let cached_access_time = start.elapsed();
-        println!("GPU Manager performance benchmark ({} iterations):", ITERATIONS);
-        println!("  get_all_gpus: {:?} (avg: {:?})", 
-                 get_all_time, get_all_time / ITERATIONS as u32);
-        println!("  get_primary_gpu: {:?} (avg: {:?})", 
-                 get_primary_time, get_primary_time / ITERATIONS as u32);
-        println!("  get_gpu_statistics: {:?} (avg: {:?})", 
-                 get_stats_time, get_stats_time / ITERATIONS as u32);
-        println!("  cached_access: {:?} (avg: {:?})", 
-                 cached_access_time, cached_access_time / ITERATIONS as u32);
+        println!(
+            "GPU Manager performance benchmark ({} iterations):",
+            ITERATIONS
+        );
+        println!(
+            "  get_all_gpus: {:?} (avg: {:?})",
+            get_all_time,
+            get_all_time / ITERATIONS as u32
+        );
+        println!(
+            "  get_primary_gpu: {:?} (avg: {:?})",
+            get_primary_time,
+            get_primary_time / ITERATIONS as u32
+        );
+        println!(
+            "  get_gpu_statistics: {:?} (avg: {:?})",
+            get_stats_time,
+            get_stats_time / ITERATIONS as u32
+        );
+        println!(
+            "  cached_access: {:?} (avg: {:?})",
+            cached_access_time,
+            cached_access_time / ITERATIONS as u32
+        );
         let avg_get_all = get_all_time / ITERATIONS as u32;
         let avg_cached = cached_access_time / ITERATIONS as u32;
-        assert!(avg_get_all < Duration::from_millis(10), 
-                "get_all_gpus too slow: {:?}", avg_get_all);
-        assert!(avg_cached < Duration::from_micros(100), 
-                "cached access too slow: {:?}", avg_cached);
+        assert!(
+            avg_get_all < Duration::from_millis(10),
+            "get_all_gpus too slow: {:?}",
+            avg_get_all
+        );
+        assert!(
+            avg_cached < Duration::from_micros(100),
+            "cached access too slow: {:?}",
+            avg_cached
+        );
     }
 
     /// Integration test: Full GPU manager workflow
@@ -454,12 +505,19 @@ mod gpu_manager_tests {
         let stats = manager.get_gpu_statistics();
         println!("GPU analysis:");
         println!("  Total GPUs: {}", stats.total_gpus);
-        println!("  Vendor distribution: N={}, A={}, I={}, Ap={}, U={}", 
-                 stats.nvidia_count, stats.amd_count, stats.intel_count, 
-                 stats.apple_count, stats.unknown_count);
+        println!(
+            "  Vendor distribution: N={}, A={}, I={}, Ap={}, U={}",
+            stats.nvidia_count,
+            stats.amd_count,
+            stats.intel_count,
+            stats.apple_count,
+            stats.unknown_count
+        );
         if let Some(primary_gpu) = manager.get_primary_gpu() {
-            println!("Primary GPU: {:?} - {:?}", 
-                     primary_gpu.vendor, primary_gpu.name_gpu);
+            println!(
+                "Primary GPU: {:?} - {:?}",
+                primary_gpu.vendor, primary_gpu.name_gpu
+            );
             match manager.refresh_primary_gpu() {
                 Ok(()) => println!("  Primary GPU refreshed successfully"),
                 Err(e) => println!("  Primary GPU refresh failed: {}", e),
@@ -492,8 +550,10 @@ mod gpu_manager_tests {
         }
         let final_stats = manager.get_gpu_statistics();
         if let Some(cache_stats) = manager.get_cache_stats() {
-            println!("Final cache stats - entries: {}, accesses: {}", 
-                     cache_stats.total_entries, cache_stats.total_accesses);
+            println!(
+                "Final cache stats - entries: {}, accesses: {}",
+                cache_stats.total_entries, cache_stats.total_accesses
+            );
         }
         assert_eq!(final_stats.total_gpus, manager.gpu_count());
         assert!(cache_time < Duration::from_millis(100));

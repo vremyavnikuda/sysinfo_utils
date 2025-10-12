@@ -109,12 +109,20 @@ mod async_api_tests {
         println!("  Successful requests: {}", successful_requests);
         println!("  Failed requests: {}", failed_requests);
         println!("  Average response time: {:?}", avg_response_time);
-        println!("  Requests per second: {:.2}", 
-                 concurrent_requests as f64 / total_duration.as_secs_f64());
-        assert!(total_duration < Duration::from_secs(30), 
-                "Load test took too long: {:?}", total_duration);
-        assert!(avg_response_time < Duration::from_secs(5), 
-                "Average response time too high: {:?}", avg_response_time);
+        println!(
+            "  Requests per second: {:.2}",
+            concurrent_requests as f64 / total_duration.as_secs_f64()
+        );
+        assert!(
+            total_duration < Duration::from_secs(30),
+            "Load test took too long: {:?}",
+            total_duration
+        );
+        assert!(
+            avg_response_time < Duration::from_secs(5),
+            "Average response time too high: {:?}",
+            avg_response_time
+        );
     }
 
     /// Stress test: Rapid sequential async calls
@@ -134,7 +142,11 @@ mod async_api_tests {
                 }
             }
             if i % 20 == 0 {
-                println!("Completed {} calls, last call took: {:?}", i + 1, call_duration);
+                println!(
+                    "Completed {} calls, last call took: {:?}",
+                    i + 1,
+                    call_duration
+                );
             }
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
@@ -143,8 +155,11 @@ mod async_api_tests {
         println!("  Successful calls: {}", successful_calls);
         println!("  Total duration: {:?}", total_duration);
         println!("  Average call time: {:?}", total_duration / iterations);
-        assert!(total_duration < Duration::from_secs(60), 
-                "Sequential test took too long: {:?}", total_duration);
+        assert!(
+            total_duration < Duration::from_secs(60),
+            "Sequential test took too long: {:?}",
+            total_duration
+        );
     }
 
     /// Test concurrent updates on shared GPU data
@@ -166,18 +181,16 @@ mod async_api_tests {
         let mut failed_updates = 0;
         while let Some(task_result) = join_set.join_next().await {
             match task_result {
-                Ok((task_id, update_result)) => {
-                    match update_result {
-                        Ok(()) => {
-                            successful_updates += 1;
-                            println!("Update task {} succeeded", task_id);
-                        }
-                        Err(_) => {
-                            failed_updates += 1;
-                            println!("Update task {} failed (expected)", task_id);
-                        }
+                Ok((task_id, update_result)) => match update_result {
+                    Ok(()) => {
+                        successful_updates += 1;
+                        println!("Update task {} succeeded", task_id);
                     }
-                }
+                    Err(_) => {
+                        failed_updates += 1;
+                        println!("Update task {} failed (expected)", task_id);
+                    }
+                },
                 Err(e) => {
                     println!("Update task join error: {}", e);
                     failed_updates += 1;
@@ -204,16 +217,14 @@ mod async_api_tests {
             }
         }
         let start_time = Instant::now();
-        let _results = tokio::join!(
-            get_async(),
-            get_all_async(),
-            get_async(),
-            get_all_async(),
-        );
+        let _results = tokio::join!(get_async(), get_all_async(), get_async(), get_all_async(),);
         let duration = start_time.elapsed();
         println!("Multiple async operations completed in {:?}", duration);
-        assert!(duration < Duration::from_secs(10), 
-                "Operations took too long: {:?}", duration);
+        assert!(
+            duration < Duration::from_secs(10),
+            "Operations took too long: {:?}",
+            duration
+        );
     }
 
     /// Integration test: Full async workflow
@@ -264,13 +275,23 @@ mod async_api_tests {
         }
         let get_all_duration = start_time.elapsed();
         let avg_get_all_time = get_all_duration / BENCHMARK_ITERATIONS as u32;
-        println!("  get_async() - Average: {:?}, Success rate: {}/{}", 
-                 avg_get_time, successful_gets, BENCHMARK_ITERATIONS);
-        println!("  get_all_async() - Average: {:?}, Success rate: {}/{}", 
-                 avg_get_all_time, successful_get_alls, BENCHMARK_ITERATIONS);
-        assert!(avg_get_time < Duration::from_millis(500), 
-                "get_async too slow: {:?}", avg_get_time);
-        assert!(avg_get_all_time < Duration::from_secs(2), 
-                "get_all_async too slow: {:?}", avg_get_all_time);
+        println!(
+            "  get_async() - Average: {:?}, Success rate: {}/{}",
+            avg_get_time, successful_gets, BENCHMARK_ITERATIONS
+        );
+        println!(
+            "  get_all_async() - Average: {:?}, Success rate: {}/{}",
+            avg_get_all_time, successful_get_alls, BENCHMARK_ITERATIONS
+        );
+        assert!(
+            avg_get_time < Duration::from_millis(500),
+            "get_async too slow: {:?}",
+            avg_get_time
+        );
+        assert!(
+            avg_get_all_time < Duration::from_secs(2),
+            "get_all_async too slow: {:?}",
+            avg_get_all_time
+        );
     }
 }

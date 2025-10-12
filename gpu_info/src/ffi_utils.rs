@@ -124,9 +124,11 @@ impl DynamicLibrary {
     /// Load a library by path on Unix systems
     #[cfg(unix)]
     pub fn load_unix(path: &str) -> Result<Self, String> {
-        match Library::new(path) {
-            Ok(lib) => Ok(DynamicLibrary::Unix(lib)),
-            Err(e) => Err(format!("Failed to load library from {}: {}", path, e)),
+        unsafe {
+            match Library::new(path) {
+                Ok(lib) => Ok(DynamicLibrary::Unix(lib)),
+                Err(e) => Err(format!("Failed to load library from {}: {}", path, e)),
+            }
         }
     }
     /// Get a symbol from the loaded library
@@ -146,15 +148,17 @@ impl DynamicLibrary {
     }
     /// Get a symbol from the loaded library on Unix
     #[cfg(unix)]
-    pub fn get_symbol<T>(&self, symbol_name: &[u8]) -> Result<Symbol<T>, String> {
+    pub fn get_symbol<T>(&self, symbol_name: &[u8]) -> Result<Symbol<'_, T>, String> {
         match self {
-            DynamicLibrary::Unix(lib) => match lib.get(symbol_name) {
-                Ok(symbol) => Ok(symbol),
-                Err(e) => Err(format!(
-                    "Failed to get symbol {:?}: {}",
-                    std::str::from_utf8(symbol_name).unwrap_or("unknown"),
-                    e
-                )),
+            DynamicLibrary::Unix(lib) => unsafe {
+                match lib.get(symbol_name) {
+                    Ok(symbol) => Ok(symbol),
+                    Err(e) => Err(format!(
+                        "Failed to get symbol {:?}: {}",
+                        std::str::from_utf8(symbol_name).unwrap_or("unknown"),
+                        e
+                    )),
+                }
             },
         }
     }
@@ -239,7 +243,7 @@ impl<'a> SymbolResolver<'a> {
     }
     /// Resolve a symbol with error handling and logging on Unix
     #[cfg(unix)]
-    pub fn resolve<T>(&self, symbol_name: &[u8]) -> Option<Symbol<T>> {
+    pub fn resolve<T>(&self, symbol_name: &[u8]) -> Option<Symbol<'_, T>> {
         match self.library.get_symbol(symbol_name) {
             Ok(symbol) => Some(symbol),
             Err(e) => {
@@ -254,7 +258,7 @@ impl<'a> SymbolResolver<'a> {
     }
     /// Resolve multiple symbols at once, returning None if any fail
     #[cfg(unix)]
-    pub fn resolve_all<T>(&self, symbol_names: &[&[u8]]) -> Option<Vec<Symbol<T>>> {
+    pub fn resolve_all<T>(&self, symbol_names: &[&[u8]]) -> Option<Vec<Symbol<'_, T>>> {
         let mut symbols = Vec::new();
         for &name in symbol_names {
             match self.resolve(name) {

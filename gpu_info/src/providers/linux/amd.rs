@@ -1,9 +1,9 @@
 //! Linux AMD GPU provider implementation
 //!
 //! This module implements the GpuProvider trait for AMD GPUs on Linux using sysfs.
-use crate::gpu_info::{ GpuError, GpuInfo, GpuProvider, Result };
+use crate::gpu_info::{GpuError, GpuInfo, GpuProvider, Result};
 use crate::vendor::Vendor;
-use log::{ debug, info, warn };
+use log::{debug, info, warn};
 use std::fs;
 use std::path::Path;
 /// AMD GPU provider for Linux
@@ -156,10 +156,8 @@ impl AmdLinuxProvider {
                 // Check if this hwmon device is for amdgpu
                 if let Ok(name) = fs::read_to_string(hwmon_device.join("name")) {
                     if name.trim() == "amdgpu" {
-                        if
-                            let Ok(content) = fs::read_to_string(
-                                hwmon_device.join("gpu_busy_percent")
-                            )
+                        if let Ok(content) =
+                            fs::read_to_string(hwmon_device.join("gpu_busy_percent"))
                         {
                             if let Ok(utilization) = content.trim().parse::<u32>() {
                                 return Some(utilization as f32);
@@ -287,7 +285,10 @@ impl AmdLinuxProvider {
             // 2: 900Mhz *
             for line in content.lines() {
                 if let Some(freq_str) = line.split(':').nth(1) {
-                    let freq_str = freq_str.trim().trim_end_matches(" *").trim_end_matches("Mhz");
+                    let freq_str = freq_str
+                        .trim()
+                        .trim_end_matches(" *")
+                        .trim_end_matches("Mhz");
                     if let Ok(freq) = freq_str.parse::<u32>() {
                         if freq > max_freq {
                             max_freq = freq;

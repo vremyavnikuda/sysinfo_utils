@@ -109,8 +109,8 @@ mod provider_manager_tests {
         manager.register_provider(Vendor::Nvidia, MockProvider::new(Vendor::Nvidia, 2));
         manager.register_provider(Vendor::Amd, MockProvider::new(Vendor::Amd, 1));
         manager.register_provider(
-            Vendor::Intel(IntelGpuType::Integrated), 
-            MockProvider::new(Vendor::Intel(IntelGpuType::Integrated), 1)
+            Vendor::Intel(IntelGpuType::Integrated),
+            MockProvider::new(Vendor::Intel(IntelGpuType::Integrated), 1),
         );
         let vendors = manager.get_registered_vendors();
         assert_eq!(vendors.len(), 3);
@@ -129,18 +129,32 @@ mod provider_manager_tests {
         manager.register_provider(Vendor::Amd, MockProvider::new(Vendor::Amd, 1));
         manager.register_provider(
             Vendor::Intel(IntelGpuType::Discrete),
-            MockProvider::new(Vendor::Intel(IntelGpuType::Discrete), 1)
+            MockProvider::new(Vendor::Intel(IntelGpuType::Discrete), 1),
         );
         let detected_gpus = manager.detect_all_gpus();
         assert_eq!(detected_gpus.len(), 4);
-        let nvidia_count = detected_gpus.iter().filter(|g| matches!(g.vendor, Vendor::Nvidia)).count();
-        let amd_count = detected_gpus.iter().filter(|g| matches!(g.vendor, Vendor::Amd)).count();
-        let intel_count = detected_gpus.iter().filter(|g| matches!(g.vendor, Vendor::Intel(_))).count();
+        let nvidia_count = detected_gpus
+            .iter()
+            .filter(|g| matches!(g.vendor, Vendor::Nvidia))
+            .count();
+        let amd_count = detected_gpus
+            .iter()
+            .filter(|g| matches!(g.vendor, Vendor::Amd))
+            .count();
+        let intel_count = detected_gpus
+            .iter()
+            .filter(|g| matches!(g.vendor, Vendor::Intel(_)))
+            .count();
         assert_eq!(nvidia_count, 2);
         assert_eq!(amd_count, 1);
         assert_eq!(intel_count, 1);
-        println!("Detected {} GPUs: {} NVIDIA, {} AMD, {} Intel", 
-                 detected_gpus.len(), nvidia_count, amd_count, intel_count);
+        println!(
+            "Detected {} GPUs: {} NVIDIA, {} AMD, {} Intel",
+            detected_gpus.len(),
+            nvidia_count,
+            amd_count,
+            intel_count
+        );
         for (i, gpu) in detected_gpus.iter().enumerate() {
             assert!(gpu.name_gpu.is_some());
             assert!(gpu.temperature.is_some());
@@ -157,17 +171,29 @@ mod provider_manager_tests {
         manager.register_provider(Vendor::Amd, MockProvider::new_failing(Vendor::Amd));
         manager.register_provider(
             Vendor::Intel(IntelGpuType::Unknown),
-            MockProvider::new(Vendor::Intel(IntelGpuType::Unknown), 2)
+            MockProvider::new(Vendor::Intel(IntelGpuType::Unknown), 2),
         );
         let detected_gpus = manager.detect_all_gpus();
         assert_eq!(detected_gpus.len(), 3);
-        let nvidia_count = detected_gpus.iter().filter(|g| matches!(g.vendor, Vendor::Nvidia)).count();
-        let amd_count = detected_gpus.iter().filter(|g| matches!(g.vendor, Vendor::Amd)).count();
-        let intel_count = detected_gpus.iter().filter(|g| matches!(g.vendor, Vendor::Intel(_))).count();
+        let nvidia_count = detected_gpus
+            .iter()
+            .filter(|g| matches!(g.vendor, Vendor::Nvidia))
+            .count();
+        let amd_count = detected_gpus
+            .iter()
+            .filter(|g| matches!(g.vendor, Vendor::Amd))
+            .count();
+        let intel_count = detected_gpus
+            .iter()
+            .filter(|g| matches!(g.vendor, Vendor::Intel(_)))
+            .count();
         assert_eq!(nvidia_count, 1);
         assert_eq!(amd_count, 0);
         assert_eq!(intel_count, 2);
-        println!("Detection with failures: {} total GPUs (AMD provider failed)", detected_gpus.len());
+        println!(
+            "Detection with failures: {} total GPUs (AMD provider failed)",
+            detected_gpus.len()
+        );
     }
 
     /// Test GPU update operations with update count verification
@@ -182,14 +208,19 @@ mod provider_manager_tests {
         let intel_update_count = intel_provider.update_count.clone();
         manager.register_provider(Vendor::Nvidia, nvidia_provider);
         manager.register_provider(Vendor::Amd, amd_provider);
-        manager.register_provider(
-            Vendor::Intel(IntelGpuType::Integrated), 
-            intel_provider
-        );
+        manager.register_provider(Vendor::Intel(IntelGpuType::Integrated), intel_provider);
         let test_cases = vec![
-            (Vendor::Nvidia, "NVIDIA GeForce RTX 4080", nvidia_update_count),
+            (
+                Vendor::Nvidia,
+                "NVIDIA GeForce RTX 4080",
+                nvidia_update_count,
+            ),
             (Vendor::Amd, "AMD Radeon RX 7800 XT", amd_update_count),
-            (Vendor::Intel(IntelGpuType::Integrated), "Intel UHD Graphics", intel_update_count),
+            (
+                Vendor::Intel(IntelGpuType::Integrated),
+                "Intel UHD Graphics",
+                intel_update_count,
+            ),
         ];
         for (vendor, gpu_name, update_count_ref) in test_cases {
             let initial_count = *update_count_ref.lock().unwrap();
@@ -202,10 +233,16 @@ mod provider_manager_tests {
             assert_eq!(gpu.temperature, Some(61.0));
             assert_eq!(gpu.utilization, Some(45.0));
             let final_count = *update_count_ref.lock().unwrap();
-            assert_eq!(final_count, initial_count + 1, 
-                      "Update count for {:?} should increase by 1", vendor);
-            println!("Successfully updated {:?} GPU: {:?} (update count: {})", 
-                    vendor, gpu.name_gpu, final_count);
+            assert_eq!(
+                final_count,
+                initial_count + 1,
+                "Update count for {:?} should increase by 1",
+                vendor
+            );
+            println!(
+                "Successfully updated {:?} GPU: {:?} (update count: {})",
+                vendor, gpu.name_gpu, final_count
+            );
         }
     }
 
@@ -215,7 +252,7 @@ mod provider_manager_tests {
         let mut manager = GpuProviderManager::new();
         manager.register_provider(
             Vendor::Intel(IntelGpuType::Discrete),
-            MockProvider::new(Vendor::Intel(IntelGpuType::Discrete), 1)
+            MockProvider::new(Vendor::Intel(IntelGpuType::Discrete), 1),
         );
         let mut intel_gpu = GpuInfo::write_vendor(Vendor::Intel(IntelGpuType::Integrated));
         intel_gpu.temperature = Some(55.0);
@@ -238,11 +275,17 @@ mod provider_manager_tests {
             let update_result = provider.update_gpu(&mut gpu);
             assert!(update_result.is_ok(), "Update {} should succeed", i);
             let current_count = provider.get_update_count();
-            assert_eq!(current_count, i, "Update count should be {} after {} updates", i, i);
-            println!("After update {}: count = {}, temp = {:?}, util = {:?}", 
-                    i, current_count, gpu.temperature, gpu.utilization);
+            assert_eq!(
+                current_count, i,
+                "Update count should be {} after {} updates",
+                i, i
+            );
+            println!(
+                "After update {}: count = {}, temp = {:?}, util = {:?}",
+                i, current_count, gpu.temperature, gpu.utilization
+            );
         }
-        
+
         // Final verification
         assert_eq!(provider.get_update_count(), 5);
         println!("Final update count: {}", provider.get_update_count());
@@ -258,10 +301,16 @@ mod provider_manager_tests {
         for i in 1..=3 {
             let update_result = failing_provider.update_gpu(&mut gpu);
             assert!(update_result.is_err(), "Update {} should fail", i);
-            assert_eq!(failing_provider.get_update_count(), 0, 
-                      "Update count should remain 0 for failing provider");
+            assert_eq!(
+                failing_provider.get_update_count(),
+                0,
+                "Update count should remain 0 for failing provider"
+            );
         }
-        println!("Failing provider update count remains: {}", failing_provider.get_update_count());
+        println!(
+            "Failing provider update count remains: {}",
+            failing_provider.get_update_count()
+        );
     }
 
     /// Test update with unsupported vendor
@@ -320,8 +369,10 @@ mod provider_manager_tests {
                 }
             }
         }
-        println!("Concurrent detections: {}/{} successful, {} total GPUs", 
-                 successful_detections, CONCURRENT_DETECTIONS, total_detections);
+        println!(
+            "Concurrent detections: {}/{} successful, {} total GPUs",
+            successful_detections, CONCURRENT_DETECTIONS, total_detections
+        );
         assert_eq!(successful_detections, CONCURRENT_DETECTIONS);
     }
 
@@ -356,13 +407,24 @@ mod provider_manager_tests {
         println!("Rapid update test results:");
         println!("  {} updates in {:?}", successful_updates, update_time);
         println!("  Updates per second: {:.0}", updates_per_second);
-        println!("  Provider update count: {} -> {} (delta: {})", 
-                initial_update_count, final_update_count, 
-                final_update_count - initial_update_count);
+        println!(
+            "  Provider update count: {} -> {} (delta: {})",
+            initial_update_count,
+            final_update_count,
+            final_update_count - initial_update_count
+        );
         assert_eq!(successful_updates, UPDATE_COUNT);
-        assert_eq!(final_update_count - initial_update_count, UPDATE_COUNT, 
-                  "Provider should be called exactly {} times", UPDATE_COUNT);
-        assert!(updates_per_second > 1000.0, "Updates too slow: {:.0}/sec", updates_per_second);
+        assert_eq!(
+            final_update_count - initial_update_count,
+            UPDATE_COUNT,
+            "Provider should be called exactly {} times",
+            UPDATE_COUNT
+        );
+        assert!(
+            updates_per_second > 1000.0,
+            "Updates too slow: {:.0}/sec",
+            updates_per_second
+        );
     }
 
     /// Stress test: Many providers with many GPUs
@@ -384,11 +446,18 @@ mod provider_manager_tests {
         let detected_gpus = manager.detect_all_gpus();
         let detection_time = detection_start.elapsed();
         println!("Many providers stress test:");
-        println!("  Detected {} GPUs in {:?}", detected_gpus.len(), detection_time);
+        println!(
+            "  Detected {} GPUs in {:?}",
+            detected_gpus.len(),
+            detection_time
+        );
         println!("  Expected {} GPUs", actual_expected);
         assert_eq!(detected_gpus.len(), actual_expected);
-        assert!(detection_time < std::time::Duration::from_secs(5), 
-                "Detection too slow: {:?}", detection_time);
+        assert!(
+            detection_time < std::time::Duration::from_secs(5),
+            "Detection too slow: {:?}",
+            detection_time
+        );
     }
 
     /// Test provider replacement
@@ -414,7 +483,7 @@ mod provider_manager_tests {
         manager.register_provider(Vendor::Amd, MockProvider::new(Vendor::Amd, 1));
         manager.register_provider(
             Vendor::Intel(IntelGpuType::Integrated),
-            MockProvider::new(Vendor::Intel(IntelGpuType::Integrated), 1)
+            MockProvider::new(Vendor::Intel(IntelGpuType::Integrated), 1),
         );
         const ITERATIONS: usize = 100;
         let detection_start = std::time::Instant::now();
@@ -437,18 +506,33 @@ mod provider_manager_tests {
         }
         let vendor_check_time = vendor_check_start.elapsed();
         println!("Provider manager performance ({} iterations):", ITERATIONS);
-        println!("  Detection: {:?} (avg: {:?})", 
-                 detection_time, detection_time / ITERATIONS as u32);
-        println!("  Updates: {:?} (avg: {:?})", 
-                 update_time, update_time / ITERATIONS as u32);
-        println!("  Vendor checks: {:?} (avg: {:?})", 
-                 vendor_check_time, vendor_check_time / ITERATIONS as u32);
+        println!(
+            "  Detection: {:?} (avg: {:?})",
+            detection_time,
+            detection_time / ITERATIONS as u32
+        );
+        println!(
+            "  Updates: {:?} (avg: {:?})",
+            update_time,
+            update_time / ITERATIONS as u32
+        );
+        println!(
+            "  Vendor checks: {:?} (avg: {:?})",
+            vendor_check_time,
+            vendor_check_time / ITERATIONS as u32
+        );
         let avg_detection = detection_time / ITERATIONS as u32;
         let avg_update = update_time / ITERATIONS as u32;
-        assert!(avg_detection < std::time::Duration::from_millis(50), 
-                "Detection too slow: {:?}", avg_detection);
-        assert!(avg_update < std::time::Duration::from_millis(10), 
-                "Updates too slow: {:?}", avg_update);
+        assert!(
+            avg_detection < std::time::Duration::from_millis(50),
+            "Detection too slow: {:?}",
+            avg_detection
+        );
+        assert!(
+            avg_update < std::time::Duration::from_millis(10),
+            "Updates too slow: {:?}",
+            avg_update
+        );
     }
 
     /// Integration test: Full provider manager workflow
@@ -462,7 +546,7 @@ mod provider_manager_tests {
         manager.register_provider(Vendor::Amd, MockProvider::new(Vendor::Amd, 1));
         manager.register_provider(
             Vendor::Intel(IntelGpuType::Discrete),
-            MockProvider::new(Vendor::Intel(IntelGpuType::Discrete), 1)
+            MockProvider::new(Vendor::Intel(IntelGpuType::Discrete), 1),
         );
         println!("Registered 3 providers");
         let vendors = manager.get_registered_vendors();
@@ -486,7 +570,10 @@ mod provider_manager_tests {
             }
         }
         println!("Completed {} update operations", update_results.len());
-        let successful_updates = update_results.iter().filter(|(_, success)| *success).count();
+        let successful_updates = update_results
+            .iter()
+            .filter(|(_, success)| *success)
+            .count();
         assert_eq!(successful_updates, 4);
         println!("All {} updates successful", successful_updates);
         let mut unknown_gpu = GpuInfo::write_vendor(Vendor::Unknown);

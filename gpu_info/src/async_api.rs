@@ -37,7 +37,7 @@ pub async fn get_async() -> Result<GpuInfo> {
         if let Some(primary_gpu) = crate::gpu_manager::get_primary_gpu() {
             return Ok(primary_gpu);
         }
-        
+
         // Fallback to direct detection if cache unavailable
         match crate::get() {
             gpu if gpu.vendor != crate::vendor::Vendor::Unknown => Ok(gpu),
@@ -45,7 +45,7 @@ pub async fn get_async() -> Result<GpuInfo> {
         }
     })
     .await;
-    
+
     match result {
         Ok(Ok(gpu)) => Ok(gpu),
         Ok(Err(e)) => Err(e),
@@ -118,17 +118,19 @@ pub async fn update_gpu_async(gpu: &mut GpuInfo) -> Result<()> {
         #[cfg(target_os = "windows")]
         {
             use crate::providers::{AmdProvider, IntelProvider, NvidiaProvider};
-            provider_manager.register_provider(crate::vendor::Vendor::Nvidia, NvidiaProvider::new());
+            provider_manager
+                .register_provider(crate::vendor::Vendor::Nvidia, NvidiaProvider::new());
             provider_manager.register_provider(crate::vendor::Vendor::Amd, AmdProvider::new());
             provider_manager.register_provider(
-                crate::vendor::Vendor::Intel(crate::vendor::IntelGpuType::Unknown), 
-                IntelProvider::new()
+                crate::vendor::Vendor::Intel(crate::vendor::IntelGpuType::Unknown),
+                IntelProvider::new(),
             );
         }
         #[cfg(target_os = "linux")]
         {
             use crate::providers::linux::{AmdLinuxProvider, NvidiaLinuxProvider};
-            provider_manager.register_provider(crate::vendor::Vendor::Nvidia, NvidiaLinuxProvider::new());
+            provider_manager
+                .register_provider(crate::vendor::Vendor::Nvidia, NvidiaLinuxProvider::new());
             provider_manager.register_provider(crate::vendor::Vendor::Amd, AmdLinuxProvider::new());
         }
         #[cfg(target_os = "macos")]

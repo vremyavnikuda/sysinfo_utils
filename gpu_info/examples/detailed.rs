@@ -1,4 +1,4 @@
-use gpu_info::{vendor::Vendor, Result};
+use gpu_info::{ vendor::Vendor, Result };
 use std::thread;
 use std::time::Duration;
 fn main() -> Result<()> {
@@ -19,7 +19,7 @@ fn main() -> Result<()> {
     for i in 0..5 {
         #[cfg(target_os = "windows")]
         {
-            use gpu_info::providers::{amd, intel, nvidia};
+            use gpu_info::providers::{ amd, intel, nvidia };
             match gpu.vendor {
                 Vendor::Nvidia => {
                     if let Err(e) = nvidia::update_nvidia_info(&mut gpu) {
@@ -45,7 +45,9 @@ fn main() -> Result<()> {
                 Vendor::Nvidia => {
                     #[cfg(any(target_os = "linux", target_os = "macos"))]
                     {
-                        if let Err(e) = gpu_info::update_nvidia_info(&mut gpu) {
+                        use gpu_info::providers::nvidia::update_nvidia_info;
+
+                        if let Err(e) = update_nvidia_info(&mut gpu) {
                             println!("Error updating NVIDIA GPU: {}", e);
                         }
                     }

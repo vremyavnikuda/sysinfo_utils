@@ -5,9 +5,7 @@
 
 #[cfg(test)]
 mod ffi_utils_tests {
-    use crate::ffi_utils::{
-        AdlResult, ApiResult, ApiTable, LibraryLoader, NvmlResult,
-    };
+    use crate::ffi_utils::{AdlResult, ApiResult, ApiTable, LibraryLoader, NvmlResult};
 
     /// Test NVML API result wrapper
     #[test]
@@ -25,11 +23,17 @@ mod ffi_utils_tests {
     /// Test ADL API result wrapper
     #[test]
     fn test_adl_result() {
-        let success_result = AdlResult { code: 0, value: "success".to_string() };
+        let success_result = AdlResult {
+            code: 0,
+            value: "success".to_string(),
+        };
         assert!(success_result.is_success());
         assert_eq!(success_result.error_code(), 0);
         assert_eq!(success_result.to_option(), Some("success".to_string()));
-        let error_result = AdlResult { code: -1, value: "error".to_string() };
+        let error_result = AdlResult {
+            code: -1,
+            value: "error".to_string(),
+        };
         assert!(!error_result.is_success());
         assert_eq!(error_result.error_code(), -1);
         assert_eq!(error_result.to_option(), None);
@@ -38,13 +42,22 @@ mod ffi_utils_tests {
     /// Test API result trait with different types
     #[test]
     fn test_api_result_trait() {
-        let int_result = NvmlResult { code: 0, value: 123 };
+        let int_result = NvmlResult {
+            code: 0,
+            value: 123,
+        };
         let opt_value: Option<i32> = int_result.to_option();
         assert_eq!(opt_value, Some(123));
-        let string_result = AdlResult { code: 0, value: "test".to_string() };
+        let string_result = AdlResult {
+            code: 0,
+            value: "test".to_string(),
+        };
         let opt_string: Option<String> = string_result.to_option();
         assert_eq!(opt_string, Some("test".to_string()));
-        let float_result = NvmlResult { code: 0, value: 3.14f32 };
+        let float_result = NvmlResult {
+            code: 0,
+            value: 3.14f32,
+        };
         let opt_float: Option<f32> = float_result.to_option();
         assert_eq!(opt_float, Some(3.14f32));
     }
@@ -57,7 +70,10 @@ mod ffi_utils_tests {
             .with_fallback_path("/path/to/fallback2");
         let result = loader.load();
         assert!(result.is_err());
-        println!("Non-existent library loading failed as expected: {}", result.unwrap_err());
+        println!(
+            "Non-existent library loading failed as expected: {}",
+            result.unwrap_err()
+        );
     }
 
     /// Test library loader with multiple fallback paths
@@ -84,8 +100,12 @@ mod ffi_utils_tests {
             func2: fn(i32) -> i32,
         }
 
-        fn test_func1() -> i32 { 42 }
-        fn test_func2(x: i32) -> i32 { x * 2 }
+        fn test_func1() -> i32 {
+            42
+        }
+        fn test_func2(x: i32) -> i32 {
+            x * 2
+        }
 
         let functions = TestFunctions {
             func1: test_func1,
@@ -112,7 +132,10 @@ mod ffi_utils_tests {
     /// Test error handling macros (compilation test)
     #[test]
     fn test_error_handling_macros() {
-        let success_result = NvmlResult { code: 0, value: 100 };
+        let success_result = NvmlResult {
+            code: 0,
+            value: 100,
+        };
         if success_result.is_success() {
             let value = success_result.to_option().unwrap();
             assert_eq!(value, 100);
@@ -130,9 +153,18 @@ mod ffi_utils_tests {
     #[test]
     fn test_result_types_with_macros() {
         // Test with different value types
-        let int_result = NvmlResult { code: 0, value: 42i32 };
-        let float_result = AdlResult { code: 0, value: 3.14f64 };
-        let bool_result = NvmlResult { code: 0, value: true };
+        let int_result = NvmlResult {
+            code: 0,
+            value: 42i32,
+        };
+        let float_result = AdlResult {
+            code: 0,
+            value: 3.14f64,
+        };
+        let bool_result = NvmlResult {
+            code: 0,
+            value: true,
+        };
         assert!(int_result.is_success());
         assert!(float_result.is_success());
         assert!(bool_result.is_success());
@@ -145,9 +177,9 @@ mod ffi_utils_tests {
     #[test]
     fn test_api_result_error_codes() {
         let test_cases = vec![
-            (0, true),   // Success
-            (1, false),  // Error
-            (-1, false), // Error
+            (0, true),    // Success
+            (1, false),   // Error
+            (-1, false),  // Error
             (999, false), // Error
         ];
 
@@ -185,8 +217,10 @@ mod ffi_utils_tests {
                 assert!(result.to_option().is_none());
             }
         }
-        println!("Stress test completed: {} successes, {} errors", 
-                 success_count, error_count);
+        println!(
+            "Stress test completed: {} successes, {} errors",
+            success_count, error_count
+        );
         assert_eq!(success_count + error_count, ITERATIONS);
     }
 
@@ -194,12 +228,13 @@ mod ffi_utils_tests {
     #[test]
     fn test_library_loading_errors() {
         let invalid_names = vec![
-            "",
             "nonexistent_library_12345",
             "/path/to/nowhere.so",
             "invalid\\path\\library.dll",
             "library with spaces.so",
         ];
+        // Note: Empty string "" is excluded as it may succeed on some systems
+        // (returns handle to main program on Unix)
         for name in invalid_names {
             let loader = LibraryLoader::new(name);
             let result = loader.load();
@@ -246,9 +281,13 @@ mod ffi_utils_tests {
             ("shutdown", NvmlResult { code: 0, value: () }),
         ];
         for (operation, result) in api_operations {
-            println!("Operation '{}': success={}, error_code={}", 
-                     operation, result.is_success(), result.error_code());
-            
+            println!(
+                "Operation '{}': success={}, error_code={}",
+                operation,
+                result.is_success(),
+                result.error_code()
+            );
+
             if result.is_success() {
                 println!("  Operation succeeded");
             } else {
@@ -257,7 +296,13 @@ mod ffi_utils_tests {
         }
         let error_scenarios = vec![
             ("device_not_found", NvmlResult { code: 6, value: () }),
-            ("insufficient_power", NvmlResult { code: 13, value: () }),
+            (
+                "insufficient_power",
+                NvmlResult {
+                    code: 13,
+                    value: (),
+                },
+            ),
             ("driver_not_loaded", NvmlResult { code: 9, value: () }),
         ];
         for (scenario, result) in error_scenarios {
@@ -276,9 +321,9 @@ mod ffi_utils_tests {
         let start = Instant::now();
         let mut success_count = 0;
         for i in 0..ITERATIONS {
-            let result = NvmlResult { 
-                code: if i % 100 == 0 { 1 } else { 0 }, 
-                value: i 
+            let result = NvmlResult {
+                code: if i % 100 == 0 { 1 } else { 0 },
+                value: i,
             };
             if result.is_success() {
                 if let Some(_value) = result.to_option() {
@@ -292,7 +337,15 @@ mod ffi_utils_tests {
         println!("  Duration: {:?}", duration);
         println!("  Operations per second: {:.0}", ops_per_sec);
         println!("  Success count: {}", success_count);
-        assert!(duration.as_millis() < 1000, "Performance test too slow: {:?}", duration);
-        assert!(ops_per_sec > 100_000.0, "Too slow: {:.0} ops/sec", ops_per_sec);
+        assert!(
+            duration.as_millis() < 1000,
+            "Performance test too slow: {:?}",
+            duration
+        );
+        assert!(
+            ops_per_sec > 100_000.0,
+            "Too slow: {:.0} ops/sec",
+            ops_per_sec
+        );
     }
 }

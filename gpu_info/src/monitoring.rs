@@ -299,7 +299,7 @@ impl GpuMonitor {
             }
             *is_running = true;
         }
-        
+
         // Ensure we have at least one alert handler
         if let Ok(handlers) = self.alert_handlers.lock() {
             if handlers.is_empty() {
@@ -307,17 +307,17 @@ impl GpuMonitor {
                 self.add_alert_handler(Box::new(LogAlertHandler))?;
             }
         }
-        
+
         info!(
             "Starting GPU monitoring with interval: {:?}",
             self.config.polling_interval
         );
-        
+
         // Initialize stats
         if let Ok(mut stats) = self.stats.lock() {
             stats.start_time = Some(Instant::now());
         }
-        
+
         // Clone all necessary data for the thread
         let gpu_manager = Arc::clone(&self.gpu_manager);
         let history = Arc::clone(&self.history);
@@ -325,7 +325,7 @@ impl GpuMonitor {
         let is_running = Arc::clone(&self.is_running);
         let stats = Arc::clone(&self.stats);
         let config = self.config.clone();
-        
+
         // Start the monitoring thread
         let handle = thread::spawn(move || {
             Self::monitoring_loop(
@@ -337,15 +337,15 @@ impl GpuMonitor {
                 config,
             );
         });
-        
+
         // Store the thread handle
         if let Ok(mut thread_handle) = self.thread_handle.lock() {
             *thread_handle = Some(handle);
         }
-        
+
         // Give the thread a moment to start
         thread::sleep(Duration::from_millis(10));
-        
+
         Ok(())
     }
     /// Останавливает мониторинг
@@ -359,13 +359,13 @@ impl GpuMonitor {
             *is_running = false;
             info!("Stopping GPU monitoring");
         }
-        
+
         // Wait for the thread to finish
         if let Ok(mut thread_handle) = self.thread_handle.lock() {
             if let Some(handle) = thread_handle.take() {
                 // Give the thread time to notice the stop signal
                 thread::sleep(Duration::from_millis(50));
-                
+
                 // Try to join the thread with a timeout
                 match handle.join() {
                     Ok(()) => {
@@ -377,7 +377,7 @@ impl GpuMonitor {
                 }
             }
         }
-        
+
         Ok(())
     }
     /// Проверяет, запущен ли мониторинг
@@ -405,39 +405,42 @@ impl GpuMonitor {
         stats: Arc<Mutex<MonitorStats>>,
         config: MonitorConfig,
     ) {
-        info!("GPU monitoring loop started with interval: {:?}", config.polling_interval);
+        info!(
+            "GPU monitoring loop started with interval: {:?}",
+            config.polling_interval
+        );
         let mut consecutive_errors = 0;
         const MAX_CONSECUTIVE_ERRORS: u32 = 10;
         let mut iteration_count = 0;
-        
+
         while Self::should_continue_monitoring(&is_running) {
             iteration_count += 1;
             debug!("Monitoring iteration #{}", iteration_count);
-            
+
             let collection_start = Instant::now();
             let collection_result = if let Ok(mut manager) = gpu_manager.lock() {
                 // Try to refresh GPU data
                 let refresh_result = manager.refresh_all_gpus();
-                
+
                 // If refresh fails, try to detect GPUs first
                 if refresh_result.is_err() && manager.gpu_count() == 0 {
                     debug!("No GPUs found, attempting detection...");
                     // In test environment, we might not have real GPUs
                     // This is acceptable for testing the monitoring system
                 }
-                
+
                 refresh_result
             } else {
                 Err(GpuError::GpuNotActive)
             };
-            
+
             match collection_result {
                 Ok(()) => {
                     consecutive_errors = 0;
                     if let Ok(manager) = gpu_manager.lock() {
                         let gpus = manager.get_all_gpus();
                         debug!("Successfully collected data for {} GPUs", gpus.len());
-                        
+
                         Self::update_history(&history, &gpus, collection_start);
                         if config.enable_alerts {
                             Self::check_alerts(&gpus, &config.thresholds, &alert_handlers);
@@ -450,27 +453,36 @@ impl GpuMonitor {
                 }
                 Err(e) => {
                     consecutive_errors += 1;
-                    debug!("GPU data collection failed (attempt {}): {}", consecutive_errors, e);
-                    
+                    debug!(
+                        "GPU data collection failed (attempt {}): {}",
+                        consecutive_errors, e
+                    );
+
                     // In test environment, this is expected behavior
                     // Still count as an error for statistics
                     if let Ok(mut s) = stats.lock() {
                         s.total_errors += 1;
                     }
-                    
+
                     if consecutive_errors >= MAX_CONSECUTIVE_ERRORS {
-                        warn!("Too many consecutive errors ({}), taking a longer break", consecutive_errors);
+                        warn!(
+                            "Too many consecutive errors ({}), taking a longer break",
+                            consecutive_errors
+                        );
                         thread::sleep(Duration::from_secs(1)); // Shorter break for tests
                         consecutive_errors = 0;
                     }
                 }
             }
-            
+
             // Always sleep for the polling interval
             thread::sleep(config.polling_interval);
         }
-        
-        info!("GPU monitoring loop ended after {} iterations", iteration_count);
+
+        info!(
+            "GPU monitoring loop ended after {} iterations",
+            iteration_count
+        );
     }
     /// Проверяет, нужно ли продолжать мониторинг
     fn should_continue_monitoring(is_running: &Arc<Mutex<bool>>) -> bool {

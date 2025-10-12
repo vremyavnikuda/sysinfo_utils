@@ -1,7 +1,7 @@
-use crate::gpu_info::{GpuError, GpuInfo, Result};
+use crate::gpu_info::{ GpuError, GpuInfo, Result };
 use crate::vendor::Vendor;
-use log::{debug, error, info, warn};
-use std::sync::{Arc, Mutex};
+use log::{ debug, error, info, warn };
+use std::sync::{ Arc, Mutex };
 use std::time::Duration;
 /// Менеджер для работы с множественными GPU в системе
 #[derive(Debug, Clone)]
@@ -78,7 +78,7 @@ impl GpuManager {
     }
     #[cfg(target_os = "windows")]
     fn detect_windows_gpus(&mut self) {
-        use crate::providers::{amd, intel, nvidia};
+        use crate::providers::{ amd, intel, nvidia };
         // NVIDIA GPUs
         if let Ok(nvidia_gpus) = nvidia::detect_nvidia_gpus() {
             for (index, gpu) in nvidia_gpus.into_iter().enumerate() {
@@ -103,7 +103,7 @@ impl GpuManager {
     #[cfg(target_os = "linux")]
     fn detect_linux_gpus(&mut self) {
         use crate::gpu_info::GpuProvider;
-        use crate::providers::linux::{AmdLinuxProvider, NvidiaLinuxProvider};
+        use crate::providers::linux::{ AmdLinuxProvider, NvidiaLinuxProvider };
         // NVIDIA GPUs
         let nvidia_provider = NvidiaLinuxProvider::new();
         match nvidia_provider.detect_gpus() {
@@ -153,7 +153,9 @@ impl GpuManager {
                     );
                     return;
                 }
-                _ => continue,
+                _ => {
+                    continue;
+                }
             }
         }
         if !self.gpus.is_empty() {
@@ -252,7 +254,7 @@ impl GpuManager {
     fn update_single_gpu_static(gpu: &mut GpuInfo) -> Result<()> {
         #[cfg(target_os = "windows")]
         {
-            use crate::providers::{amd, intel, nvidia};
+            use crate::providers::{ amd, intel, nvidia };
             match gpu.vendor {
                 Vendor::Nvidia => nvidia::update_nvidia_info(gpu),
                 Vendor::Amd => amd::update_amd_info(gpu),
@@ -266,7 +268,7 @@ impl GpuManager {
         #[cfg(target_os = "linux")]
         {
             use crate::gpu_info::GpuProvider;
-            use crate::providers::linux::{AmdLinuxProvider, NvidiaLinuxProvider};
+            use crate::providers::linux::{ AmdLinuxProvider, NvidiaLinuxProvider };
             match gpu.vendor {
                 Vendor::Nvidia => {
                     let nvidia_provider = NvidiaLinuxProvider::new();
@@ -315,11 +317,21 @@ impl GpuManager {
         let mut stats = GpuStatistics::default();
         for gpu in &self.gpus {
             match gpu.vendor {
-                Vendor::Nvidia => stats.nvidia_count += 1,
-                Vendor::Amd => stats.amd_count += 1,
-                Vendor::Intel(_) => stats.intel_count += 1,
-                Vendor::Apple => stats.apple_count += 1,
-                Vendor::Unknown => stats.unknown_count += 1,
+                Vendor::Nvidia => {
+                    stats.nvidia_count += 1;
+                }
+                Vendor::Amd => {
+                    stats.amd_count += 1;
+                }
+                Vendor::Intel(_) => {
+                    stats.intel_count += 1;
+                }
+                Vendor::Apple => {
+                    stats.apple_count += 1;
+                }
+                Vendor::Unknown => {
+                    stats.unknown_count += 1;
+                }
             }
             if let Some(temp) = gpu.temperature {
                 stats.total_temperature += temp;
@@ -369,18 +381,14 @@ impl GpuStatistics {
     /// Возвращает среднюю температуру по всем GPU
     pub fn average_temperature(&self) -> Option<f32> {
         if self.temperature_readings > 0 {
-            Some(self.total_temperature / self.temperature_readings as f32)
+            Some(self.total_temperature / (self.temperature_readings as f32))
         } else {
             None
         }
     }
     /// Возвращает общее энергопотребление всех GPU
     pub fn total_power_consumption(&self) -> Option<f32> {
-        if self.power_readings > 0 {
-            Some(self.total_power_usage)
-        } else {
-            None
-        }
+        if self.power_readings > 0 { Some(self.total_power_usage) } else { None }
     }
 }
 // Глобальная статическая переменная для singleton доступа
@@ -388,37 +396,23 @@ use std::sync::OnceLock;
 static GPU_MANAGER: OnceLock<Arc<Mutex<GpuManager>>> = OnceLock::new();
 /// Возвращает глобальный экземпляр GpuManager
 pub fn global_gpu_manager() -> Arc<Mutex<GpuManager>> {
-    GPU_MANAGER
-        .get_or_init(|| Arc::new(Mutex::new(GpuManager::new())))
-        .clone()
+    GPU_MANAGER.get_or_init(|| Arc::new(Mutex::new(GpuManager::new()))).clone()
 }
 /// Convenience функция для получения основного GPU
 pub fn get_primary_gpu() -> Option<GpuInfo> {
     let manager = global_gpu_manager();
-    let result = if let Ok(mgr) = manager.lock() {
-        mgr.get_primary_gpu_cached()
-    } else {
-        None
-    };
+    let result = if let Ok(mgr) = manager.lock() { mgr.get_primary_gpu_cached() } else { None };
     result
 }
 /// Convenience функция для получения всех GPU
 pub fn get_all_gpus() -> Vec<GpuInfo> {
     let manager = global_gpu_manager();
-    let result = if let Ok(mgr) = manager.lock() {
-        mgr.get_all_gpus_owned()
-    } else {
-        Vec::new()
-    };
+    let result = if let Ok(mgr) = manager.lock() { mgr.get_all_gpus_owned() } else { Vec::new() };
     result
 }
 /// Convenience функция для получения количества GPU
 pub fn get_gpu_count() -> usize {
     let manager = global_gpu_manager();
-    let result = if let Ok(mgr) = manager.lock() {
-        mgr.gpu_count()
-    } else {
-        0
-    };
+    let result = if let Ok(mgr) = manager.lock() { mgr.gpu_count() } else { 0 };
     result
 }
