@@ -76,7 +76,7 @@ impl Default for MacosConfig {
 pub enum MacosBackend {
     /// IOKit backend - fast PCI device detection and static information
     ///
-    /// **Speed:** 1-10ms  
+    /// **Speed:** 1-10ms
     /// **Requires:** `macos-iokit` feature flag
     ///
     /// Uses IOKit framework for direct hardware access. Fastest option for
@@ -86,7 +86,7 @@ pub enum MacosBackend {
 
     /// Metal API backend - real-time GPU metrics
     ///
-    /// **Speed:** 1-5ms  
+    /// **Speed:** 1-5ms
     /// **Requires:** `macos-metal` feature flag
     ///
     /// Uses Metal framework for real-time GPU utilization, memory usage,
@@ -96,7 +96,7 @@ pub enum MacosBackend {
 
     /// powermetrics CLI tool - GPU metrics without sudo (if available)
     ///
-    /// **Speed:** ~100ms  
+    /// **Speed:** ~100ms
     /// **Requires:** No feature flags
     ///
     /// Uses the `powermetrics` command-line tool. May require sudo access
@@ -105,7 +105,7 @@ pub enum MacosBackend {
 
     /// system_profiler - legacy fallback method
     ///
-    /// **Speed:** 500-1000ms  
+    /// **Speed:** 500-1000ms
     /// **Requires:** No feature flags
     ///
     /// Uses the `system_profiler` command. Slowest but most compatible option.
@@ -152,12 +152,15 @@ impl MacosBackend {
     pub fn is_available(&self) -> bool {
         match self {
             #[cfg(feature = "macos-iokit")]
-            Self::IOKit => true, // IOKit is always available on macOS with feature flag
+            // IOKit is always available on macOS with feature flag
+            Self::IOKit => true,
             #[cfg(feature = "macos-metal")]
-            Self::Metal => true, // Metal is always available on macOS 10.11+ with feature flag
+            // Metal is always available on macOS 10.11+ with feature flag
+            Self::Metal => true,
             Self::PowerMetrics => {
                 // Check if powermetrics command exists
-                std::process::Command::new("which")
+                std::process::Command
+                    ::new("which")
                     .arg("powermetrics")
                     .output()
                     .map(|output| output.status.success())
@@ -167,7 +170,8 @@ impl MacosBackend {
                 // system_profiler is always available on macOS
                 true
             }
-            Self::Hybrid => true, // Hybrid is always available (uses available backends)
+            // Hybrid is always available (uses available backends)
+            Self::Hybrid => true,
         }
     }
 }
@@ -212,8 +216,9 @@ mod tests {
     fn test_backend_serialization() {
         let backend = MacosBackend::Hybrid;
         let json = serde_json::to_string(&backend).expect("Failed to serialize");
-        let deserialized: MacosBackend =
-            serde_json::from_str(&json).expect("Failed to deserialize");
+        let deserialized: MacosBackend = serde_json
+            ::from_str(&json)
+            .expect("Failed to deserialize");
         assert_eq!(backend, deserialized);
     }
 }

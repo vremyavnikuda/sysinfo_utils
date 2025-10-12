@@ -30,14 +30,14 @@
 //! # }
 //! ```
 
-use crate::gpu_info::{GpuInfo, Result};
 #[cfg(not(feature = "macos-metal"))]
 use crate::gpu_info::GpuError;
+use crate::gpu_info::{GpuInfo, Result};
 use crate::vendor::Vendor;
 use log::{debug, warn};
 
 // TODO: Add actual Metal FFI bindings (REQUIRES macOS hardware)
-// Priority: HIGH | Estimated time: 6-8 hours
+// Priority: HIGH
 //
 // Required imports when implementing:
 // #[cfg(feature = "macos-metal")]
@@ -50,15 +50,15 @@ use log::{debug, warn};
 mod ffi {
     // TODO: Metal FFI types and helpers
     // When implementing, replace these with actual Metal types
-    
+
     /// Placeholder for Metal Device
     /// Should be: metal::Device
     pub type MetalDevice = usize;
-    
+
     /// Placeholder for Metal command queue
     #[allow(dead_code)]
     pub type MetalCommandQueue = usize;
-    
+
     #[allow(dead_code)]
     pub const fn is_valid_device(device: MetalDevice) -> bool {
         device != 0
@@ -72,11 +72,11 @@ mod ffi {
 pub struct MemoryMetrics {
     /// Currently allocated memory in bytes
     pub allocated: u64,
-    
+
     /// Recommended maximum memory in bytes
     /// This is the amount Metal suggests not to exceed
     pub recommended_max: u64,
-    
+
     /// Current memory utilization as percentage (0.0 - 100.0)
     pub utilization_percent: f32,
 }
@@ -89,19 +89,19 @@ impl MemoryMetrics {
         } else {
             0.0
         };
-        
+
         Self {
             allocated,
             recommended_max,
             utilization_percent,
         }
     }
-    
+
     /// Returns true if memory usage is high (>80%)
     pub fn is_high_usage(&self) -> bool {
         self.utilization_percent > 80.0
     }
-    
+
     /// Returns free memory in bytes
     pub fn free(&self) -> u64 {
         self.recommended_max.saturating_sub(self.allocated)
@@ -115,10 +115,10 @@ impl MemoryMetrics {
 pub struct UtilizationMetrics {
     /// GPU utilization percentage (0.0 - 100.0)
     pub gpu_percent: f32,
-    
+
     /// Renderer utilization percentage (0.0 - 100.0)
     pub renderer_percent: f32,
-    
+
     /// Tiler utilization percentage (0.0 - 100.0)
     /// Available on Apple Silicon
     pub tiler_percent: Option<f32>,
@@ -133,28 +133,28 @@ impl UtilizationMetrics {
             tiler_percent: None,
         }
     }
-    
+
     /// Sets tiler utilization (Apple Silicon only)
     pub fn with_tiler(mut self, tiler_percent: f32) -> Self {
         self.tiler_percent = Some(tiler_percent.clamp(0.0, 100.0));
         self
     }
-    
+
     /// Returns true if GPU is under heavy load (>80%)
     pub fn is_heavy_load(&self) -> bool {
         self.gpu_percent > 80.0
     }
-    
+
     /// Returns average utilization across all components
     pub fn average(&self) -> f32 {
         let mut sum = self.gpu_percent + self.renderer_percent;
         let mut count = 2.0;
-        
+
         if let Some(tiler) = self.tiler_percent {
             sum += tiler;
             count += 1.0;
         }
-        
+
         sum / count
     }
 }
@@ -203,13 +203,13 @@ impl MetalBackend {
     /// ```
     pub fn new() -> Result<Self> {
         debug!("Initializing Metal backend");
-        
+
         // TODO: Initialize Metal framework
         // When implementing:
         // 1. Check if Metal is available: MTLCreateSystemDefaultDevice()
         // 2. Get all Metal devices: Metal::all_devices()
         // 3. Cache devices for future use
-        
+
         Ok(Self {
             devices: Vec::new(),
         })
@@ -240,10 +240,10 @@ impl MetalBackend {
     /// ```
     pub fn detect_gpus(&self) -> Result<Vec<GpuInfo>> {
         debug!("Detecting Metal-capable GPUs");
-        
+
         let devices = self.enumerate_metal_devices()?;
         let mut gpus = Vec::with_capacity(devices.len());
-        
+
         for device in devices {
             match self.create_gpu_info_from_device(device) {
                 Ok(gpu) => {
@@ -256,13 +256,13 @@ impl MetalBackend {
                 }
             }
         }
-        
+
         if gpus.is_empty() {
             warn!("No Metal-capable GPUs detected");
         } else {
             debug!("Successfully detected {} Metal GPU(s)", gpus.len());
         }
-        
+
         Ok(gpus)
     }
 
@@ -294,39 +294,37 @@ impl MetalBackend {
     /// ```
     pub fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
         debug!("Updating Metal GPU metrics for: {:?}", gpu.name_gpu);
-        
+
         // TODO: Get Metal device for this GPU
         // Match by name or index
-        
+
         // Update utilization
         if let Some(utilization) = self.read_utilization()? {
             debug!("GPU utilization: {:.2}%", utilization.gpu_percent);
             // TODO: Add utilization field to GpuInfo or use extended metrics
         }
-        
+
         // Update memory metrics
         if let Some(memory) = self.read_memory_metrics()? {
             debug!(
                 "Memory usage: {} / {} bytes ({:.2}%)",
-                memory.allocated,
-                memory.recommended_max,
-                memory.utilization_percent
+                memory.allocated, memory.recommended_max, memory.utilization_percent
             );
             // Set memory fields if GpuInfo has them
         }
-        
+
         // Update power state if available
         if let Some(power_state) = self.read_power_state()? {
             debug!("Power state: {:?}", power_state);
         }
-        
+
         Ok(())
     }
-    
+
     /// Enumerates all Metal devices
     ///
     /// TODO: Implement Metal device enumeration (REQUIRES macOS hardware)
-    /// Priority: HIGH | Estimated time: 2-3 hours
+    /// Priority: HIGH
     ///
     /// Implementation steps:
     /// 1. Get default device: MTLCreateSystemDefaultDevice()
@@ -336,7 +334,7 @@ impl MetalBackend {
     /// Example implementation:
     /// ```rust,ignore
     /// use metal::Device;
-    /// 
+    ///
     /// let devices = Device::all();
     /// let gpu_devices: Vec<_> = devices
     ///     .into_iter()
@@ -353,11 +351,11 @@ impl MetalBackend {
         warn!("Metal device enumeration not yet implemented");
         Ok(vec![])
     }
-    
+
     /// Creates GpuInfo from Metal device
     ///
     /// TODO: Implement Metal device info extraction (REQUIRES macOS hardware)
-    /// Priority: HIGH | Estimated time: 1-2 hours
+    /// Priority: HIGH
     ///
     /// Implementation steps:
     /// 1. Get device name: device.name()
@@ -400,11 +398,11 @@ impl MetalBackend {
         gpu.name_gpu = Some("Unknown Metal GPU".to_string());
         Ok(gpu)
     }
-    
+
     /// Reads current GPU utilization
     ///
     /// TODO: Implement GPU utilization monitoring (REQUIRES macOS hardware)
-    /// Priority: HIGH | Estimated time: 2-3 hours
+    /// Priority: HIGH
     ///
     /// Implementation challenges:
     /// Metal doesn't provide direct GPU utilization API. Options:
@@ -431,11 +429,11 @@ impl MetalBackend {
         // TODO: Replace with actual implementation
         Ok(None)
     }
-    
+
     /// Reads memory metrics from Metal device
     ///
     /// TODO: Implement memory metrics (REQUIRES macOS hardware)
-    /// Priority: HIGH | Estimated time: 1-2 hours
+    /// Priority: HIGH
     ///
     /// Implementation steps:
     /// 1. Get allocated memory: device.current_allocated_size()
@@ -458,11 +456,11 @@ impl MetalBackend {
         // TODO: Replace with actual implementation
         Ok(None)
     }
-    
+
     /// Reads GPU power state
     ///
     /// TODO: Implement power state monitoring (REQUIRES macOS hardware)
-    /// Priority: MEDIUM | Estimated time: 1 hour
+    /// Priority: MEDIUM
     ///
     /// Implementation:
     /// Metal provides limited power state info. Options:
@@ -531,49 +529,49 @@ mod tests {
         assert_eq!(metrics.recommended_max, 10_000_000_000);
         assert_eq!(metrics.utilization_percent, 80.0);
         assert!(!metrics.is_high_usage()); // 80% is NOT high (threshold is > 80%)
-        
+
         // Test high usage (>80%)
         let high_metrics = MemoryMetrics::new(9_000_000_000, 10_000_000_000);
         assert!(high_metrics.is_high_usage());
     }
-    
+
     #[test]
     fn test_memory_metrics_free() {
         let metrics = MemoryMetrics::new(6_000_000_000, 10_000_000_000);
         assert_eq!(metrics.free(), 4_000_000_000);
     }
-    
+
     #[test]
     fn test_memory_metrics_overflow() {
         let metrics = MemoryMetrics::new(12_000_000_000, 10_000_000_000);
         assert_eq!(metrics.free(), 0); // Saturating sub
     }
-    
+
     #[test]
     fn test_utilization_metrics_clamp() {
         let metrics = UtilizationMetrics::new(150.0, -10.0);
         assert_eq!(metrics.gpu_percent, 100.0); // Clamped to max
         assert_eq!(metrics.renderer_percent, 0.0); // Clamped to min
     }
-    
+
     #[test]
     fn test_utilization_metrics_average() {
         let metrics = UtilizationMetrics::new(80.0, 60.0);
         assert_eq!(metrics.average(), 70.0);
     }
-    
+
     #[test]
     fn test_utilization_metrics_with_tiler() {
         let metrics = UtilizationMetrics::new(80.0, 60.0).with_tiler(90.0);
         assert_eq!(metrics.tiler_percent, Some(90.0));
         assert_eq!(metrics.average(), 76.666664); // (80 + 60 + 90) / 3
     }
-    
+
     #[test]
     fn test_utilization_heavy_load() {
         let light = UtilizationMetrics::new(50.0, 40.0);
         assert!(!light.is_heavy_load());
-        
+
         let heavy = UtilizationMetrics::new(85.0, 70.0);
         assert!(heavy.is_heavy_load());
     }
@@ -610,7 +608,7 @@ mod tests {
     fn test_metal_disabled_returns_error() {
         let result = MetalBackend::new();
         assert!(result.is_err());
-        
+
         if let Err(e) = result {
             assert!(matches!(e, GpuError::FeatureNotEnabled(_)));
         }

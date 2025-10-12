@@ -37,6 +37,38 @@ use log::{debug, warn};
 
 #[cfg(feature = "macos-iokit")]
 mod ffi {
+    // TODO: Add actual IOKit FFI bindings (REQUIRES macOS hardware)
+    // Priority: HIGH
+    //
+    // Required imports:
+    // use core_foundation::base::*;
+    // use core_foundation::dictionary::*;
+    // use core_foundation::number::*;
+    // use core_foundation::string::*;
+    // use io_kit_sys::*;
+    //
+    // Helper functions to implement:
+    // 1. cf_string_to_string(cf_str: CFStringRef) -> Option<String>
+    //    - Safe conversion from CFString to Rust String
+    //    - Handle null pointers gracefully
+    //
+    // 2. cf_number_to_u16(cf_num: CFNumberRef) -> Option<u16>
+    //    - Safe conversion from CFNumber to u16
+    //    - Use CFNumberGetValue() with kCFNumberSInt16Type
+    //
+    // 3. cf_number_to_u8(cf_num: CFNumberRef) -> Option<u8>
+    //    - Similar to cf_number_to_u16()
+    //    - Use kCFNumberSInt8Type
+    //
+    // Additional constants needed:
+    // - K_IO_REGISTRY_ENTRY_PROPERTY_KEYS
+    // - KERN_SUCCESS (from mach/kern_return.h)
+    //
+    // Safety considerations:
+    // - All CFType operations must check for null
+    // - Proper CFRelease() for all created CF objects
+    // - Use CFRetain() when keeping references
+
     #[allow(dead_code)]
     pub const K_IO_MASTER_PORT_DEFAULT: u32 = 0;
     #[allow(dead_code)]
@@ -238,24 +270,100 @@ impl IOKitBackend {
 
     /// Gets an iterator for PCI display controller devices
     ///
-    /// TODO: Implement actual IOKit FFI calls
-    /// This requires:
-    /// 1. IOServiceMatching() to create matching dictionary
-    /// 2. IOServiceGetMatchingServices() to get iterator
-    /// 3. Proper error handling for IOKit return codes
+    /// TODO: Implement actual IOKit FFI calls (REQUIRES macOS hardware)
+    /// Priority: HIGH
+    ///
+    /// Implementation steps:
+    /// 1. Create matching dictionary for PCI display controllers:
+    ///    ```rust
+    ///    let matching_dict = IOServiceMatching(b"IOPCIDevice\0".as_ptr() as *const i8);
+    ///    if matching_dict.is_null() {
+    ///        return Err(GpuError::DriverNotInstalled);
+    ///    }
+    ///    ```
+    ///
+    /// 2. Add class-code filter (0x0300 for display controllers):
+    ///    - Use CFDictionarySetValue() to add filter
+    ///    - Key: "class-code"
+    ///    - Value: 0x0300 (display controller)
+    ///
+    /// 3. Get matching services:
+    ///    ```rust
+    ///    let mut iterator: io_iterator_t = 0;
+    ///    let result = IOServiceGetMatchingServices(
+    ///        ffi::K_IO_MASTER_PORT_DEFAULT,
+    ///        matching_dict,
+    ///        &mut iterator
+    ///    );
+    ///    if result != KERN_SUCCESS {
+    ///        return Err(GpuError::DriverNotInstalled);
+    ///    }
+    ///    Ok(iterator)
+    ///    ```
+    ///
+    /// Safety considerations:
+    /// - Check for null matching_dict before use
+    /// - Validate result == KERN_SUCCESS
+    /// - Dictionary is consumed by IOServiceGetMatchingServices (no need to release)
+    ///
+    /// Required dependencies:
+    /// - core-foundation = "0.9" (already added)
+    /// - io-kit-sys = "0.4" (already added)
     fn get_matching_services(&self) -> Result<ffi::IoIterator> {
         warn!("IOKit FFI not yet implemented - returning mock iterator");
+        // TODO: Replace with actual implementation when on macOS
         Ok(0)
     }
 
     /// Gets next PCI device from iterator
     ///
-    /// TODO: Implement actual IOKit FFI calls
-    /// This requires:
-    /// 1. IOIteratorNext() to get next service
-    /// 2. Read PCI properties (vendor-id, device-id, bus, device, function)
-    /// 3. IOObjectRelease() to release service
+    /// TODO: Implement actual IOKit FFI calls (REQUIRES macOS hardware)
+    /// Priority: HIGH
+    ///
+    /// Implementation steps:
+    /// 1. Get next service from iterator:
+    ///    ```rust
+    ///    let service = IOIteratorNext(iterator);
+    ///    if service == 0 {
+    ///        return None;  // End of iteration
+    ///    }
+    ///    ```
+    ///
+    /// 2. Read PCI properties using helper methods:
+    ///    ```rust
+    ///    let vendor_id = self.read_pci_property_u16(service, "vendor-id")?;
+    ///    let device_id = self.read_pci_property_u16(service, "device-id")?;
+    ///    let bus = self.read_pci_property_u8(service, "bus")?;
+    ///    let device = self.read_pci_property_u8(service, "device")?;
+    ///    let function = self.read_pci_property_u8(service, "function")?;
+    ///    ```
+    ///
+    /// 3. Create helper methods (add these to impl block):
+    ///    ```rust
+    ///    fn read_pci_property_u16(&self, service: io_service_t, key: &str) -> Option<u16> {
+    ///        // Use IORegistryEntryCreateCFProperty() to read property
+    ///        // Convert CFNumber to u16 using CFNumberGetValue()
+    ///    }
+    ///    
+    ///    fn read_pci_property_u8(&self, service: io_service_t, key: &str) -> Option<u8> {
+    ///        // Similar to read_pci_property_u16()
+    ///    }
+    ///    ```
+    ///
+    /// 4. ALWAYS release service:
+    ///    ```rust
+    ///    IOObjectRelease(service);
+    ///    ```
+    ///
+    /// Safety considerations:
+    /// - All IOKit operations must be in unsafe block
+    /// - Check service != 0 before using
+    /// - MUST call IOObjectRelease() for each service (memory leak otherwise)
+    /// - Handle missing properties gracefully (return None)
+    ///
+    /// Thread safety: IOKit calls are thread-safe
     fn next_device(&self, _iterator: ffi::IoIterator) -> Option<PciInfo> {
+        // TODO: Replace with actual implementation when on macOS
         None
     }
 
@@ -263,6 +371,30 @@ impl IOKitBackend {
         let mut gpu = GpuInfo::default();
 
         gpu.vendor = pci_info.vendor();
+
+        // TODO: GPU name enrichment (Priority: MEDIUM, 2-3 hours)
+        // Can be done partially without macOS hardware
+        //
+        // Enhancement options:
+        // 1. Create PCI ID database (vendor_id:device_id -> name mapping)
+        //    - Use https://pci-ids.ucw.cz/ as source
+        //    - Store as static HashMap or include file
+        //    - Example: 0x10DE:0x1F82 -> "NVIDIA GeForce GTX 1660 SUPER"
+        //
+        // 2. Read model name from IORegistry (requires macOS):
+        //    ```rust
+        //    let model_name = self.read_pci_property_string(service, "model");
+        //    ```
+        //
+        // 3. Memory information (requires macOS):
+        //    - Read VRAM size from PCI BAR regions
+        //    - Query IORegistry for "VRAM,totalMB" or similar property
+        //    - Set gpu.memory_total
+        //
+        // 4. Additional properties:
+        //    - Driver version from kext info
+        //    - Current clock speeds (if available in IORegistry)
+        //    - Power state information
         gpu.name_gpu = Some(format!(
             "Unknown GPU {:04x}:{:04x}",
             pci_info.vendor_id, pci_info.device_id
@@ -295,23 +427,80 @@ impl IOKitBackend {
     pub fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
         debug!("Updating GPU metrics via IOKit for: {:?}", gpu.name_gpu);
 
-        // TODO: Implement SMC temperature reading
-        // For now, leave metrics unchanged
+        // TODO: Implement SMC temperature reading (see read_temperature() for details)
+        // When implemented, set temperature:
+        // if let Some(temp) = self.read_temperature() {
+        //     gpu.temperature = Some(temp);
+        // }
 
         Ok(())
     }
 
     /// Reads GPU temperature from SMC (System Management Controller)
     ///
+    /// TODO: Implement SMC temperature reading (REQUIRES macOS hardware)
+    /// Priority: LOW
+    ///
+    /// Implementation options:
+    ///
+    /// Option A: Use smc-rs crate (RECOMMENDED if available)
+    /// ```rust
+    /// // Add to Cargo.toml: smc = "0.3"
+    /// use smc::SMC;
+    ///
+    /// let smc = SMC::new()?;
+    /// let temp = smc.read_key("TG0D")?;  // GPU 1 diode
+    /// Some(temp as f32)
+    /// ```
+    ///
+    /// Option B: Direct SMC calls via IOKit
+    /// ```rust
+    /// // More complex, requires SMCOpen/SMCReadKey from Apple SMC API
+    /// // SMC keys for GPU temperature:
+    /// // - "TG0D" = GPU 1 diode temperature
+    /// // - "TG1D" = GPU 2 diode temperature  
+    /// // - "TG0P" = GPU 1 proximity temperature
+    /// ```
+    ///
+    /// Option C: Parse output from iStats command (FALLBACK)
+    /// ```rust
+    /// let output = Command::new("istats").arg("gpu").output()?;
+    /// // Parse temperature from output
+    /// ```
+    ///
+    /// Important notes:
+    /// - SMC requires special permissions (may not work on all Macs)
+    /// - Always use graceful degradation (return None on failure)
+    /// - Log warning on error, don't fail the entire operation
+    /// - Not all Macs expose GPU temperature via SMC
+    ///
     /// # Errors
     ///
     /// Returns None if SMC is unavailable or temperature cannot be read.
     pub fn read_temperature(&self) -> Option<f32> {
-        // TODO: Implement SMC temperature reading
+        // TODO: Replace with actual implementation when on macOS
         None
     }
 
     /// Gets PCI information for a specific device
+    ///
+    /// TODO: Implement device-specific PCI info retrieval (REQUIRES macOS hardware)
+    /// Priority: LOW
+    ///
+    /// This is useful for:
+    /// - Querying specific GPU by name or index
+    /// - Getting detailed PCI info for a known device
+    ///
+    /// Implementation:
+    /// ```rust
+    /// // Search cached devices first
+    /// for (pci_info, name) in &self.cached_devices {
+    ///     if name == device_name {
+    ///         return Some(pci_info.clone());
+    ///     }
+    /// }
+    /// // Or query IORegistry directly by device path
+    /// ```
     ///
     /// # Errors
     ///

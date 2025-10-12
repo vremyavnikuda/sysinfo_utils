@@ -2,13 +2,13 @@
 //!
 //! Orchestrates all backends, caching, and routing for macOS GPU operations.
 
-use super::backends::{PowerMetricsBackend, SystemProfilerBackend};
+use super::backends::{ PowerMetricsBackend, SystemProfilerBackend };
 use super::cache::GpuCache;
-use super::config::{MacosBackend, MacosConfig};
+use super::config::{ MacosBackend, MacosConfig };
 use super::metrics::MacosMetrics;
-use super::router::{BackendRouter, Operation};
-use crate::gpu_info::{GpuInfo, GpuProvider, Result};
-use log::{debug, info, warn};
+use super::router::{ BackendRouter, Operation };
+use crate::gpu_info::{ GpuInfo, GpuProvider, Result };
+use log::{ debug, info, warn };
 use std::time::Instant;
 
 #[cfg(feature = "macos-iokit")]
@@ -126,10 +126,8 @@ impl MacosProvider {
             last_metrics: None,
             system_profiler,
             powermetrics,
-            #[cfg(feature = "macos-iokit")]
-            iokit,
-            #[cfg(feature = "macos-metal")]
-            metal,
+            #[cfg(feature = "macos-iokit")] iokit,
+            #[cfg(feature = "macos-metal")] metal,
         })
     }
 
@@ -161,12 +159,13 @@ impl MacosProvider {
 
     /// Updates metrics after an operation
     fn update_metrics(&mut self, backend_used: MacosBackend, duration: std::time::Duration) {
-        let cache_hit = duration.as_millis() < 10; // Assume cache hit if very fast
+        // Assume cache hit if very fast
+        let cache_hit = duration.as_millis() < 10;
         let metrics = MacosMetrics::new(
             backend_used,
             duration,
             cache_hit,
-            self.router.available_count(),
+            self.router.available_count()
         );
 
         debug!(
@@ -297,10 +296,7 @@ mod tests {
         assert!(result.is_ok());
 
         if let Ok(provider) = result {
-            assert_eq!(
-                provider.config().cache_ttl,
-                std::time::Duration::from_secs(120)
-            );
+            assert_eq!(provider.config().cache_ttl, std::time::Duration::from_secs(120));
         }
     }
 
@@ -325,19 +321,18 @@ mod tests {
     #[test]
     fn test_clear_cache() {
         let mut provider = MacosProvider::new().expect("Failed to create provider");
-        provider.clear_cache(); // Should not panic
+        // Should not panic
+        provider.clear_cache();
     }
 
     #[test]
     fn test_config_access() {
         let config = MacosConfig::default();
-        let provider =
-            MacosProvider::with_config(config.clone()).expect("Failed to create provider");
+        let provider = MacosProvider::with_config(config.clone()).expect(
+            "Failed to create provider"
+        );
 
         assert_eq!(provider.config().cache_ttl, config.cache_ttl);
-        assert_eq!(
-            provider.config().preferred_backend,
-            config.preferred_backend
-        );
+        assert_eq!(provider.config().preferred_backend, config.preferred_backend);
     }
 }

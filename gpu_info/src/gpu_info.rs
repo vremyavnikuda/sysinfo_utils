@@ -19,6 +19,8 @@ pub enum GpuError {
     DriverNotInstalled,
     #[error("GPU not active")]
     GpuNotActive,
+    #[error("Feature not enabled: {0}")]
+    FeatureNotEnabled(String),
 }
 pub type Result<T> = std::result::Result<T, GpuError>;
 /// Trait for unified GPU provider interface
