@@ -1,7 +1,6 @@
 //src/system_info.rs
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
-
 /// The `SystemMatcher` enum provides various strategies for searching and extracting data from strings.
 ///
 /// It is used to parse strings, such as configuration files or system metadata,

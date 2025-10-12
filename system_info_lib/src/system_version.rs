@@ -86,7 +86,7 @@ impl Display for SystemVersion {
                 write!(f, "{}.{}.{}", major, minor, patch)
             }
             SystemVersion::Rolling(ref codename) => {
-                if let &Some(ref codename) = codename {
+                if let Some(codename) = codename {
                     write!(f, "Rolling ({})", codename)
                 } else {
                     write!(f, "Rolling")

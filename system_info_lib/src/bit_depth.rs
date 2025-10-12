@@ -15,7 +15,6 @@ use std::process::{Command, Output};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
-
 /// The bit depth of the system.
 pub enum BitDepth {
     /// Unknown bitness (unable to determine).
@@ -49,7 +48,6 @@ impl Display for BitDepth {
     target_os = "linux",
     target_os = "macos",
 ))]
-
 /// Returns the bit depth of the system as a `BitDepth`.
 ///
 /// The bit depth is determined by running the `getconf LONG_BIT` command
@@ -148,7 +146,6 @@ pub fn get() -> BitDepth {
         target_os = "openbsd"
     )
 ))]
-
 mod bit_depth_tests {
     use super::*;
     use pretty_assertions::assert_ne;
