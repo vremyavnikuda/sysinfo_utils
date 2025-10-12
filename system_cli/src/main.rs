@@ -1,8 +1,6 @@
 //! system_info_lib/system_cl/src/main.rs
 use clap::Parser;
-use gpu_info;
 use system_cli::{GpuOptions, Options};
-use system_info_lib;
 
 /// Initializes the logging framework, parses command-line options, and retrieves system information.
 ///
