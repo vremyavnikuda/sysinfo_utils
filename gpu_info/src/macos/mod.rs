@@ -116,20 +116,18 @@ impl MacOSGpuProvider {
                 in_display_section = true;
                 continue;
             }
-            if in_display_section {
-                if line.starts_with("<string>") && line.ends_with("</string>") {
-                    let name = line
-                        .trim_start_matches("<string>")
-                        .trim_end_matches("</string>")
-                        .to_string();
-                    current_gpu.name_gpu = Some(name.clone());
-                    current_gpu.vendor = Self::determine_vendor(&name);
-                    current_gpu.active = Some(true);
-                    current_gpu.memory_total = Self::extract_vram_from_name(&name);
-                    gpus.push(current_gpu.clone());
-                    current_gpu = GpuInfo::unknown();
-                    in_display_section = false;
-                }
+            if in_display_section && line.starts_with("<string>") && line.ends_with("</string>") {
+                let name = line
+                    .trim_start_matches("<string>")
+                    .trim_end_matches("</string>")
+                    .to_string();
+                current_gpu.name_gpu = Some(name.clone());
+                current_gpu.vendor = Self::determine_vendor(&name);
+                current_gpu.active = Some(true);
+                current_gpu.memory_total = Self::extract_vram_from_name(&name);
+                gpus.push(current_gpu.clone());
+                current_gpu = GpuInfo::unknown();
+                in_display_section = false;
             }
         }
         gpus
@@ -359,7 +357,7 @@ impl MacOSGpuProvider {
         None
     }
     /// Расширение информации через дополнительные системные вызовы
-    fn enhance_with_iokit(gpus: &mut Vec<GpuInfo>) {
+    fn enhance_with_iokit(gpus: &mut [GpuInfo]) {
         debug!("Attempting to enhance GPU information via additional system calls");
         for gpu in gpus.iter_mut() {
             if gpu.utilization.is_none() {
@@ -392,10 +390,8 @@ impl MacOSGpuProvider {
             if gpu.temperature.is_none() {
                 gpu.temperature = Self::get_apple_gpu_temperature();
             }
-        } else {
-            if gpu.utilization.is_none() {
-                gpu.utilization = Self::get_gpu_utilization_estimate();
-            }
+        } else if gpu.utilization.is_none() {
+            gpu.utilization = Self::get_gpu_utilization_estimate();
         }
         Ok(())
     }

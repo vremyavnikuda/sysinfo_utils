@@ -267,7 +267,7 @@ mod tests {
     #[test]
     fn test_intel_linux_provider_creation() {
         let provider = IntelLinuxProvider::new();
-        let default_provider = IntelLinuxProvider::default();
+        let default_provider = IntelLinuxProvider;
         // Just ensure they can be created without panicking
         assert!(matches!(provider.get_vendor(), Vendor::Intel(_)));
         assert!(matches!(default_provider.get_vendor(), Vendor::Intel(_)));

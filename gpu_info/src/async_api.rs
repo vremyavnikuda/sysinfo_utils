@@ -74,7 +74,7 @@ pub async fn get_async() -> Result<GpuInfo> {
 /// }
 /// ```
 pub async fn get_all_async() -> Result<Vec<GpuInfo>> {
-    let result = tokio::task::spawn_blocking(|| crate::get_all()).await;
+    let result = tokio::task::spawn_blocking(crate::get_all).await;
     match result {
         Ok(gpus) => Ok(gpus),
         Err(_) => Err(GpuError::GpuNotActive),

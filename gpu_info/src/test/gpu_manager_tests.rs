@@ -13,7 +13,7 @@
 //! - CI/CD environments with limited resources
 
 #[cfg(test)]
-mod gpu_manager_tests {
+mod tests {
     use crate::gpu_manager::GpuManager;
     use crate::vendor::Vendor;
     use std::sync::Arc;
@@ -108,8 +108,8 @@ mod gpu_manager_tests {
         let manager = GpuManager::new();
         let vendors = vec![Vendor::Nvidia, Vendor::Amd, Vendor::Unknown];
         for vendor in vendors {
-            let gpus_ref = manager.get_gpus_by_vendor(vendor.clone());
-            let gpus_owned = manager.get_gpus_by_vendor_owned(vendor.clone());
+            let gpus_ref = manager.get_gpus_by_vendor(vendor);
+            let gpus_owned = manager.get_gpus_by_vendor_owned(vendor);
             assert_eq!(gpus_ref.len(), gpus_owned.len());
             println!("Found {} GPUs for vendor {:?}", gpus_ref.len(), vendor);
             for (ref_gpu, owned_gpu) in gpus_ref.iter().zip(gpus_owned.iter()) {
@@ -207,7 +207,7 @@ mod gpu_manager_tests {
         println!("  Unknown count: {}", stats.unknown_count);
         if let Some(avg_temp) = stats.average_temperature() {
             println!("  Average temperature: {:.1}°C", avg_temp);
-            assert!(avg_temp >= 0.0 && avg_temp <= 150.0);
+            assert!((0.0..=150.0).contains(&avg_temp));
         }
         if let Some(total_power) = stats.total_power_consumption() {
             println!("  Total power consumption: {:.1}W", total_power);
@@ -524,7 +524,7 @@ mod gpu_manager_tests {
             }
         }
         for vendor in [Vendor::Nvidia, Vendor::Amd, Vendor::Unknown] {
-            let vendor_gpus = manager.get_gpus_by_vendor(vendor.clone());
+            let vendor_gpus = manager.get_gpus_by_vendor(vendor);
             if !vendor_gpus.is_empty() {
                 println!("Found {} {:?} GPUs", vendor_gpus.len(), vendor);
             }

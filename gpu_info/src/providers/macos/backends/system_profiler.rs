@@ -78,7 +78,7 @@ mod tests {
 
     #[test]
     fn test_default() {
-        let backend = SystemProfilerBackend::default();
+        let backend = SystemProfilerBackend;
         let _ = backend;
     }
 }

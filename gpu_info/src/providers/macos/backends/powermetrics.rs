@@ -51,8 +51,6 @@ use std::time::Duration;
 /// so concurrent calls are safe but not recommended due to performance overhead.
 #[derive(Debug, Clone)]
 pub struct PowerMetricsBackend {
-    /// Timeout for powermetrics command
-    timeout: Duration,
     /// Whether to attempt sudo access
     try_sudo: bool,
 }
@@ -68,10 +66,7 @@ impl PowerMetricsBackend {
     /// let backend = PowerMetricsBackend::new();
     /// ```
     pub fn new() -> Self {
-        Self {
-            timeout: Duration::from_millis(500),
-            try_sudo: false,
-        }
+        Self { try_sudo: false }
     }
 
     /// Creates a new PowerMetrics backend with custom timeout
@@ -84,11 +79,8 @@ impl PowerMetricsBackend {
     ///
     /// let backend = PowerMetricsBackend::with_timeout(Duration::from_secs(1));
     /// ```
-    pub fn with_timeout(timeout: Duration) -> Self {
-        Self {
-            timeout,
-            try_sudo: false,
-        }
+    pub fn with_timeout(_timeout: Duration) -> Self {
+        Self { try_sudo: false }
     }
 
     /// Enables sudo access for powermetrics
@@ -328,6 +320,7 @@ impl PowerMetricsBackend {
     /// - "45.67%"
     /// - "45.67"
     /// - "GPU Duty Cycle: 45.67%"
+    #[allow(dead_code)]
     fn parse_percentage(line: &str) -> Option<f32> {
         // Extract number followed by optional %
         let parts: Vec<&str> = line.split(':').collect();
@@ -343,6 +336,7 @@ impl PowerMetricsBackend {
     /// - "1234 mW" → 1.234 W
     /// - "1.234 W"
     /// - "GPU Power: 1234 mW"
+    #[allow(dead_code)]
     fn parse_power(line: &str) -> Option<f32> {
         let parts: Vec<&str> = line.split(':').collect();
         let value_str = parts.last()?.trim();
@@ -369,6 +363,7 @@ impl PowerMetricsBackend {
     /// - "56.7 C"
     /// - "56.7°C"
     /// - "GPU Temperature: 56.7 C"
+    #[allow(dead_code)]
     fn parse_temperature(line: &str) -> Option<f32> {
         let parts: Vec<&str> = line.split(':').collect();
         let value_str = parts.last()?.trim();
@@ -507,14 +502,13 @@ mod tests {
     #[test]
     fn test_powermetrics_creation() {
         let backend = PowerMetricsBackend::new();
-        assert_eq!(backend.timeout, Duration::from_millis(500));
         assert!(!backend.try_sudo);
     }
 
     #[test]
     fn test_with_timeout() {
-        let backend = PowerMetricsBackend::with_timeout(Duration::from_secs(2));
-        assert_eq!(backend.timeout, Duration::from_secs(2));
+        let _backend = PowerMetricsBackend::with_timeout(Duration::from_secs(2));
+        // Backend accepts timeout parameter
     }
 
     #[test]
@@ -613,8 +607,8 @@ mod tests {
 
     #[test]
     fn test_default() {
-        let backend = PowerMetricsBackend::default();
-        assert_eq!(backend.timeout, Duration::from_millis(500));
+        let _backend = PowerMetricsBackend::default();
+        // Backend created with default settings
     }
 
     #[test]

@@ -154,20 +154,18 @@ impl MacosProvider {
                 in_display_section = true;
                 continue;
             }
-            if in_display_section {
-                if line.starts_with("<string>") && line.ends_with("</string>") {
-                    let name = line
-                        .trim_start_matches("<string>")
-                        .trim_end_matches("</string>")
-                        .to_string();
-                    current_gpu.name_gpu = Some(name.clone());
-                    current_gpu.vendor = self.determine_vendor(&name);
-                    current_gpu.active = Some(true);
-                    current_gpu.memory_total = self.extract_vram_from_name(&name);
-                    gpus.push(current_gpu.clone());
-                    current_gpu = GpuInfo::unknown();
-                    in_display_section = false;
-                }
+            if in_display_section && line.starts_with("<string>") && line.ends_with("</string>") {
+                let name = line
+                    .trim_start_matches("<string>")
+                    .trim_end_matches("</string>")
+                    .to_string();
+                current_gpu.name_gpu = Some(name.clone());
+                current_gpu.vendor = self.determine_vendor(&name);
+                current_gpu.active = Some(true);
+                current_gpu.memory_total = self.extract_vram_from_name(&name);
+                gpus.push(current_gpu.clone());
+                current_gpu = GpuInfo::unknown();
+                in_display_section = false;
             }
         }
         gpus
@@ -376,7 +374,7 @@ impl MacosProvider {
         None
     }
     /// Расширение информации через дополнительные системные вызовы
-    fn enhance_with_additional_info(&self, gpus: &mut Vec<GpuInfo>) {
+    fn enhance_with_additional_info(&self, gpus: &mut [GpuInfo]) {
         debug!("Attempting to enhance GPU information via additional system calls");
         for gpu in gpus.iter_mut() {
             if gpu.utilization.is_none() {
@@ -421,10 +419,8 @@ impl GpuProvider for MacosProvider {
             if gpu.temperature.is_none() {
                 gpu.temperature = self.get_apple_gpu_temperature();
             }
-        } else {
-            if gpu.utilization.is_none() {
-                gpu.utilization = self.get_gpu_utilization_estimate();
-            }
+        } else if gpu.utilization.is_none() {
+            gpu.utilization = self.get_gpu_utilization_estimate();
         }
         Ok(())
     }
@@ -442,7 +438,7 @@ mod tests {
     #[test]
     fn test_macos_provider_creation() {
         let provider = MacosProvider::new();
-        let default_provider = MacosProvider::default();
+        let default_provider = MacosProvider;
         // Ensure both creation methods work
         assert_eq!(provider.get_vendor(), Vendor::Unknown);
         assert_eq!(default_provider.get_vendor(), Vendor::Unknown);

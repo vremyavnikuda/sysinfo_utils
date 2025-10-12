@@ -4,7 +4,7 @@
 //! and conversion between basic and extended GPU information structures.
 
 #[cfg(test)]
-mod extended_info_tests {
+mod tests {
     use crate::extended_info::{
         ConnectionInfo, EncoderInfo, ExtendedGpuInfo, FanInfo, GpuInfoExtensions,
         IndividualFanInfo, MemoryInfo, OverclockingInfo, PerformanceState, ThermalInfo,
@@ -82,7 +82,7 @@ mod extended_info_tests {
         let health_score = extended_gpu.health_score();
         println!("Health score with mixed conditions: {:.1}%", health_score);
         assert!(
-            health_score >= 50.0 && health_score <= 90.0,
+            (50.0..=90.0).contains(&health_score),
             "Expected moderate health score, got {:.1}%",
             health_score
         );
@@ -98,7 +98,7 @@ mod extended_info_tests {
         assert!(efficiency.is_some());
         let eff_value = efficiency.unwrap();
         println!("Cooling efficiency: {:.1}%", eff_value);
-        assert!(eff_value >= 0.0 && eff_value <= 100.0);
+        assert!((0.0..=100.0).contains(&eff_value));
         extended_gpu.fan_info.fan_speed_percent = Some(0.0);
         let efficiency_zero = extended_gpu.cooling_efficiency();
         assert!(efficiency_zero.is_none());
@@ -110,6 +110,7 @@ mod extended_info_tests {
 
     /// Test thermal info functionality
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn test_thermal_info() {
         let mut thermal_info = ThermalInfo::default();
         thermal_info.gpu_temperature = Some(75.5);
@@ -160,6 +161,7 @@ mod extended_info_tests {
 
     /// Test fan info functionality
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn test_fan_info() {
         let individual_fan = IndividualFanInfo {
             index: 0,
@@ -182,6 +184,7 @@ mod extended_info_tests {
 
     /// Test memory info functionality
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn test_memory_info() {
         let mut memory_info = MemoryInfo::default();
         memory_info.total_memory_mb = Some(8192);
@@ -201,6 +204,7 @@ mod extended_info_tests {
 
     /// Test connection info functionality
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn test_connection_info() {
         let mut connection_info = ConnectionInfo::default();
         connection_info.pcie_generation = Some(4);
@@ -218,6 +222,7 @@ mod extended_info_tests {
 
     /// Test encoder info functionality
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn test_encoder_info() {
         let mut encoder_info = EncoderInfo::default();
         encoder_info.encoder_utilization = Some(15.0);
@@ -233,6 +238,7 @@ mod extended_info_tests {
 
     /// Test overclocking info functionality
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn test_overclocking_info() {
         let mut oc_info = OverclockingInfo::default();
         oc_info.overclocking_supported = Some(true);
@@ -349,14 +355,15 @@ mod extended_info_tests {
         println!("  Needs attention: {}", needs_attention);
         let display_output = format!("{}", extended_gpu);
         println!("Display output length: {} characters", display_output.len());
-        assert!(health_score >= 0.0 && health_score <= 100.0);
+        assert!((0.0..=100.0).contains(&health_score));
         if let Some(efficiency) = cooling_efficiency {
-            assert!(efficiency >= 0.0 && efficiency <= 100.0);
+            assert!((0.0..=100.0).contains(&efficiency));
         }
     }
 
     // Helper functions
 
+    #[allow(clippy::field_reassign_with_default)]
     fn create_test_gpu() -> GpuInfo {
         let mut gpu = GpuInfo::default();
         gpu.vendor = Vendor::Nvidia;

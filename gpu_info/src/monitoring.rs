@@ -441,12 +441,12 @@ impl GpuMonitor {
                         let gpus = manager.get_all_gpus();
                         debug!("Successfully collected data for {} GPUs", gpus.len());
 
-                        Self::update_history(&history, &gpus, collection_start);
+                        Self::update_history(&history, gpus, collection_start);
                         if config.enable_alerts {
-                            Self::check_alerts(&gpus, &config.thresholds, &alert_handlers);
+                            Self::check_alerts(gpus, &config.thresholds, &alert_handlers);
                         }
                         if config.log_metrics {
-                            Self::log_metrics(&gpus);
+                            Self::log_metrics(gpus);
                         }
                         Self::update_stats(&stats, collection_start);
                     }

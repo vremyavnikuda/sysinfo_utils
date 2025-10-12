@@ -1,6 +1,6 @@
 //! Tests for AMD GPU provider on Linux
 #[cfg(test)]
-mod amd_provider_tests {
+mod tests {
     use crate::gpu_info::GpuProvider;
     use crate::providers::linux::amd::AmdLinuxProvider;
     use crate::vendor::Vendor;

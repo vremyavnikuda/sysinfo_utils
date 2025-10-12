@@ -1,6 +1,6 @@
 //! Additional edge case tests for cache utilities
 #[cfg(test)]
-mod cache_edge_case_tests {
+mod tests {
     use crate::cache_utils::*;
     use crate::gpu_info::GpuInfo;
     use crate::vendor::Vendor;

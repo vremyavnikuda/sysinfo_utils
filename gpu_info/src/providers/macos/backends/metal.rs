@@ -393,9 +393,11 @@ impl MetalBackend {
     /// ```
     fn create_gpu_info_from_device(&self, _device: ffi::MetalDevice) -> Result<GpuInfo> {
         // TODO: Replace with actual implementation
-        let mut gpu = GpuInfo::default();
-        gpu.vendor = Vendor::Unknown;
-        gpu.name_gpu = Some("Unknown Metal GPU".to_string());
+        let gpu = GpuInfo {
+            vendor: Vendor::Unknown,
+            name_gpu: Some("Unknown Metal GPU".to_string()),
+            ..Default::default()
+        };
         Ok(gpu)
     }
 

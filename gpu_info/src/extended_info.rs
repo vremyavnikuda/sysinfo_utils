@@ -337,7 +337,7 @@ impl ExtendedGpuInfo {
         if factors == 0 {
             50.0
         } else {
-            score.max(0.0).min(100.0)
+            score.clamp(0.0, 100.0)
         }
     }
     /// Проверяет, требует ли GPU внимания

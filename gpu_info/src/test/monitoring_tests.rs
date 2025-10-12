@@ -12,7 +12,7 @@
 //! - CI/CD environments with limited resources
 //!
 #[cfg(test)]
-mod monitoring_tests {
+mod tests {
     use crate::monitoring::{
         AlertHandler, AlertType, GpuMonitor, GpuThresholds, LogAlertHandler, MonitorConfig,
     };
@@ -167,8 +167,10 @@ mod monitoring_tests {
     /// Test monitoring start and stop
     #[tokio::test]
     async fn test_monitoring_lifecycle() {
-        let mut config = MonitorConfig::default();
-        config.polling_interval = Duration::from_millis(50);
+        let config = MonitorConfig {
+            polling_interval: Duration::from_millis(50),
+            ..Default::default()
+        };
         let monitor = GpuMonitor::new(config);
         assert!(!monitor.is_monitoring());
         let result = monitor.start_monitoring();
@@ -199,10 +201,12 @@ mod monitoring_tests {
     /// Test monitoring performance in constrained environments
     #[tokio::test]
     async fn test_monitoring_performance_constrained() {
-        let mut config = MonitorConfig::default();
-        config.polling_interval = Duration::from_millis(200);
-        config.enable_alerts = false;
-        config.log_metrics = false;
+        let config = MonitorConfig {
+            polling_interval: Duration::from_millis(200),
+            enable_alerts: false,
+            log_metrics: false,
+            ..Default::default()
+        };
         let monitor = GpuMonitor::new(config);
         monitor.start_monitoring().unwrap();
         sleep(Duration::from_millis(500)).await;
@@ -228,10 +232,12 @@ mod monitoring_tests {
     /// Load test: Long-running monitoring with performance optimizations
     #[tokio::test]
     async fn test_long_running_monitoring() {
-        let mut config = MonitorConfig::default();
-        config.polling_interval = Duration::from_millis(100);
-        config.enable_alerts = false;
-        config.log_metrics = false;
+        let config = MonitorConfig {
+            polling_interval: Duration::from_millis(100),
+            enable_alerts: false,
+            log_metrics: false,
+            ..Default::default()
+        };
         let monitor = GpuMonitor::new(config);
         let mock_handler = MockAlertHandler::new();
         monitor.add_alert_handler(Box::new(mock_handler)).unwrap();
@@ -270,8 +276,10 @@ mod monitoring_tests {
     /// Test alert generation under simulated conditions
     #[tokio::test]
     async fn test_alert_generation() {
-        let mut config = MonitorConfig::default();
-        config.polling_interval = Duration::from_millis(50);
+        let mut config = MonitorConfig {
+            polling_interval: Duration::from_millis(50),
+            ..Default::default()
+        };
         config.thresholds.temperature_warning = 70.0;
         config.thresholds.temperature_critical = 80.0;
         config.enable_alerts = true;
@@ -296,8 +304,10 @@ mod monitoring_tests {
     /// Test monitor statistics accuracy
     #[tokio::test]
     async fn test_statistics_accuracy() {
-        let mut config = MonitorConfig::default();
-        config.polling_interval = Duration::from_millis(20);
+        let config = MonitorConfig {
+            polling_interval: Duration::from_millis(20),
+            ..Default::default()
+        };
         let monitor = GpuMonitor::new(config);
         let initial_stats = monitor.get_stats();
         assert_eq!(initial_stats.total_measurements, 0);
@@ -331,8 +341,10 @@ mod monitoring_tests {
     /// Test concurrent monitoring operations
     #[tokio::test]
     async fn test_concurrent_monitoring() {
-        let mut config = MonitorConfig::default();
-        config.polling_interval = Duration::from_millis(30);
+        let config = MonitorConfig {
+            polling_interval: Duration::from_millis(30),
+            ..Default::default()
+        };
         let monitor = Arc::new(GpuMonitor::new(config));
         let mut handles = Vec::new();
         for i in 0..5 {
@@ -379,8 +391,10 @@ mod monitoring_tests {
     /// Stress test: Rapid start/stop cycles
     #[tokio::test]
     async fn test_rapid_start_stop_cycles() {
-        let mut config = MonitorConfig::default();
-        config.polling_interval = Duration::from_millis(10);
+        let config = MonitorConfig {
+            polling_interval: Duration::from_millis(10),
+            ..Default::default()
+        };
         let monitor = GpuMonitor::new(config);
         let cycles = 20;
         let mut successful_cycles = 0;
@@ -423,10 +437,12 @@ mod monitoring_tests {
     #[tokio::test]
     async fn test_full_monitoring_workflow() {
         println!("Starting full monitoring workflow test");
-        let mut config = MonitorConfig::default();
-        config.polling_interval = Duration::from_millis(25);
-        config.enable_alerts = true;
-        config.log_metrics = false;
+        let config = MonitorConfig {
+            polling_interval: Duration::from_millis(25),
+            enable_alerts: true,
+            log_metrics: false,
+            ..Default::default()
+        };
         let monitor = GpuMonitor::new(config);
         let mock_handler = MockAlertHandler::new();
         let _handler_ref = Arc::new(Mutex::new(mock_handler));

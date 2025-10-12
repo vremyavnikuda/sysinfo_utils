@@ -4,7 +4,7 @@
 //! update operations, error handling, and performance under load conditions.
 
 #[cfg(test)]
-mod provider_manager_tests {
+mod tests {
     use crate::gpu_info::{GpuInfo, GpuProvider, Result};
     use crate::provider_manager::GpuProviderManager;
     use crate::vendor::{IntelGpuType, Vendor};
@@ -51,7 +51,7 @@ mod provider_manager_tests {
             }
             let mut gpus = Vec::new();
             for i in 0..self.gpu_count {
-                let mut gpu = GpuInfo::write_vendor(self.vendor.clone());
+                let mut gpu = GpuInfo::write_vendor(self.vendor);
                 gpu.name_gpu = Some(format!("Mock {} GPU #{}", self.vendor, i));
                 gpu.temperature = Some(50.0 + i as f32 * 5.0);
                 gpu.utilization = Some(30.0 + i as f32 * 10.0);
@@ -75,7 +75,7 @@ mod provider_manager_tests {
         }
 
         fn get_vendor(&self) -> Vendor {
-            self.vendor.clone()
+            self.vendor
         }
     }
 
@@ -224,7 +224,7 @@ mod provider_manager_tests {
         ];
         for (vendor, gpu_name, update_count_ref) in test_cases {
             let initial_count = *update_count_ref.lock().unwrap();
-            let mut gpu = GpuInfo::write_vendor(vendor.clone());
+            let mut gpu = GpuInfo::write_vendor(vendor);
             gpu.name_gpu = Some(gpu_name.to_string());
             gpu.temperature = Some(60.0);
             gpu.utilization = Some(40.0);
@@ -562,7 +562,7 @@ mod provider_manager_tests {
             let mut gpu_copy = gpu.clone();
             let original_temp = gpu_copy.temperature;
             let update_result = manager.update_gpu(&mut gpu_copy);
-            update_results.push((gpu.vendor.clone(), update_result.is_ok()));
+            update_results.push((gpu.vendor, update_result.is_ok()));
             if update_result.is_ok() {
                 if let (Some(orig), Some(new)) = (original_temp, gpu_copy.temperature) {
                     assert!(new > orig, "Temperature should increase after update");

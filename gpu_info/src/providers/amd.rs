@@ -24,7 +24,7 @@ impl GpuProvider for AmdProvider {
     }
     /// Update the information for a specific AMD GPU
     fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
-        crate::gpu_info::update_gpu_from_api(gpu, || adl_api::get_amd_gpus())
+        crate::gpu_info::update_gpu_from_api(gpu, adl_api::get_amd_gpus)
     }
     /// Get the vendor for this provider
     fn get_vendor(&self) -> Vendor {

@@ -4,7 +4,7 @@
 //! including concurrent access, error handling, and performance characteristics.
 
 #[cfg(test)]
-mod async_api_tests {
+mod tests {
     use crate::async_api::{get_all_async, get_async, update_gpu_async};
     use crate::gpu_info::GpuInfo;
     use crate::vendor::Vendor;
@@ -173,7 +173,7 @@ mod async_api_tests {
             let gpu_clone = shared_gpu.clone();
             join_set.spawn(async move {
                 let mut gpu = gpu_clone.lock().await;
-                let result = update_gpu_async(&mut *gpu).await;
+                let result = update_gpu_async(&mut gpu).await;
                 (i, result)
             });
         }
@@ -205,8 +205,10 @@ mod async_api_tests {
     /// Test async error handling under various conditions
     #[tokio::test]
     async fn test_async_error_handling() {
-        let mut invalid_gpu = GpuInfo::default();
-        invalid_gpu.vendor = Vendor::Unknown;
+        let mut invalid_gpu = GpuInfo {
+            vendor: Vendor::Unknown,
+            ..Default::default()
+        };
         let result = update_gpu_async(&mut invalid_gpu).await;
         match result {
             Ok(()) => {

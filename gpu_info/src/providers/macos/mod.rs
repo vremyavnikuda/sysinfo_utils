@@ -52,6 +52,7 @@ pub mod provider;
 pub mod router;
 
 // Legacy module (will be migrated in future tasks)
+#[allow(clippy::module_inception)]
 pub mod macos;
 
 // Re-export public API

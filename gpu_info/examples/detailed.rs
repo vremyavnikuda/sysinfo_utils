@@ -41,18 +41,15 @@ fn main() -> Result<()> {
         }
         #[cfg(not(target_os = "windows"))]
         {
-            match gpu.vendor {
-                Vendor::Nvidia => {
-                    #[cfg(any(target_os = "linux", target_os = "macos"))]
-                    {
-                        use gpu_info::providers::nvidia::update_nvidia_info;
+            if gpu.vendor == Vendor::Nvidia {
+                #[cfg(any(target_os = "linux", target_os = "macos"))]
+                {
+                    use gpu_info::providers::nvidia::update_nvidia_info;
 
-                        if let Err(e) = update_nvidia_info(&mut gpu) {
-                            println!("Error updating NVIDIA GPU: {}", e);
-                        }
+                    if let Err(e) = update_nvidia_info(&mut gpu) {
+                        println!("Error updating NVIDIA GPU: {}", e);
                     }
                 }
-                _ => {}
             }
         }
         println!("Measurement #{}", i + 1);

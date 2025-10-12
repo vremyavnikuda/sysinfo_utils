@@ -4,7 +4,7 @@
 //! and cross-platform compatibility of the FFI abstraction layer.
 
 #[cfg(test)]
-mod ffi_utils_tests {
+mod tests {
     use crate::ffi_utils::{AdlResult, ApiResult, ApiTable, LibraryLoader, NvmlResult};
 
     /// Test NVML API result wrapper
@@ -56,10 +56,10 @@ mod ffi_utils_tests {
         assert_eq!(opt_string, Some("test".to_string()));
         let float_result = NvmlResult {
             code: 0,
-            value: 3.14f32,
+            value: std::f32::consts::PI,
         };
         let opt_float: Option<f32> = float_result.to_option();
-        assert_eq!(opt_float, Some(3.14f32));
+        assert_eq!(opt_float, Some(std::f32::consts::PI));
     }
 
     /// Test library loader builder pattern
@@ -141,7 +141,7 @@ mod ffi_utils_tests {
             assert_eq!(value, 100);
         }
         let error_result = NvmlResult { code: 1, value: 0 };
-        if let Some(_) = error_result.to_option() {
+        if error_result.to_option().is_some() {
             panic!("Should not get value from error result");
         } else {
             println!("Error result handled correctly");
@@ -159,7 +159,7 @@ mod ffi_utils_tests {
         };
         let float_result = AdlResult {
             code: 0,
-            value: 3.14f64,
+            value: std::f64::consts::PI,
         };
         let bool_result = NvmlResult {
             code: 0,
@@ -169,7 +169,7 @@ mod ffi_utils_tests {
         assert!(float_result.is_success());
         assert!(bool_result.is_success());
         assert_eq!(int_result.to_option(), Some(42));
-        assert_eq!(float_result.to_option(), Some(3.14f64));
+        assert_eq!(float_result.to_option(), Some(std::f64::consts::PI));
         assert_eq!(bool_result.to_option(), Some(true));
     }
 

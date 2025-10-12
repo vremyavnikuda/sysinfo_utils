@@ -132,10 +132,7 @@ impl GpuProvider for IntelProvider {
 // Backwards compatibility functions
 pub fn detect_intel_gpus() -> Vec<GpuInfo> {
     let provider = IntelProvider::new();
-    match provider.detect_gpus() {
-        Ok(gpus) => gpus,
-        Err(_) => Vec::new(),
-    }
+    provider.detect_gpus().unwrap_or_default()
 }
 pub fn update_intel_info(gpu: &mut GpuInfo) -> Result<()> {
     let provider = IntelProvider::new();
@@ -149,8 +146,8 @@ mod tests {
         let provider = IntelProvider::new();
         // Note: We can't directly compare Vendor::Intel values because they contain IntelGpuType
         match provider.get_vendor() {
-            Vendor::Intel(_) => assert!(true),
-            _ => assert!(false, "Expected Intel vendor"),
+            Vendor::Intel(_) => {}
+            _ => panic!("Expected Intel vendor"),
         }
     }
 }

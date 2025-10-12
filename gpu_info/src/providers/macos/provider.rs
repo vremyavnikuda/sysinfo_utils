@@ -160,6 +160,7 @@ impl MacosProvider {
     }
 
     /// Updates metrics after an operation
+    #[allow(dead_code)]
     fn update_metrics(&mut self, backend_used: MacosBackend, duration: std::time::Duration) {
         // Assume cache hit if very fast
         let cache_hit = duration.as_millis() < 10;

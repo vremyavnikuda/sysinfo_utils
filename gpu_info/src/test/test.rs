@@ -602,7 +602,7 @@ mod gpu_info_tests {
         }
     }
     thread_local! {
-        static MOCK_COMMAND: RefCell<Option<MockCommand>> = RefCell::new(None);
+        static MOCK_COMMAND: RefCell<Option<MockCommand>> = const { RefCell::new(None) };
     }
     /// Sets a mocked command for the duration of the current test.
     ///
@@ -795,7 +795,7 @@ mod linux_nvidia_provider_test {
         assert_eq!(provider.get_vendor(), Vendor::Nvidia);
 
         // Test Default trait
-        let provider_default = NvidiaLinuxProvider::default();
+        let provider_default = NvidiaLinuxProvider;
         assert_eq!(provider_default.get_vendor(), Vendor::Nvidia);
     }
 

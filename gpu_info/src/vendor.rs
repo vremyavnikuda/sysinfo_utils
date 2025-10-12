@@ -14,11 +14,12 @@ pub enum Vendor {
     Unknown,
 }
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 pub enum IntelGpuType {
     Integrated,
     Discrete,
+    #[default]
     Unknown,
 }
 /// Converts a string to a Vendor enum
@@ -27,11 +28,7 @@ impl Default for Vendor {
         Vendor::Unknown
     }
 }
-impl Default for IntelGpuType {
-    fn default() -> Self {
-        IntelGpuType::Unknown
-    }
-}
+
 ///
 /// Display trait implementation for Vendor enum
 impl Display for Vendor {

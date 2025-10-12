@@ -24,7 +24,7 @@ impl GpuProvider for NvidiaProvider {
     }
     /// Update the information for a specific NVIDIA GPU
     fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
-        crate::gpu_info::update_gpu_from_api(gpu, || nvml_api::get_nvidia_gpus())
+        crate::gpu_info::update_gpu_from_api(gpu, nvml_api::get_nvidia_gpus)
     }
     /// Get the vendor for this provider
     fn get_vendor(&self) -> Vendor {

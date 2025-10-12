@@ -138,9 +138,9 @@ impl PciInfo {
 /// IOKitBackend is Send + Sync safe. Multiple instances can be created
 /// and used from different threads.
 #[cfg(feature = "macos-iokit")]
+#[derive(Default)]
 pub struct IOKitBackend {
-    /// Cached PCI information for detected GPUs
-    cached_devices: Vec<(PciInfo, String)>,
+    _private: (),
 }
 
 #[cfg(feature = "macos-iokit")]
@@ -163,9 +163,7 @@ impl IOKitBackend {
     /// ```
     pub fn new() -> Result<Self> {
         debug!("Initializing IOKit backend");
-        Ok(Self {
-            cached_devices: Vec::new(),
-        })
+        Ok(Self { _private: () })
     }
 
     /// Detects all GPUs using IOKit
@@ -368,9 +366,10 @@ impl IOKitBackend {
     }
 
     fn create_gpu_info_from_pci(&self, pci_info: &PciInfo) -> Result<GpuInfo> {
-        let mut gpu = GpuInfo::default();
-
-        gpu.vendor = pci_info.vendor();
+        let mut gpu = GpuInfo {
+            vendor: pci_info.vendor(),
+            ..Default::default()
+        };
 
         // TODO: GPU name enrichment (Priority: MEDIUM, 2-3 hours)
         // Can be done partially without macOS hardware
@@ -511,15 +510,6 @@ impl IOKitBackend {
     }
 }
 
-#[cfg(feature = "macos-iokit")]
-impl Default for IOKitBackend {
-    fn default() -> Self {
-        Self {
-            cached_devices: Vec::new(),
-        }
-    }
-}
-
 // Stub implementation for when feature is not enabled
 #[cfg(not(feature = "macos-iokit"))]
 pub struct IOKitBackend;
@@ -593,8 +583,8 @@ mod tests {
     #[cfg(feature = "macos-iokit")]
     #[test]
     fn test_iokit_default() {
-        let backend = IOKitBackend::default();
-        assert!(backend.cached_devices.is_empty());
+        let _backend = IOKitBackend::default();
+        // Backend created successfully
     }
 
     #[cfg(feature = "macos-iokit")]

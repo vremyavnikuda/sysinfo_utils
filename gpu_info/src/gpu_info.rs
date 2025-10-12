@@ -187,7 +187,7 @@ impl GpuInfo {
     /// let unknown_gpu = GpuInfo::unknown();
     /// ```
     pub fn unknown() -> Self {
-        return Self {
+        Self {
             vendor: Vendor::Unknown,
             name_gpu: None,
             temperature: None,
@@ -201,7 +201,7 @@ impl GpuInfo {
             memory_total: None,
             driver_version: None,
             max_clock_speed: None,
-        };
+        }
     }
     /// Creates a new `GpuInfo` instance with the specified GPU vendor.
     ///
