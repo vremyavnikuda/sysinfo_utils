@@ -163,12 +163,7 @@ mod tests {
 
     #[test]
     fn test_is_fast() {
-        let fast = MacosMetrics::new(
-            MacosBackend::Hybrid,
-            Duration::from_millis(10),
-            false,
-            3,
-        );
+        let fast = MacosMetrics::new(MacosBackend::Hybrid, Duration::from_millis(10), false, 3);
         let slow = MacosMetrics::new(
             MacosBackend::SystemProfiler,
             Duration::from_millis(600),
@@ -182,15 +177,22 @@ mod tests {
 
     #[test]
     fn test_performance_rating() {
-        let excellent =
-            MacosMetrics::new(MacosBackend::Hybrid, Duration::from_millis(5), false, 3);
+        let excellent = MacosMetrics::new(MacosBackend::Hybrid, Duration::from_millis(5), false, 3);
         let good = MacosMetrics::new(MacosBackend::Hybrid, Duration::from_millis(30), false, 3);
         let acceptable =
             MacosMetrics::new(MacosBackend::Hybrid, Duration::from_millis(100), false, 3);
-        let slow =
-            MacosMetrics::new(MacosBackend::SystemProfiler, Duration::from_millis(300), false, 3);
-        let very_slow =
-            MacosMetrics::new(MacosBackend::SystemProfiler, Duration::from_millis(800), false, 3);
+        let slow = MacosMetrics::new(
+            MacosBackend::SystemProfiler,
+            Duration::from_millis(300),
+            false,
+            3,
+        );
+        let very_slow = MacosMetrics::new(
+            MacosBackend::SystemProfiler,
+            Duration::from_millis(800),
+            false,
+            3,
+        );
 
         assert_eq!(excellent.performance_rating(), 1.0);
         assert_eq!(good.performance_rating(), 0.8);

@@ -117,10 +117,7 @@ impl MacosProvider {
         #[cfg(feature = "macos-metal")]
         let metal = MetalBackend::new().ok();
 
-        info!(
-            "Available backends: {} total",
-            router.available_count()
-        );
+        info!("Available backends: {} total", router.available_count());
 
         Ok(Self {
             config,
@@ -256,10 +253,7 @@ impl GpuProvider for MacosProvider {
         let start = Instant::now();
         let backend = self.router.select_backend(Operation::GetDynamicMetrics);
 
-        debug!(
-            "Updating GPU metrics with backend: {}",
-            backend.name()
-        );
+        debug!("Updating GPU metrics with backend: {}", backend.name());
 
         let result = self.update_gpu_with_backend(gpu, backend);
 
@@ -303,7 +297,10 @@ mod tests {
         assert!(result.is_ok());
 
         if let Ok(provider) = result {
-            assert_eq!(provider.config().cache_ttl, std::time::Duration::from_secs(120));
+            assert_eq!(
+                provider.config().cache_ttl,
+                std::time::Duration::from_secs(120)
+            );
         }
     }
 
@@ -334,9 +331,13 @@ mod tests {
     #[test]
     fn test_config_access() {
         let config = MacosConfig::default();
-        let provider = MacosProvider::with_config(config.clone()).expect("Failed to create provider");
+        let provider =
+            MacosProvider::with_config(config.clone()).expect("Failed to create provider");
 
         assert_eq!(provider.config().cache_ttl, config.cache_ttl);
-        assert_eq!(provider.config().preferred_backend, config.preferred_backend);
+        assert_eq!(
+            provider.config().preferred_backend,
+            config.preferred_backend
+        );
     }
 }

@@ -43,19 +43,19 @@
 //! ```
 
 // Core modules
-pub mod config;
-pub mod builder;
-pub mod metrics;
-pub mod cache;
-pub mod router;
-pub mod provider;
 pub mod backends;
+pub mod builder;
+pub mod cache;
+pub mod config;
+pub mod metrics;
+pub mod provider;
+pub mod router;
 
 // Legacy module (will be migrated in future tasks)
 pub mod macos;
 
 // Re-export public API
-pub use self::config::{MacosBackend, MacosConfig};
 pub use self::builder::MacosProviderBuilder;
+pub use self::config::{MacosBackend, MacosConfig};
 pub use self::metrics::MacosMetrics;
 pub use self::provider::MacosProvider;

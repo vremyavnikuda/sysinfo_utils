@@ -192,7 +192,10 @@ mod tests {
             .profiler_timeout(Duration::from_secs(5));
 
         assert_eq!(builder.config.cache_ttl, Duration::from_secs(120));
-        assert_eq!(builder.config.preferred_backend, MacosBackend::SystemProfiler);
+        assert_eq!(
+            builder.config.preferred_backend,
+            MacosBackend::SystemProfiler
+        );
         assert!(!builder.config.fallback_enabled);
         assert_eq!(builder.config.profiler_timeout, Duration::from_secs(5));
     }

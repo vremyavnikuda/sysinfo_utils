@@ -93,7 +93,7 @@ impl BackendRouter {
             if self.is_backend_available(self.config.preferred_backend) {
                 return self.config.preferred_backend;
             }
-            
+
             // If fallback is disabled, still return preferred even if unavailable
             if !self.config.fallback_enabled {
                 return self.config.preferred_backend;
@@ -186,7 +186,7 @@ mod tests {
     fn test_router_creation() {
         let config = MacosConfig::default();
         let router = BackendRouter::new(config);
-        
+
         // Should have at least SystemProfiler
         assert!(!router.available_backends.is_empty());
         assert!(router.is_backend_available(MacosBackend::SystemProfiler));
@@ -213,7 +213,7 @@ mod tests {
     fn test_available_count() {
         let router = BackendRouter::new(MacosConfig::default());
         let count = router.available_count();
-        
+
         // Should have at least 1 (SystemProfiler)
         assert!(count >= 1);
     }
@@ -221,11 +221,11 @@ mod tests {
     #[test]
     fn test_backend_selection_consistency() {
         let router = BackendRouter::new(MacosConfig::default());
-        
+
         // Same operation should return same backend
         let backend1 = router.select_backend(Operation::DetectGpu);
         let backend2 = router.select_backend(Operation::DetectGpu);
-        
+
         assert_eq!(backend1, backend2);
     }
 }

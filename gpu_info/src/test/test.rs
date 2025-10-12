@@ -680,7 +680,10 @@ mod gpu_info_tests {
     #[test]
     fn _test_gpu_manager_creation() {
         let gpu = GpuInfo::default();
-        assert_eq!(gpu.name_gpu, None, "Expected gpus to be empty, but it was not.");
+        assert_eq!(
+            gpu.name_gpu, None,
+            "Expected gpus to be empty, but it was not."
+        );
         assert_eq!(gpu.active.fmt_string(), "N/A");
     }
 }
@@ -703,7 +706,7 @@ mod mock_impl {
     use std::os::unix::process::ExitStatusExt;
     #[cfg(windows)]
     use std::os::windows::process::ExitStatusExt;
-    use std::process::{ Command, ExitStatus, Output };
+    use std::process::{Command, ExitStatus, Output};
     /// Mocks the execution of a system command by returning predefined output.
     ///
     /// This function is used in testing to simulate the execution of a system
@@ -734,10 +737,10 @@ mod mock_impl {
 #[test]
 #[cfg(target_os = "linux")]
 fn integration_test_real_system() {
+    use crate::vendor::Vendor;
+    use crate::GpuManager;
     use std::fs;
     use std::path::Path;
-    use crate::GpuManager;
-    use crate::vendor::Vendor;
 
     let manager = GpuManager::new();
     let gpus = manager.get_all_gpus_owned();
@@ -746,20 +749,16 @@ fn integration_test_real_system() {
         assert!(gpus.iter().any(|g| matches!(g.vendor, Vendor::Nvidia)));
     }
     if Path::new("/sys/class/drm/card0/device/vendor").exists() {
-        let vendor_str = fs
-            ::read_to_string("/sys/class/drm/card0/device/vendor")
-            .unwrap_or_default();
+        let vendor_str =
+            fs::read_to_string("/sys/class/drm/card0/device/vendor").unwrap_or_default();
         if vendor_str.contains("0x1002") {
             assert!(gpus.iter().any(|g| matches!(g.vendor, Vendor::Amd)));
         }
         if vendor_str.contains("0x8086") {
-            assert!(
-                gpus
-                    .iter()
-                    .any(|g|
-                        matches!(g.vendor, Vendor::Intel(crate::vendor::IntelGpuType::Unknown))
-                    )
-            );
+            assert!(gpus.iter().any(|g| matches!(
+                g.vendor,
+                Vendor::Intel(crate::vendor::IntelGpuType::Unknown)
+            )));
         }
     }
 }
@@ -794,7 +793,7 @@ mod linux_nvidia_provider_test {
     fn test_nvidia_provider_creation() {
         let provider = NvidiaLinuxProvider::new();
         assert_eq!(provider.get_vendor(), Vendor::Nvidia);
-        
+
         // Test Default trait
         let provider_default = NvidiaLinuxProvider::default();
         assert_eq!(provider_default.get_vendor(), Vendor::Nvidia);
@@ -804,7 +803,7 @@ mod linux_nvidia_provider_test {
     #[test]
     fn test_nvidia_provider_detect_gpus_integration() {
         let provider = NvidiaLinuxProvider::new();
-        
+
         match provider.detect_gpus() {
             Ok(gpus) => {
                 // If NVML is available and GPU detected
@@ -825,12 +824,12 @@ mod linux_nvidia_provider_test {
     #[test]
     fn test_nvidia_provider_update_gpu_integration() {
         let provider = NvidiaLinuxProvider::new();
-        
+
         // First detect GPUs
         match provider.detect_gpus() {
             Ok(gpus) if !gpus.is_empty() => {
                 let mut gpu = gpus[0].clone();
-                
+
                 // Try to update the GPU info
                 match provider.update_gpu(&mut gpu) {
                     Ok(()) => {
