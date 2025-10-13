@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 /// Operating system version.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-//The init variant should be called New and should contain three u64 fields: major, minor, and patch.
 /// Represents a rolling release version of the system.
 ///
 /// The `Rolling` variant contains an `Option<String>` which may hold
@@ -30,8 +29,6 @@ pub enum SystemVersion {
     Rolling(Option<String>),
     /// Represents a custom version of the system as a string.
     Custom(String),
-    /// Represents a init version of the system with major, minor, and patch numbers.
-    New(u64, u64, u64),
 }
 
 impl SystemVersion {
@@ -93,9 +90,6 @@ impl Display for SystemVersion {
                 }
             }
             SystemVersion::Custom(ref version) => write!(f, "{}", version),
-            SystemVersion::New(major, minor, patch) => {
-                write!(f, "{}.{}.{}", major, minor, patch)
-            }
         }
     }
 }

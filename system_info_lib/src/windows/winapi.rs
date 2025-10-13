@@ -282,11 +282,11 @@ fn edition(version_info: &OSVERSIONINFOEX) -> Option<String> {
 
 fn get_proc_address(module: &[u8], proc: &[u8]) -> Option<FARPROC> {
     assert!(
-        *module.last().expect("Empty module name_gpu") == 0,
+        module.last() == Some(&0),
         "Module name should be zero-terminated"
     );
     assert!(
-        *proc.last().expect("Empty procedure name_gpu") == 0,
+        proc.last() == Some(&0),
         "Procedure name should be zero-terminated"
     );
 

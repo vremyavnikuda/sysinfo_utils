@@ -247,7 +247,7 @@ mod system_os_tests {
     fn test_info_display() {
         let info = Info {
             system_type: Type::Linux,
-            version: SystemVersion::New(1, 1, 1),
+            version: SystemVersion::Semantic(1, 1, 1),
             edition: Some("Pro".to_string()),
             codename: Some("Focal".to_string()),
             bit_depth: BitDepth::X64,

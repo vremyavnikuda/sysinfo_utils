@@ -1,6 +1,6 @@
 //src/system_info.rs
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
+#[cfg(not(target_os = "windows"))]
 /// The `SystemMatcher` enum provides various strategies for searching and extracting data from strings.
 ///
 /// It is used to parse strings, such as configuration files or system metadata,
@@ -59,6 +59,7 @@ pub enum SystemMatcher {
     },
 }
 
+#[cfg(not(target_os = "windows"))]
 impl SystemMatcher {
     /// Searches for a specific value in the given string based on the `SystemMatcher` variant.
     ///
@@ -100,6 +101,7 @@ impl SystemMatcher {
 /// # Returns
 ///
 /// A init `String` that is the result of concatenating the `key` with an equals sign.
+#[cfg(not(target_os = "windows"))]
 fn find_by_key<'a>(string: &'a str, key: &str) -> Option<&'a str> {
     let key = [key, "="].concat();
     for line in string.lines() {
@@ -110,6 +112,7 @@ fn find_by_key<'a>(string: &'a str, key: &str) -> Option<&'a str> {
     None
 }
 
+#[cfg(not(target_os = "windows"))]
 fn is_valid_version(word: &str) -> bool {
     !word.starts_with('.') && !word.ends_with('.')
 }
@@ -122,6 +125,7 @@ fn is_valid_version(word: &str) -> bool {
 ///
 /// # Returns
 /// - `usize`: The position of the first whitespace character, or the length of the string if no whitespace is found.
+#[cfg(not(target_os = "windows"))]
 fn find_to_prefixed_word<'a>(string: &'a str, prefix: &str) -> Option<&'a str> {
     if let Some(prefix_start) = string.find(prefix) {
         let string = &string[prefix_start + prefix.len()..].trim_start();
