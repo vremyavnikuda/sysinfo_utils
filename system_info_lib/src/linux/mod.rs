@@ -27,7 +27,7 @@ mod linux_tests {
     fn system_type() {
         let version = current_platform();
         let system_type = version.system_type();
-        
+
         let is_valid_linux = matches!(
             system_type,
             Type::AlmaLinux
