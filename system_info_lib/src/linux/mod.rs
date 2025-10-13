@@ -26,46 +26,52 @@ mod linux_tests {
     #[test]
     fn system_type() {
         let version = current_platform();
-        match version.system_type() {
+        let system_type = version.system_type();
+        
+        let is_valid_linux = matches!(
+            system_type,
             Type::AlmaLinux
-            | Type::Alpaquita
-            | Type::Alpine
-            | Type::Amazon
-            | Type::Arch
-            | Type::Artix
-            | Type::CachyOS
-            | Type::CentOS
-            | Type::Debian
-            | Type::EndeavourOS
-            | Type::Fedora
-            | Type::Garuda
-            | Type::Gentoo
-            | Type::Kali
-            | Type::Linux
-            | Type::Mabox
-            | Type::Manjaro
-            | Type::Mariner
-            | Type::NixOS
-            | Type::Nobara
-            | Type::Uos
-            | Type::OpenCloudOS
-            | Type::openEuler
-            | Type::openSUSE
-            | Type::OracleLinux
-            | Type::Pop
-            | Type::Raspbian
-            | Type::Redhat
-            | Type::RedHatEnterprise
-            | Type::RockyLinux
-            | Type::Solus
-            | Type::SUSE
-            | Type::Ubuntu
-            | Type::Ultramarine
-            | Type::Void
-            | Type::Mint => (),
-            system_type => {
-                panic!("Unexpected OS type: {}", system_type);
-            }
-        }
+                | Type::Alpaquita
+                | Type::Alpine
+                | Type::Amazon
+                | Type::Arch
+                | Type::Artix
+                | Type::CachyOS
+                | Type::CentOS
+                | Type::Debian
+                | Type::EndeavourOS
+                | Type::Fedora
+                | Type::Garuda
+                | Type::Gentoo
+                | Type::Kali
+                | Type::Linux
+                | Type::Mabox
+                | Type::Manjaro
+                | Type::Mariner
+                | Type::NixOS
+                | Type::Nobara
+                | Type::Uos
+                | Type::OpenCloudOS
+                | Type::openEuler
+                | Type::openSUSE
+                | Type::OracleLinux
+                | Type::Pop
+                | Type::Raspbian
+                | Type::Redhat
+                | Type::RedHatEnterprise
+                | Type::RockyLinux
+                | Type::Solus
+                | Type::SUSE
+                | Type::Ubuntu
+                | Type::Ultramarine
+                | Type::Void
+                | Type::Mint
+        );
+
+        assert!(
+            is_valid_linux,
+            "Expected a valid Linux distribution type, but got: {}",
+            system_type
+        );
     }
 }

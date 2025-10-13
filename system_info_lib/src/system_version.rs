@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 /// # Examples
 ///
 /// ```
-/// use system_info::SystemVersion::Rolling;
+/// use system_info_lib::SystemVersion::Rolling;
 ///
 /// let version = Rolling(Some(String::from("2023.10")));
 /// let no_version = Rolling(None);
