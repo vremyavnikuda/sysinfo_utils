@@ -406,4 +406,48 @@ mod tests {
 
         assert_eq!(version3, version4);
     }
+
+    mod proptest_tests {
+        use super::SystemVersion;
+        use proptest::prelude::*;
+
+        proptest! {
+            #[test]
+            fn test_semantic_version_roundtrip(major in 0u64..100, minor in 0u64..100, patch in 0u64..100) {
+                let version = SystemVersion::semantic(major, minor, patch);
+                assert_eq!(version, SystemVersion::Semantic(major, minor, patch));
+            }
+
+            #[test]
+            fn test_custom_version_any_string(s in "\\PC+") {
+                let version = SystemVersion::custom(&s);
+                if let SystemVersion::Custom(content) = version {
+                    assert_eq!(content, s);
+                } else {
+                    panic!("Expected Custom variant");
+                }
+            }
+
+            #[test]
+            fn test_rolling_with_optional_codename(codename in proptest::option::of("\\PC+")) {
+                let version = SystemVersion::rolling(codename.as_deref());
+                match version {
+                    SystemVersion::Rolling(c) => {
+                        assert_eq!(c, codename);
+                    }
+                    _ => panic!("Expected Rolling variant"),
+                }
+            }
+
+            #[test]
+            fn test_semantic_version_properties(major in 0u64..1000, minor in 0u64..1000, patch in 0u64..1000) {
+                let version = SystemVersion::semantic(major, minor, patch);
+                let display = version.to_string();
+
+                assert!(display.contains(&major.to_string()));
+                assert!(display.contains(&minor.to_string()));
+                assert!(display.contains(&patch.to_string()));
+            }
+        }
+    }
 }

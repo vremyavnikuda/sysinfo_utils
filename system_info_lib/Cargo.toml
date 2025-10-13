@@ -38,3 +38,4 @@ windows-sys = { version = "0.52", features = [
 [dev-dependencies]
 pretty_assertions = "1"
 doc-comment = "0.3"
+proptest = "1.5"

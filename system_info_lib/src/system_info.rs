@@ -442,4 +442,93 @@ mod tests {
         assert_eq!(info.system_type(), Type::Macos);
         assert_eq!(info.version(), &SystemVersion::Semantic(12, 0, 0));
     }
+
+    mod proptest_tests {
+        use super::{BitDepth, Info, InfoBuilder, SystemVersion, Type};
+        use proptest::prelude::*;
+
+        proptest! {
+            #[test]
+            fn test_builder_with_any_strings(
+                edition in proptest::option::of("\\PC+"),
+                codename in proptest::option::of("\\PC+"),
+                architecture in proptest::option::of("\\PC+")
+            ) {
+                let builder = InfoBuilder::new()
+                    .system_type(Type::Linux)
+                    .bit_depth(BitDepth::X64);
+
+                let builder = if let Some(e) = &edition {
+                    builder.edition(e.as_str())
+                } else {
+                    builder
+                };
+
+                let builder = if let Some(c) = &codename {
+                    builder.codename(c.as_str())
+                } else {
+                    builder
+                };
+
+                let builder = if let Some(a) = &architecture {
+                    builder.architecture(a.as_str())
+                } else {
+                    builder
+                };
+
+                let info = builder.build();
+
+                assert_eq!(info.system_type(), Type::Linux);
+                assert_eq!(info.bit_depth(), BitDepth::X64);
+                assert_eq!(info.edition(), edition.as_deref());
+                assert_eq!(info.codename(), codename.as_deref());
+                assert_eq!(info.architecture(), architecture.as_deref());
+            }
+
+            #[test]
+            fn test_builder_clone_equals_original(major in 0u64..100, minor in 0u64..100, patch in 0u64..100) {
+                let info1 = Info::builder()
+                    .system_type(Type::Ubuntu)
+                    .version(SystemVersion::semantic(major, minor, patch))
+                    .bit_depth(BitDepth::X64)
+                    .build();
+
+                let info2 = info1.clone();
+
+                assert_eq!(info1, info2);
+                assert_eq!(info1.system_type(), info2.system_type());
+                assert_eq!(info1.version(), info2.version());
+                assert_eq!(info1.bit_depth(), info2.bit_depth());
+            }
+
+            #[test]
+            fn test_info_display_never_panics(
+                edition in proptest::option::of("\\PC{0,50}"),
+                codename in proptest::option::of("\\PC{0,50}")
+            ) {
+                let builder = Info::builder()
+                    .system_type(Type::Fedora)
+                    .version(SystemVersion::semantic(39, 0, 0))
+                    .bit_depth(BitDepth::X64);
+
+                let builder = if let Some(e) = edition {
+                    builder.edition(e)
+                } else {
+                    builder
+                };
+
+                let builder = if let Some(c) = codename {
+                    builder.codename(c)
+                } else {
+                    builder
+                };
+
+                let info = builder.build();
+                let display = info.to_string();
+
+                assert!(!display.is_empty());
+                assert!(display.contains("Fedora"));
+            }
+        }
+    }
 }
