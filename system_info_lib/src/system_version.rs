@@ -392,18 +392,18 @@ mod tests {
     fn test_constructor_string_flexibility() {
         let str_ref = "test";
         let version1 = SystemVersion::custom(str_ref);
-        
+
         let owned_string = String::from("test");
         let version2 = SystemVersion::custom(owned_string);
-        
+
         assert_eq!(version1, version2);
 
         let codename_str = "focal";
         let version3 = SystemVersion::rolling(Some(codename_str));
-        
+
         let codename_owned = String::from("focal");
         let version4 = SystemVersion::rolling(Some(codename_owned));
-        
+
         assert_eq!(version3, version4);
     }
 }

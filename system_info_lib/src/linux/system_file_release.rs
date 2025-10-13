@@ -7,7 +7,6 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-//TODO: add more distributions
 pub fn get() -> Option<Info> {
     retrieve_release_info(&DISTRIBUTIONS, "/")
 }
@@ -96,7 +95,8 @@ static DISTRIBUTIONS: [ReleaseInfo; 6] = [
                     "artix" => Some(Type::Artix),
                     "cachyos" => Some(Type::CachyOS),
                     "centos" => Some(Type::CentOS),
-                    //"clear-linux-os" => ClearLinuxOS
+                    "chromeos" => Some(Type::ChromeOS),
+                    "clear-linux-os" => Some(Type::ClearLinux),
                     //"clearos" => ClearOS
                     //"coreos"
                     //"cumulus-linux" => Cumulus
@@ -104,6 +104,7 @@ static DISTRIBUTIONS: [ReleaseInfo; 6] = [
                     //"devuan" => Devuan
                     //"elementary" => Elementary
                     "fedora" => Some(Type::Fedora),
+                    "fedora-silverblue" => Some(Type::Silverblue),
                     //"gentoo" => Gentoo
                     //"ios_xr" => ios_xr
                     "kali" => Some(Type::Kali),
@@ -122,6 +123,7 @@ static DISTRIBUTIONS: [ReleaseInfo; 6] = [
                     "opensuse-leap" => Some(Type::openSUSE),
                     "opensuse-microos" => Some(Type::openSUSE),
                     "opensuse-tumbleweed" => Some(Type::openSUSE),
+                    "openwrt" => Some(Type::OpenWrt),
                     //"rancheros" => RancherOS
                     //"raspbian" => Raspbian
                     // note XBian also uses "raspbian"
@@ -318,5 +320,138 @@ mod system_file_release_test {
         let info = result.unwrap();
         assert_eq!(info.system_type, Type::Ubuntu);
         assert_eq!(info.version, SystemVersion::Unknown);
+    }
+
+    #[test]
+    fn retrieve_release_info_recognizes_clear_linux() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_path = temp_dir.path().join("os-release");
+        let mut file = fs::File::create(&temp_path).unwrap();
+        writeln!(file, "ID=clear-linux-os\nVERSION_ID=\"41440\"").unwrap();
+
+        let custom_distributions = [ReleaseInfo {
+            path: "os-release",
+            type_var: |content| {
+                SystemMatcher::KeyValue { key: "ID" }
+                    .find(content)
+                    .and_then(|id| match id.as_str() {
+                        "clear-linux-os" => Some(Type::ClearLinux),
+                        _ => None,
+                    })
+            },
+            version: |content| {
+                SystemMatcher::KeyValue { key: "VERSION_ID" }
+                    .find(content)
+                    .map(SystemVersion::from_string)
+            },
+        }];
+
+        let result =
+            retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
+        assert!(result.is_some());
+        let info = result.unwrap();
+        assert_eq!(info.system_type, Type::ClearLinux);
+        assert_eq!(
+            info.version,
+            SystemVersion::from_string("41440".to_string())
+        );
+    }
+
+    #[test]
+    fn retrieve_release_info_recognizes_chromeos() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_path = temp_dir.path().join("os-release");
+        let mut file = fs::File::create(&temp_path).unwrap();
+        writeln!(file, "ID=chromeos\nVERSION_ID=\"15236.80.0\"").unwrap();
+
+        let custom_distributions = [ReleaseInfo {
+            path: "os-release",
+            type_var: |content| {
+                SystemMatcher::KeyValue { key: "ID" }
+                    .find(content)
+                    .and_then(|id| match id.as_str() {
+                        "chromeos" => Some(Type::ChromeOS),
+                        _ => None,
+                    })
+            },
+            version: |content| {
+                SystemMatcher::KeyValue { key: "VERSION_ID" }
+                    .find(content)
+                    .map(SystemVersion::from_string)
+            },
+        }];
+
+        let result =
+            retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
+        assert!(result.is_some());
+        let info = result.unwrap();
+        assert_eq!(info.system_type, Type::ChromeOS);
+    }
+
+    #[test]
+    fn retrieve_release_info_recognizes_silverblue() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_path = temp_dir.path().join("os-release");
+        let mut file = fs::File::create(&temp_path).unwrap();
+        writeln!(file, "ID=fedora-silverblue\nVERSION_ID=\"39\"").unwrap();
+
+        let custom_distributions = [ReleaseInfo {
+            path: "os-release",
+            type_var: |content| {
+                SystemMatcher::KeyValue { key: "ID" }
+                    .find(content)
+                    .and_then(|id| match id.as_str() {
+                        "fedora-silverblue" => Some(Type::Silverblue),
+                        _ => None,
+                    })
+            },
+            version: |content| {
+                SystemMatcher::KeyValue { key: "VERSION_ID" }
+                    .find(content)
+                    .map(SystemVersion::from_string)
+            },
+        }];
+
+        let result =
+            retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
+        assert!(result.is_some());
+        let info = result.unwrap();
+        assert_eq!(info.system_type, Type::Silverblue);
+        assert_eq!(info.version, SystemVersion::from_string("39".to_string()));
+    }
+
+    #[test]
+    fn retrieve_release_info_recognizes_openwrt() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_path = temp_dir.path().join("os-release");
+        let mut file = fs::File::create(&temp_path).unwrap();
+        writeln!(file, "ID=openwrt\nVERSION_ID=\"23.05.2\"").unwrap();
+
+        let custom_distributions = [ReleaseInfo {
+            path: "os-release",
+            type_var: |content| {
+                SystemMatcher::KeyValue { key: "ID" }
+                    .find(content)
+                    .and_then(|id| match id.as_str() {
+                        "openwrt" => Some(Type::OpenWrt),
+                        _ => None,
+                    })
+            },
+            version: |content| {
+                SystemMatcher::KeyValue { key: "VERSION_ID" }
+                    .find(content)
+                    .map(SystemVersion::from_string)
+            },
+        }];
+
+        let result =
+            retrieve_release_info(&custom_distributions, temp_dir.path().to_str().unwrap());
+        assert!(result.is_some());
+        let info = result.unwrap();
+        assert_eq!(info.system_type, Type::OpenWrt);
+        assert_eq!(
+            info.version,
+            SystemVersion::from_string("23.05.2".to_string())
+        );
     }
 }

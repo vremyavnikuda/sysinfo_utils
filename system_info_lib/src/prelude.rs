@@ -31,6 +31,4 @@
 //! - [`SystemVersion`] - System version representation
 //! - [`get`] - Function to retrieve current system information
 
-pub use crate::{
-    get, BitDepth, Info, InfoBuilder, SystemVersion, Type,
-};
+pub use crate::{get, BitDepth, Info, InfoBuilder, SystemVersion, Type};

@@ -29,6 +29,10 @@ pub enum Type {
     CachyOS,
     /// Commercial Linux distribution based on Red Hat
     CentOS,
+    /// Browser-based operating system by Google
+    ChromeOS,
+    /// Performance-oriented Linux distribution by Intel
+    ClearLinux,
     /// One of the oldest and most stable Linux distributions
     Debian,
     /// Unix-like operating system, a fork of BSD
@@ -79,6 +83,8 @@ pub enum Type {
     openEuler,
     /// Linux distribution by SUSE
     openSUSE,
+    /// Embedded Linux distribution for routers
+    OpenWrt,
     /// Enterprise Linux distribution by Oracle
     OracleLinux,
     /// Linux distribution by System76
@@ -95,6 +101,8 @@ pub enum Type {
     RockyLinux,
     /// Independent Linux distribution
     Solus,
+    /// Immutable Fedora variant with OSTree
+    Silverblue,
     /// Enterprise Linux distribution by SUSE
     SUSE,
     /// Popular Linux distribution by Canonical
@@ -141,6 +149,8 @@ impl Display for Type {
             Type::Artix => write!(f, "Artix Linux"),
             Type::CachyOS => write!(f, "CachyOS Linux"),
             Type::CentOS => write!(f, "CentOS"),
+            Type::ChromeOS => write!(f, "Chrome OS"),
+            Type::ClearLinux => write!(f, "Clear Linux"),
             Type::Debian => write!(f, "Debian"),
             Type::DragonFly => write!(f, "DragonFly BSD"),
             Type::Emscripten => write!(f, "Emscripten"),
@@ -166,6 +176,7 @@ impl Display for Type {
             Type::OpenCloudOS => write!(f, "OpenCloudOS"),
             Type::openEuler => write!(f, "EulerOS"),
             Type::openSUSE => write!(f, "openSUSE"),
+            Type::OpenWrt => write!(f, "OpenWrt"),
             Type::OracleLinux => write!(f, "Oracle Linux"),
             Type::Pop => write!(f, "Pop!_OS"),
             Type::Raspbian => write!(f, "Raspberry Pi OS"),
@@ -174,6 +185,7 @@ impl Display for Type {
             Type::Redox => write!(f, "Redox"),
             Type::RockyLinux => write!(f, "Rocky Linux"),
             Type::Solus => write!(f, "Solus"),
+            Type::Silverblue => write!(f, "Fedora Silverblue"),
             Type::SUSE => write!(f, "SUSE Linux Enterprise Server"),
             Type::Ubuntu => write!(f, "Ubuntu"),
             Type::Ultramarine => write!(f, "Ultramarine Linux"),
@@ -275,6 +287,8 @@ mod system_os_tests {
             (Type::Artix, "Artix Linux"),
             (Type::CachyOS, "CachyOS Linux"),
             (Type::CentOS, "CentOS"),
+            (Type::ChromeOS, "Chrome OS"),
+            (Type::ClearLinux, "Clear Linux"),
             (Type::Debian, "Debian"),
             (Type::DragonFly, "DragonFly BSD"),
             (Type::Emscripten, "Emscripten"),
@@ -300,6 +314,7 @@ mod system_os_tests {
             (Type::OpenBSD, "OpenBSD"),
             (Type::openEuler, "EulerOS"),
             (Type::openSUSE, "openSUSE"),
+            (Type::OpenWrt, "OpenWrt"),
             (Type::OracleLinux, "Oracle Linux"),
             (Type::Pop, "Pop!_OS"),
             (Type::Raspbian, "Raspberry Pi OS"),
@@ -308,6 +323,7 @@ mod system_os_tests {
             (Type::Redox, "Redox"),
             (Type::RockyLinux, "Rocky Linux"),
             (Type::Solus, "Solus"),
+            (Type::Silverblue, "Fedora Silverblue"),
             (Type::SUSE, "SUSE Linux Enterprise Server"),
             (Type::Ubuntu, "Ubuntu"),
             (Type::Ultramarine, "Ultramarine Linux"),

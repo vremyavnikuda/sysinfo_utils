@@ -165,7 +165,6 @@ mod bit_depth_tests {
     /// - `BitDepth::Unknown` should be represented as "unknown bit depth".
     /// - `BitDepth::X32` should be represented as "32-bit".
     /// - `BitDepth::X64` should be represented as "64-bit".
-    //FIXME: failures : bit_depth::bit_depth_tests::display
     #[test]
     fn display() {
         let data = [
