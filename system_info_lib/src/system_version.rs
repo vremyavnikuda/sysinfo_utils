@@ -53,6 +53,100 @@ impl SystemVersion {
             Self::Custom(s.into())
         }
     }
+
+    /// Creates a semantic version with major, minor, and patch numbers.
+    ///
+    /// This is a convenience constructor for creating `SystemVersion::Semantic`
+    /// instances without directly using the enum variant.
+    ///
+    /// # Arguments
+    ///
+    /// * `major` - The major version number
+    /// * `minor` - The minor version number
+    /// * `patch` - The patch version number
+    ///
+    /// # Returns
+    ///
+    /// A `SystemVersion::Semantic` instance with the specified version numbers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use system_info_lib::SystemVersion;
+    ///
+    /// let version = SystemVersion::semantic(5, 15, 0);
+    /// assert_eq!(version.to_string(), "5.15.0");
+    ///
+    /// // Equivalent to:
+    /// let version2 = SystemVersion::Semantic(5, 15, 0);
+    /// assert_eq!(version, version2);
+    /// ```
+    pub fn semantic(major: u64, minor: u64, patch: u64) -> Self {
+        Self::Semantic(major, minor, patch)
+    }
+
+    /// Creates a rolling release version with an optional codename.
+    ///
+    /// Rolling releases are distributions that continuously update rather than
+    /// having fixed version numbers (e.g., Arch Linux, Gentoo).
+    ///
+    /// # Arguments
+    ///
+    /// * `codename` - Optional codename or identifier for the rolling release
+    ///
+    /// # Returns
+    ///
+    /// A `SystemVersion::Rolling` instance with the specified codename.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use system_info_lib::SystemVersion;
+    ///
+    /// // Rolling release with codename
+    /// let version = SystemVersion::rolling(Some("2024.01"));
+    /// assert_eq!(version.to_string(), "Rolling (2024.01)");
+    ///
+    /// // Rolling release without codename
+    /// let version = SystemVersion::rolling(None::<String>);
+    /// assert_eq!(version.to_string(), "Rolling");
+    ///
+    /// // Works with &str
+    /// let version = SystemVersion::rolling(Some("focal"));
+    /// assert_eq!(version.to_string(), "Rolling (focal)");
+    /// ```
+    pub fn rolling<S: Into<String>>(codename: Option<S>) -> Self {
+        Self::Rolling(codename.map(|s| s.into()))
+    }
+
+    /// Creates a custom version with an arbitrary version string.
+    ///
+    /// Use this for version formats that don't fit semantic or rolling
+    /// release patterns (e.g., "NT 10.0", "2023.12-LTS").
+    ///
+    /// # Arguments
+    ///
+    /// * `version` - A custom version string
+    ///
+    /// # Returns
+    ///
+    /// A `SystemVersion::Custom` instance with the specified version string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use system_info_lib::SystemVersion;
+    ///
+    /// let version = SystemVersion::custom("NT 10.0");
+    /// assert_eq!(version.to_string(), "NT 10.0");
+    ///
+    /// // Works with both &str and String
+    /// let version = SystemVersion::custom(String::from("2023.12-LTS"));
+    /// assert_eq!(version.to_string(), "2023.12-LTS");
+    /// ```
+    pub fn custom(version: impl Into<String>) -> Self {
+        Self::Custom(version.into())
+    }
 }
 
 impl Default for SystemVersion {
@@ -235,5 +329,81 @@ mod tests {
     fn test_parse_version_invalid() {
         let parsed = parse_version("1.2");
         assert_eq!(parsed, None);
+    }
+
+    /// Tests the `semantic()` constructor.
+    ///
+    /// This test ensures that `SystemVersion::semantic()` creates a valid
+    /// semantic version and that it's equivalent to using the enum variant directly.
+    #[test]
+    fn test_constructor_semantic() {
+        let version = SystemVersion::semantic(5, 15, 0);
+        assert_eq!(version, SystemVersion::Semantic(5, 15, 0));
+        assert_eq!(version.to_string(), "5.15.0");
+
+        let version2 = SystemVersion::semantic(1, 2, 3);
+        assert_eq!(version2.to_string(), "1.2.3");
+    }
+
+    /// Tests the `rolling()` constructor with a codename.
+    ///
+    /// This test ensures that `SystemVersion::rolling()` correctly creates
+    /// rolling release versions with codenames.
+    #[test]
+    fn test_constructor_rolling_with_codename() {
+        let version = SystemVersion::rolling(Some("2024.01"));
+        assert_eq!(version, SystemVersion::Rolling(Some("2024.01".to_string())));
+        assert_eq!(version.to_string(), "Rolling (2024.01)");
+
+        let version2 = SystemVersion::rolling(Some(String::from("focal")));
+        assert_eq!(version2.to_string(), "Rolling (focal)");
+    }
+
+    /// Tests the `rolling()` constructor without a codename.
+    ///
+    /// This test ensures that `SystemVersion::rolling()` correctly creates
+    /// rolling release versions without codenames.
+    #[test]
+    fn test_constructor_rolling_without_codename() {
+        let version = SystemVersion::rolling(None::<String>);
+        assert_eq!(version, SystemVersion::Rolling(None));
+        assert_eq!(version.to_string(), "Rolling");
+    }
+
+    /// Tests the `custom()` constructor.
+    ///
+    /// This test ensures that `SystemVersion::custom()` creates custom versions
+    /// correctly and works with both &str and String.
+    #[test]
+    fn test_constructor_custom() {
+        let version = SystemVersion::custom("NT 10.0");
+        assert_eq!(version, SystemVersion::Custom("NT 10.0".to_string()));
+        assert_eq!(version.to_string(), "NT 10.0");
+
+        let version2 = SystemVersion::custom(String::from("2023.12-LTS"));
+        assert_eq!(version2.to_string(), "2023.12-LTS");
+    }
+
+    /// Tests that constructors accept flexible string types.
+    ///
+    /// This test verifies that `impl Into<String>` works correctly,
+    /// allowing both &str and String to be passed.
+    #[test]
+    fn test_constructor_string_flexibility() {
+        let str_ref = "test";
+        let version1 = SystemVersion::custom(str_ref);
+        
+        let owned_string = String::from("test");
+        let version2 = SystemVersion::custom(owned_string);
+        
+        assert_eq!(version1, version2);
+
+        let codename_str = "focal";
+        let version3 = SystemVersion::rolling(Some(codename_str));
+        
+        let codename_owned = String::from("focal");
+        let version4 = SystemVersion::rolling(Some(codename_owned));
+        
+        assert_eq!(version3, version4);
     }
 }

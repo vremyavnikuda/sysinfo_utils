@@ -126,6 +126,27 @@ impl Info {
     pub fn architecture(&self) -> Option<&str> {
         self.architecture.as_ref().map(String::as_ref)
     }
+
+    /// Creates a new [`InfoBuilder`] for constructing an `Info` instance.
+    ///
+    /// # Returns
+    ///
+    /// A new `InfoBuilder` instance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use system_info_lib::{Info, Type, SystemVersion, BitDepth};
+    ///
+    /// let info = Info::builder()
+    ///     .system_type(Type::Linux)
+    ///     .version(SystemVersion::Semantic(5, 15, 0))
+    ///     .bit_depth(BitDepth::X64)
+    ///     .build();
+    /// ```
+    pub fn builder() -> InfoBuilder {
+        InfoBuilder::new()
+    }
 }
 
 impl Default for Info {
@@ -176,5 +197,249 @@ impl Display for Info {
             write!(f, ", {}", architecture)?;
         }
         Ok(())
+    }
+}
+
+/// Builder for constructing [`Info`] instances with method chaining.
+///
+/// Provides an ergonomic API for building system information objects.
+/// All fields are optional and will default to unknown values if not set.
+///
+/// # Examples
+///
+/// ```
+/// use system_info_lib::{Info, Type, SystemVersion, BitDepth};
+///
+/// let info = Info::builder()
+///     .system_type(Type::Linux)
+///     .version(SystemVersion::Semantic(5, 15, 0))
+///     .edition("Pro")
+///     .codename("Focal")
+///     .bit_depth(BitDepth::X64)
+///     .architecture("x86_64")
+///     .build();
+///
+/// assert_eq!(info.system_type(), Type::Linux);
+/// assert_eq!(info.edition(), Some("Pro"));
+/// ```
+#[derive(Debug, Clone, Default)]
+pub struct InfoBuilder {
+    system_type: Option<Type>,
+    version: Option<SystemVersion>,
+    edition: Option<String>,
+    codename: Option<String>,
+    bit_depth: Option<BitDepth>,
+    architecture: Option<String>,
+}
+
+impl InfoBuilder {
+    /// Creates a new empty builder.
+    ///
+    /// # Returns
+    ///
+    /// A new `InfoBuilder` instance with all fields set to `None`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Sets the system type.
+    ///
+    /// # Arguments
+    ///
+    /// * `system_type` - The type of the operating system.
+    ///
+    /// # Returns
+    ///
+    /// The builder instance for method chaining.
+    pub fn system_type(mut self, system_type: Type) -> Self {
+        self.system_type = Some(system_type);
+        self
+    }
+
+    /// Sets the system version.
+    ///
+    /// # Arguments
+    ///
+    /// * `version` - The version of the operating system.
+    ///
+    /// # Returns
+    ///
+    /// The builder instance for method chaining.
+    pub fn version(mut self, version: SystemVersion) -> Self {
+        self.version = Some(version);
+        self
+    }
+
+    /// Sets the system edition.
+    ///
+    /// # Arguments
+    ///
+    /// * `edition` - The edition of the operating system.
+    ///
+    /// # Returns
+    ///
+    /// The builder instance for method chaining.
+    pub fn edition(mut self, edition: impl Into<String>) -> Self {
+        self.edition = Some(edition.into());
+        self
+    }
+
+    /// Sets the system codename.
+    ///
+    /// # Arguments
+    ///
+    /// * `codename` - The codename of the operating system.
+    ///
+    /// # Returns
+    ///
+    /// The builder instance for method chaining.
+    pub fn codename(mut self, codename: impl Into<String>) -> Self {
+        self.codename = Some(codename.into());
+        self
+    }
+
+    /// Sets the bit depth.
+    ///
+    /// # Arguments
+    ///
+    /// * `bit_depth` - The bit depth of the operating system.
+    ///
+    /// # Returns
+    ///
+    /// The builder instance for method chaining.
+    pub fn bit_depth(mut self, bit_depth: BitDepth) -> Self {
+        self.bit_depth = Some(bit_depth);
+        self
+    }
+
+    /// Sets the system architecture.
+    ///
+    /// # Arguments
+    ///
+    /// * `architecture` - The architecture of the operating system.
+    ///
+    /// # Returns
+    ///
+    /// The builder instance for method chaining.
+    pub fn architecture(mut self, architecture: impl Into<String>) -> Self {
+        self.architecture = Some(architecture.into());
+        self
+    }
+
+    /// Builds the [`Info`] instance.
+    ///
+    /// All unset fields will default to their unknown values:
+    /// - `system_type`: `Type::Unknown`
+    /// - `version`: `SystemVersion::Unknown`
+    /// - `edition`: `None`
+    /// - `codename`: `None`
+    /// - `bit_depth`: `BitDepth::Unknown`
+    /// - `architecture`: `None`
+    ///
+    /// # Returns
+    ///
+    /// A new `Info` instance.
+    pub fn build(self) -> Info {
+        Info {
+            system_type: self.system_type.unwrap_or(Type::Unknown),
+            version: self.version.unwrap_or(SystemVersion::Unknown),
+            edition: self.edition,
+            codename: self.codename,
+            bit_depth: self.bit_depth.unwrap_or(BitDepth::Unknown),
+            architecture: self.architecture,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_builder_all_fields() {
+        let info = Info::builder()
+            .system_type(Type::Linux)
+            .version(SystemVersion::Semantic(5, 15, 0))
+            .edition("Pro")
+            .codename("Focal")
+            .bit_depth(BitDepth::X64)
+            .architecture("x86_64")
+            .build();
+
+        assert_eq!(info.system_type(), Type::Linux);
+        assert_eq!(info.version(), &SystemVersion::Semantic(5, 15, 0));
+        assert_eq!(info.edition(), Some("Pro"));
+        assert_eq!(info.codename(), Some("Focal"));
+        assert_eq!(info.bit_depth(), BitDepth::X64);
+        assert_eq!(info.architecture(), Some("x86_64"));
+    }
+
+    #[test]
+    fn test_builder_minimal() {
+        let info = Info::builder().system_type(Type::Linux).build();
+
+        assert_eq!(info.system_type(), Type::Linux);
+        assert_eq!(info.version(), &SystemVersion::Unknown);
+        assert_eq!(info.edition(), None);
+        assert_eq!(info.codename(), None);
+        assert_eq!(info.bit_depth(), BitDepth::Unknown);
+        assert_eq!(info.architecture(), None);
+    }
+
+    #[test]
+    fn test_builder_defaults() {
+        let info = Info::builder().build();
+
+        assert_eq!(info.system_type(), Type::Unknown);
+        assert_eq!(info.version(), &SystemVersion::Unknown);
+        assert_eq!(info.edition(), None);
+        assert_eq!(info.codename(), None);
+        assert_eq!(info.bit_depth(), BitDepth::Unknown);
+        assert_eq!(info.architecture(), None);
+    }
+
+    #[test]
+    fn test_builder_partial() {
+        let info = Info::builder()
+            .system_type(Type::Windows)
+            .edition("Home")
+            .bit_depth(BitDepth::X64)
+            .build();
+
+        assert_eq!(info.system_type(), Type::Windows);
+        assert_eq!(info.version(), &SystemVersion::Unknown);
+        assert_eq!(info.edition(), Some("Home"));
+        assert_eq!(info.codename(), None);
+        assert_eq!(info.bit_depth(), BitDepth::X64);
+        assert_eq!(info.architecture(), None);
+    }
+
+    #[test]
+    fn test_builder_string_conversions() {
+        let edition_string = String::from("Enterprise");
+        let codename_str = "Buster";
+        let arch_string = String::from("aarch64");
+
+        let info = Info::builder()
+            .edition(edition_string)
+            .codename(codename_str)
+            .architecture(arch_string)
+            .build();
+
+        assert_eq!(info.edition(), Some("Enterprise"));
+        assert_eq!(info.codename(), Some("Buster"));
+        assert_eq!(info.architecture(), Some("aarch64"));
+    }
+
+    #[test]
+    fn test_builder_method_chaining() {
+        let builder = InfoBuilder::new();
+        let builder = builder.system_type(Type::Macos);
+        let builder = builder.version(SystemVersion::Semantic(12, 0, 0));
+        let info = builder.build();
+
+        assert_eq!(info.system_type(), Type::Macos);
+        assert_eq!(info.version(), &SystemVersion::Semantic(12, 0, 0));
     }
 }

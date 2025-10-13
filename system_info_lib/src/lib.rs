@@ -92,6 +92,7 @@ mod imp;
 ))]
 mod architecture;
 mod bit_depth;
+pub mod prelude;
 mod system_info;
 #[cfg(not(windows))]
 mod system_matcher;
@@ -108,7 +109,10 @@ mod system_uname;
 mod system_version;
 
 pub use crate::{
-    bit_depth::BitDepth, system_info::Info, system_os::Type, system_version::SystemVersion,
+    bit_depth::BitDepth,
+    system_info::{Info, InfoBuilder},
+    system_os::Type,
+    system_version::SystemVersion,
 };
 
 /// Returns information about the current operating system (type, version, edition, etc.).
