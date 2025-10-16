@@ -92,6 +92,7 @@ mod imp;
 ))]
 mod architecture;
 mod bit_depth;
+pub mod ext;
 mod kernel_version;
 pub mod prelude;
 mod system_info;
@@ -111,6 +112,7 @@ mod system_version;
 
 pub use crate::{
     bit_depth::BitDepth,
+    ext::{InfoExt, SystemVersionExt},
     system_info::{Info, InfoBuilder},
     system_os::Type,
     system_version::SystemVersion,

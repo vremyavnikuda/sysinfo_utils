@@ -27,8 +27,10 @@
 //! - [`BitDepth`] - System bit depth representation
 //! - [`Info`] - Main system information structure
 //! - [`InfoBuilder`] - Builder for creating `Info` instances
+//! - [`InfoExt`] - Extension trait for `Info` with convenient methods
 //! - [`Type`] - Operating system type enumeration
 //! - [`SystemVersion`] - System version representation
+//! - [`SystemVersionExt`] - Extension trait for `SystemVersion` with convenient methods
 //! - [`get`] - Function to retrieve current system information
 
-pub use crate::{get, BitDepth, Info, InfoBuilder, SystemVersion, Type};
+pub use crate::{get, BitDepth, Info, InfoBuilder, InfoExt, SystemVersion, SystemVersionExt, Type};
