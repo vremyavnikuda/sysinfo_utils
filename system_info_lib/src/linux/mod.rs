@@ -2,10 +2,9 @@
 mod system_file_release;
 mod system_release_lsb;
 
-use crate::{architecture, bit_depth, system_os::Type, Info};
+use crate::{architecture, bit_depth, kernel_version, system_os::Type, Info};
 use log::trace;
 
-//TODO: Implement the `current_platform` function for the Linux platform.
 pub fn current_platform() -> Info {
     trace!("linux::current_platform() is called");
 
@@ -14,6 +13,7 @@ pub fn current_platform() -> Info {
         .unwrap_or_else(|| Info::with_type(Type::Linux));
     info.bit_depth = bit_depth::get();
     info.architecture = architecture::get();
+    info.kernel_version = kernel_version::get();
 
     trace!("Returns {:?}", info);
     info

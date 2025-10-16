@@ -3,11 +3,12 @@ mod winapi;
 
 use log::trace;
 
-use crate::Info;
+use crate::{kernel_version, Info};
 
 pub fn current_platform() -> Info {
     trace!("windows::current_platform is called");
-    let info = winapi::get();
+    let mut info = winapi::get();
+    info.kernel_version = kernel_version::get();
     trace!("Returning {:?}", info);
     info
 }

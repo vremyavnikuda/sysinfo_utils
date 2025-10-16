@@ -28,6 +28,9 @@ pub struct Info {
 
     /// The architecture of the operating system, if known.
     pub(crate) architecture: Option<String>,
+
+    /// The kernel version of the operating system, if known.
+    pub(crate) kernel_version: Option<String>,
 }
 
 impl Info {
@@ -42,6 +45,7 @@ impl Info {
     ///     - `codename`: `None`
     ///     - `bit_depth`: `BitDepth::Unknown`
     ///     - `architecture`: `None`
+    ///     - `kernel_version`: `None`
     pub fn unknown() -> Self {
         Self {
             system_type: Type::Unknown,
@@ -50,6 +54,7 @@ impl Info {
             codename: None,
             bit_depth: BitDepth::Unknown,
             architecture: None,
+            kernel_version: None,
         }
     }
 
@@ -127,6 +132,26 @@ impl Info {
         self.architecture.as_ref().map(String::as_ref)
     }
 
+    /// Returns the kernel version of the OS.
+    ///
+    /// # Returns
+    ///
+    /// * `Option<&str>` - The kernel version of the OS, if known.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use system_info_lib::get;
+    ///
+    /// let info = get();
+    /// if let Some(kernel) = info.kernel_version() {
+    ///     println!("Kernel version: {}", kernel);
+    /// }
+    /// ```
+    pub fn kernel_version(&self) -> Option<&str> {
+        self.kernel_version.as_ref().map(String::as_ref)
+    }
+
     /// Creates a new [`InfoBuilder`] for constructing an `Info` instance.
     ///
     /// # Returns
@@ -161,6 +186,7 @@ impl Default for Info {
     ///     - `codename`: `None`
     ///     - `bit_depth`: `BitDepth::Unknown`
     ///     - `architecture`: `None`
+    ///     - `kernel_version`: `None`
     fn default() -> Self {
         Self::unknown()
     }
@@ -230,6 +256,7 @@ pub struct InfoBuilder {
     codename: Option<String>,
     bit_depth: Option<BitDepth>,
     architecture: Option<String>,
+    kernel_version: Option<String>,
 }
 
 impl InfoBuilder {
@@ -326,6 +353,32 @@ impl InfoBuilder {
         self
     }
 
+    /// Sets the kernel version.
+    ///
+    /// # Arguments
+    ///
+    /// * `kernel_version` - The kernel version of the operating system.
+    ///
+    /// # Returns
+    ///
+    /// The builder instance for method chaining.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use system_info_lib::Info;
+    ///
+    /// let info = Info::builder()
+    ///     .kernel_version("5.15.0-76-generic")
+    ///     .build();
+    ///
+    /// assert_eq!(info.kernel_version(), Some("5.15.0-76-generic"));
+    /// ```
+    pub fn kernel_version(mut self, kernel_version: impl Into<String>) -> Self {
+        self.kernel_version = Some(kernel_version.into());
+        self
+    }
+
     /// Builds the [`Info`] instance.
     ///
     /// All unset fields will default to their unknown values:
@@ -335,6 +388,7 @@ impl InfoBuilder {
     /// - `codename`: `None`
     /// - `bit_depth`: `BitDepth::Unknown`
     /// - `architecture`: `None`
+    /// - `kernel_version`: `None`
     ///
     /// # Returns
     ///
@@ -347,6 +401,7 @@ impl InfoBuilder {
             codename: self.codename,
             bit_depth: self.bit_depth.unwrap_or(BitDepth::Unknown),
             architecture: self.architecture,
+            kernel_version: self.kernel_version,
         }
     }
 }
@@ -441,6 +496,30 @@ mod tests {
 
         assert_eq!(info.system_type(), Type::Macos);
         assert_eq!(info.version(), &SystemVersion::Semantic(12, 0, 0));
+    }
+
+    #[test]
+    fn test_builder_with_kernel_version() {
+        let info = Info::builder()
+            .system_type(Type::Linux)
+            .kernel_version("5.15.0-76-generic")
+            .build();
+
+        assert_eq!(info.kernel_version(), Some("5.15.0-76-generic"));
+    }
+
+    #[test]
+    fn test_builder_kernel_version_string_conversions() {
+        let kernel_string = String::from("6.1.0-13-amd64");
+        let info = Info::builder().kernel_version(kernel_string).build();
+
+        assert_eq!(info.kernel_version(), Some("6.1.0-13-amd64"));
+    }
+
+    #[test]
+    fn test_info_unknown_has_no_kernel_version() {
+        let info = Info::unknown();
+        assert_eq!(info.kernel_version(), None);
     }
 
     mod proptest_tests {

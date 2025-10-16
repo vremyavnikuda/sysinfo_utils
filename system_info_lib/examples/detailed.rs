@@ -35,6 +35,14 @@ fn main() {
     }
 
     println!();
+    println!("Kernel:");
+    if let Some(kernel) = info.kernel_version() {
+        println!("Kernel Version: {}", kernel);
+    } else {
+        println!("Kernel Version: Not available");
+    }
+
+    println!();
     println!("Full Info: {}", info);
     println!();
 

@@ -573,3 +573,52 @@ fn test_builder_multiple_chains() {
     assert_eq!(info.system_type(), Type::Linux);
     assert_eq!(info.version(), &SystemVersion::Semantic(5, 15, 0));
 }
+
+#[test]
+fn test_kernel_version_getter() {
+    let info = Info::builder()
+        .system_type(Type::Linux)
+        .kernel_version("5.15.0-76-generic")
+        .build();
+
+    assert_eq!(info.kernel_version(), Some("5.15.0-76-generic"));
+}
+
+#[test]
+fn test_kernel_version_none() {
+    let info = Info::builder().system_type(Type::Linux).build();
+
+    assert_eq!(info.kernel_version(), None);
+}
+
+#[test]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn test_get_includes_kernel_version() {
+    let info = get();
+
+    assert!(
+        info.kernel_version().is_some(),
+        "Kernel version should be available on Linux and macOS"
+    );
+}
+
+#[test]
+fn test_info_builder_with_all_fields_including_kernel() {
+    let info = Info::builder()
+        .system_type(Type::Fedora)
+        .version(SystemVersion::semantic(39, 0, 0))
+        .edition("Workstation")
+        .codename("Rawhide")
+        .bit_depth(BitDepth::X64)
+        .architecture("x86_64")
+        .kernel_version("6.6.8-200.fc39.x86_64")
+        .build();
+
+    assert_eq!(info.system_type(), Type::Fedora);
+    assert_eq!(info.version(), &SystemVersion::semantic(39, 0, 0));
+    assert_eq!(info.edition(), Some("Workstation"));
+    assert_eq!(info.codename(), Some("Rawhide"));
+    assert_eq!(info.bit_depth(), BitDepth::X64);
+    assert_eq!(info.architecture(), Some("x86_64"));
+    assert_eq!(info.kernel_version(), Some("6.6.8-200.fc39.x86_64"));
+}

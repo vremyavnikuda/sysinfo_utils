@@ -92,6 +92,7 @@ mod imp;
 ))]
 mod architecture;
 mod bit_depth;
+mod kernel_version;
 pub mod prelude;
 mod system_info;
 #[cfg(not(windows))]

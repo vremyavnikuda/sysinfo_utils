@@ -264,6 +264,7 @@ mod system_os_tests {
             codename: Some("Focal".to_string()),
             bit_depth: BitDepth::X64,
             architecture: Some("x86_64".to_string()),
+            kernel_version: Some("5.15.0".to_string()),
         };
         let display = format!("{}", info);
         assert_eq!(display, "Linux Pro (Focal) 1.1.1, 64-bit, x86_64");
