@@ -1,4 +1,5 @@
 # System Info Utils
+>if you like this project, then the best way to express gratitude is to give it a star ⭐, it doesn't cost you anything, but I understand that I'm moving the project in the right direction.
 
 A utility library for system and GPU information.
 
