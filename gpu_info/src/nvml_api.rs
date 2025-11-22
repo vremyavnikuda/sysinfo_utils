@@ -225,7 +225,10 @@ impl NvmlClient {
         }
     }
     /// Get device name
-    pub fn get_device_name(&self, device: *mut nvmlDevice_st) -> NvmlResult<String> {
+    ///
+    /// # Safety
+    /// The caller must ensure that `device` is a valid NVML device handle.
+    pub unsafe fn get_device_name(&self, device: *mut nvmlDevice_st) -> NvmlResult<String> {
         let mut name_buf = [0u8; 64];
         let code = unsafe {
             #[cfg(windows)]
@@ -256,7 +259,10 @@ impl NvmlClient {
         NvmlResult { code, value: name }
     }
     /// Get device temperature
-    pub fn get_device_temperature(&self, device: *mut nvmlDevice_st) -> NvmlResult<f32> {
+    ///
+    /// # Safety
+    /// The caller must ensure that `device` is a valid NVML device handle.
+    pub unsafe fn get_device_temperature(&self, device: *mut nvmlDevice_st) -> NvmlResult<f32> {
         let mut temp = 0u32;
         let code = unsafe {
             #[cfg(windows)]
@@ -282,7 +288,10 @@ impl NvmlClient {
         }
     }
     /// Get device utilization rates
-    pub fn get_device_utilization(&self, device: *mut nvmlDevice_st) -> NvmlResult<(f32, f32)> {
+    ///
+    /// # Safety
+    /// The caller must ensure that `device` is a valid NVML device handle.
+    pub unsafe fn get_device_utilization(&self, device: *mut nvmlDevice_st) -> NvmlResult<(f32, f32)> {
         let mut util = nvmlUtilization_t { gpu: 0, memory: 0 };
         let code =
             unsafe { (self.api_table.functions().device_get_utilization_rates)(device, &mut util) };
@@ -292,7 +301,10 @@ impl NvmlClient {
         }
     }
     /// Get device power usage
-    pub fn get_device_power_usage(&self, device: *mut nvmlDevice_st) -> NvmlResult<f32> {
+    ///
+    /// # Safety
+    /// The caller must ensure that `device` is a valid NVML device handle.
+    pub unsafe fn get_device_power_usage(&self, device: *mut nvmlDevice_st) -> NvmlResult<f32> {
         let mut power = 0u32;
         let code =
             unsafe { (self.api_table.functions().device_get_power_usage)(device, &mut power) };
@@ -303,7 +315,10 @@ impl NvmlClient {
         }
     }
     /// Get device clock info
-    pub fn get_device_clock_info(&self, device: *mut nvmlDevice_st) -> NvmlResult<u32> {
+    ///
+    /// # Safety
+    /// The caller must ensure that `device` is a valid NVML device handle.
+    pub unsafe fn get_device_clock_info(&self, device: *mut nvmlDevice_st) -> NvmlResult<u32> {
         let mut clock = 0u32;
         let code = unsafe {
             #[cfg(windows)]
@@ -326,7 +341,10 @@ impl NvmlClient {
         NvmlResult { code, value: clock }
     }
     /// Get device memory info
-    pub fn get_device_memory_info(
+    ///
+    /// # Safety
+    /// The caller must ensure that `device` is a valid NVML device handle.
+    pub unsafe fn get_device_memory_info(
         &self,
         device: *mut nvmlDevice_st,
     ) -> NvmlResult<(u64, u64, u64)> {
@@ -343,7 +361,10 @@ impl NvmlClient {
         }
     }
     /// Create GpuInfo from NVML device
-    pub fn create_gpu_info(&self, device: *mut nvmlDevice_st) -> Option<GpuInfo> {
+    ///
+    /// # Safety
+    /// The caller must ensure that `device` is a valid NVML device handle.
+    pub unsafe fn create_gpu_info(&self, device: *mut nvmlDevice_st) -> Option<GpuInfo> {
         use crate::handle_api_result;
         let name = handle_api_result!(self.get_device_name(device), "Failed to get device name");
         let temperature = handle_api_result!(
@@ -409,7 +430,7 @@ pub fn get_nvidia_gpus() -> Vec<GpuInfo> {
         let mut gpus = Vec::new();
         for i in 0..count {
             if let Some(device) = client.get_device_handle(i).to_option() {
-                if let Some(gpu_info) = client.create_gpu_info(device) {
+                if let Some(gpu_info) = unsafe { client.create_gpu_info(device) } {
                     gpus.push(gpu_info);
                 }
             }
@@ -420,7 +441,7 @@ pub fn get_nvidia_gpus() -> Vec<GpuInfo> {
     #[cfg(unix)]
     {
         if let Some(device) = client.get_device_handle(0).to_option() {
-            if let Some(gpu_info) = client.create_gpu_info(device) {
+            if let Some(gpu_info) = unsafe { client.create_gpu_info(device) } {
                 client.shutdown();
                 return vec![gpu_info];
             }

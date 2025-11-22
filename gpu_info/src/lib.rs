@@ -14,7 +14,6 @@ pub mod provider_manager;
 pub mod providers;
 pub mod unknown;
 pub mod vendor;
-pub mod windows;
 pub use async_api::{get_all_async, get_async, update_gpu_async};
 pub use extended_info::{ExtendedGpuInfo, GpuInfoExtensions};
 pub use gpu_manager::{GpuManager, GpuStatistics};
@@ -23,6 +22,8 @@ pub use provider_manager::GpuProviderManager;
 #[cfg(target_os = "windows")]
 #[path = "windows/mod.rs"]
 pub mod imp;
+#[cfg(target_os = "windows")]
+pub use imp as windows;
 #[cfg(target_os = "macos")]
 #[path = "macos/mod.rs"]
 pub mod imp;

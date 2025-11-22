@@ -6,10 +6,12 @@ fn main() {
     let mut provider_manager = GpuProviderManager::new();
     #[cfg(target_os = "windows")]
     {
-
         provider_manager.register_provider(Vendor::Nvidia, gpu_info::providers::NvidiaProvider);
         provider_manager.register_provider(Vendor::Amd, gpu_info::providers::AmdProvider);
-        provider_manager.register_provider(Vendor::Intel(Default::default()), gpu_info::providers::IntelProvider);
+        provider_manager.register_provider(
+            Vendor::Intel(Default::default()),
+            gpu_info::providers::IntelProvider,
+        );
     }
     println!("Registered vendors:");
     for vendor in provider_manager.get_registered_vendors() {
@@ -36,13 +38,10 @@ fn main() {
     );
     #[cfg(target_os = "windows")]
     {
-        match Vendor::Intel(Default::default()) {
-            intel_vendor => {
-                println!(
-                    "  - Supports Intel: {}",
-                    provider_manager.is_vendor_supported(&intel_vendor)
-                );
-            }
-        }
+        let intel_vendor = Vendor::Intel(Default::default());
+        println!(
+            "  - Supports Intel: {}",
+            provider_manager.is_vendor_supported(&intel_vendor)
+        );
     }
 }

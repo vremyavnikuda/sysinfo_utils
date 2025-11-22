@@ -56,14 +56,11 @@ fn main() {
     );
     #[cfg(target_os = "windows")]
     {
-        match Vendor::Intel(Default::default()) {
-            intel_vendor => {
-                println!(
-                    "  - Supports Intel: {}",
-                    provider_manager.is_vendor_supported(&intel_vendor)
-                );
-            }
-        }
+        let intel_vendor = Vendor::Intel(Default::default());
+        println!(
+            "  - Supports Intel: {}",
+            provider_manager.is_vendor_supported(&intel_vendor)
+        );
     }
     #[cfg(target_os = "linux")]
     {

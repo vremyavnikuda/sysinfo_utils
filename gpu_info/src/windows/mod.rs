@@ -1,10 +1,8 @@
 use crate::gpu_info::GpuInfo;
+use crate::providers::{amd, intel, nvidia};
 use crate::vendor::Vendor;
 use log::{error, info};
 use std::process::Command;
-pub mod amd;
-pub mod intel;
-pub mod nvidia;
 /// Returns information about the GPU.
 /// Automatically detects GPU vendor and returns appropriate information.
 pub fn info_gpu() -> GpuInfo {
