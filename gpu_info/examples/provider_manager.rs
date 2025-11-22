@@ -3,12 +3,13 @@ use gpu_info::vendor::Vendor;
 use gpu_info::GpuProviderManager;
 fn main() {
     println!("GPU Provider Manager Example");
-    let provider_manager = GpuProviderManager::new();
+    let mut provider_manager = GpuProviderManager::new();
     #[cfg(target_os = "windows")]
     {
-        provider_manager.register_provider(Vendor::Nvidia, NvidiaProvider);
-        provider_manager.register_provider(Vendor::Amd, AmdProvider);
-        provider_manager.register_provider(Vendor::Intel(Default::default()), IntelProvider);
+
+        provider_manager.register_provider(Vendor::Nvidia, gpu_info::providers::NvidiaProvider);
+        provider_manager.register_provider(Vendor::Amd, gpu_info::providers::AmdProvider);
+        provider_manager.register_provider(Vendor::Intel(Default::default()), gpu_info::providers::IntelProvider);
     }
     println!("Registered vendors:");
     for vendor in provider_manager.get_registered_vendors() {

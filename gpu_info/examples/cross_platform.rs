@@ -9,6 +9,8 @@ fn main() {
     let mut provider_manager = GpuProviderManager::new();
     #[cfg(target_os = "windows")]
     {
+        use gpu_info::providers::{AmdProvider, IntelProvider, NvidiaProvider};
+
         println!("Registering Windows GPU providers...");
         provider_manager.register_provider(Vendor::Nvidia, NvidiaProvider::new());
         provider_manager.register_provider(Vendor::Amd, AmdProvider::new());

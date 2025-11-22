@@ -79,6 +79,8 @@ pub struct AdlClient {
 impl AdlClient {
     /// Load ADL library and initialize API table
     pub fn new() -> Option<Self> {
+        use crate::ffi_utils::{LibraryLoader, SymbolResolver};
+
         let library = LibraryLoader::new("atiadlxx.dll")
             .with_fallback_path("atiadlxy.dll")
             .with_fallback_path("C:\\Windows\\System32\\atiadlxx.dll")
