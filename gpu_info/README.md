@@ -260,10 +260,6 @@ cargo run --example async_example
 - Linux: NVIDIA NVML or AMD ADL
 - macOS: Apple Metal API (support currently suspended)
 
-## Documentation
-
-dev
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.

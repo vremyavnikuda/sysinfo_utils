@@ -99,12 +99,14 @@ pub struct NvmlClient {
 impl NvmlClient {
     /// Load NVML library and initialize API table
     pub fn new() -> Option<Self> {
-        let library = LibraryLoader::new("nvml.dll")
-            .with_fallback_path(&Self::get_local_nvml_path())
-            .with_fallback_path("C:\\Program Files\\NVIDIA Corporation\\NVSMI\\nvml.dll")
+        // Try system paths first (more secure and up-to-date)
+        let library = LibraryLoader::new("C:\\Program Files\\NVIDIA Corporation\\NVSMI\\nvml.dll")
+            .with_fallback_path("C:\\Windows\\System32\\nvml.dll")
+            .with_fallback_path("nvml.dll")  // Last resort: system PATH
             .load()
             .map_err(|e| {
                 error!("Failed to load NVML library: {}", e);
+                error!("Make sure NVIDIA drivers are installed");
             })
             .ok()?;
         let resolver = SymbolResolver::new(&library);
@@ -128,12 +130,6 @@ impl NvmlClient {
             _library: library,
             api_table: ApiTable::new(functions),
         })
-    }
-
-    fn get_local_nvml_path() -> String {
-        std::env::var("CARGO_MANIFEST_DIR")
-            .map(|dir| format!("{}/src/libs/nvml.dll", dir))
-            .unwrap_or_else(|_| "nvml.dll".to_string())
     }
 }
 

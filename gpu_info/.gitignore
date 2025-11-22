@@ -56,3 +56,9 @@ rust-project.json
 .vscode/
 gpu_info/.vscode
 .anchora
+
+# Don't commit vendor libraries - use system libraries instead
+src/libs/*.dll
+src/libs/*.lib
+src/libs/*.so
+src/libs/*.dylib
