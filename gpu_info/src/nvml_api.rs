@@ -99,10 +99,11 @@ pub struct NvmlClient {
 impl NvmlClient {
     /// Load NVML library and initialize API table
     pub fn new() -> Option<Self> {
-        // Try system paths first (more secure and up-to-date)
-        let library = LibraryLoader::new("C:\\Program Files\\NVIDIA Corporation\\NVSMI\\nvml.dll")
+        // Try loading from system paths
+        // Priority: NVIDIA installation → System32 → System PATH
+        let library = LibraryLoader::new("nvml.dll")
+            .with_fallback_path("C:\\Program Files\\NVIDIA Corporation\\NVSMI\\nvml.dll")
             .with_fallback_path("C:\\Windows\\System32\\nvml.dll")
-            .with_fallback_path("nvml.dll")  // Last resort: system PATH
             .load()
             .map_err(|e| {
                 error!("Failed to load NVML library: {}", e);
