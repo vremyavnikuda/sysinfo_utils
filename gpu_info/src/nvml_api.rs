@@ -291,7 +291,10 @@ impl NvmlClient {
     ///
     /// # Safety
     /// The caller must ensure that `device` is a valid NVML device handle.
-    pub unsafe fn get_device_utilization(&self, device: *mut nvmlDevice_st) -> NvmlResult<(f32, f32)> {
+    pub unsafe fn get_device_utilization(
+        &self,
+        device: *mut nvmlDevice_st,
+    ) -> NvmlResult<(f32, f32)> {
         let mut util = nvmlUtilization_t { gpu: 0, memory: 0 };
         let code =
             unsafe { (self.api_table.functions().device_get_utilization_rates)(device, &mut util) };
