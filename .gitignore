@@ -42,3 +42,6 @@ gpu_info/src/test_provider.rs
 gpu_info/ANALYSIS_REPORT_18_09_2025.md
 gpu_info/CI_CD_SETUP.md
 gpu_info/.github/workflows/README.md
+
+# Exclude examples folder from git but keep locally
+gpu_info/examples/
