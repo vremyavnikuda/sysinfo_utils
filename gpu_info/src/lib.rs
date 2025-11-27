@@ -83,9 +83,3 @@ pub fn get_count() -> usize {
 pub fn get_primary() -> Option<GpuInfo> {
     gpu_manager::get_primary_gpu()
 }
-// Testing API: Get test GPUs for development and testing
-// #[cfg(test)]
-// pub fn get_test_gpus() -> Result<Vec<GpuInfo>> {
-//     let provider = test_provider::create_test_provider();
-//     provider.detect_test_gpus()
-// }
