@@ -46,18 +46,18 @@ fn type_long() {
 }
 
 #[test]
-fn version_short() {
+fn os_version_short() {
     Command::new(BIN_NAME)
-        .arg("-v")
+        .arg("-o")
         .assert()
         .success()
         .stdout(version_predicate());
 }
 
 #[test]
-fn version_long() {
+fn os_version_long() {
     Command::new(BIN_NAME)
-        .arg("--version")
+        .arg("--os-version")
         .assert()
         .success()
         .stdout(version_predicate());
