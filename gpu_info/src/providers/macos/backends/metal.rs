@@ -282,14 +282,14 @@ impl MetalBackend {
     ///
     /// ```no_run
     /// # #[cfg(feature = "macos-metal")]
-    /// # {
+    /// # fn example() -> Result<(), gpu_info::gpu_info::GpuError> {
     /// use gpu_info::providers::macos::backends::MetalBackend;
     /// use gpu_info::gpu_info::GpuInfo;
     ///
     /// let backend = MetalBackend::new()?;
     /// let mut gpu = GpuInfo::default();
     /// backend.update_gpu(&mut gpu)?;
-    /// # Ok::<(), gpu_info::gpu_info::GpuError>(())
+    /// # Ok(())
     /// # }
     /// ```
     pub fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
