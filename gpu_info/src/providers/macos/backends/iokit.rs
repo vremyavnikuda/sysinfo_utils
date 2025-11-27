@@ -273,7 +273,7 @@ impl IOKitBackend {
     ///
     /// Implementation steps:
     /// 1. Create matching dictionary for PCI display controllers:
-    ///    ```rust
+    ///    ```rust,ignore
     ///    let matching_dict = IOServiceMatching(b"IOPCIDevice\0".as_ptr() as *const i8);
     ///    if matching_dict.is_null() {
     ///        return Err(GpuError::DriverNotInstalled);
@@ -286,7 +286,7 @@ impl IOKitBackend {
     ///    - Value: 0x0300 (display controller)
     ///
     /// 3. Get matching services:
-    ///    ```rust
+    ///    ```rust,ignore
     ///    let mut iterator: io_iterator_t = 0;
     ///    let result = IOServiceGetMatchingServices(
     ///        ffi::K_IO_MASTER_PORT_DEFAULT,
@@ -320,7 +320,7 @@ impl IOKitBackend {
     ///
     /// Implementation steps:
     /// 1. Get next service from iterator:
-    ///    ```rust
+    ///    ```rust,ignore
     ///    let service = IOIteratorNext(iterator);
     ///    if service == 0 {
     ///        return None;  // End of iteration
@@ -328,7 +328,7 @@ impl IOKitBackend {
     ///    ```
     ///
     /// 2. Read PCI properties using helper methods:
-    ///    ```rust
+    ///    ```rust,ignore
     ///    let vendor_id = self.read_pci_property_u16(service, "vendor-id")?;
     ///    let device_id = self.read_pci_property_u16(service, "device-id")?;
     ///    let bus = self.read_pci_property_u8(service, "bus")?;
@@ -337,7 +337,7 @@ impl IOKitBackend {
     ///    ```
     ///
     /// 3. Create helper methods (add these to impl block):
-    ///    ```rust
+    ///    ```rust,ignore
     ///    fn read_pci_property_u16(&self, service: io_service_t, key: &str) -> Option<u16> {
     ///        // Use IORegistryEntryCreateCFProperty() to read property
     ///        // Convert CFNumber to u16 using CFNumberGetValue()
@@ -349,7 +349,7 @@ impl IOKitBackend {
     ///    ```
     ///
     /// 4. ALWAYS release service:
-    ///    ```rust
+    ///    ```rust,ignore
     ///    IOObjectRelease(service);
     ///    ```
     ///
@@ -443,7 +443,7 @@ impl IOKitBackend {
     /// Implementation options:
     ///
     /// Option A: Use smc-rs crate (RECOMMENDED if available)
-    /// ```rust
+    /// ```rust,ignore
     /// // Add to Cargo.toml: smc = "0.3"
     /// use smc::SMC;
     ///
@@ -462,7 +462,7 @@ impl IOKitBackend {
     /// ```
     ///
     /// Option C: Parse output from iStats command (FALLBACK)
-    /// ```rust
+    /// ```rust,ignore
     /// let output = Command::new("istats").arg("gpu").output()?;
     /// // Parse temperature from output
     /// ```
@@ -491,7 +491,7 @@ impl IOKitBackend {
     /// - Getting detailed PCI info for a known device
     ///
     /// Implementation:
-    /// ```rust
+    /// ```rust,ignore
     /// // Search cached devices first
     /// for (pci_info, name) in &self.cached_devices {
     ///     if name == device_name {

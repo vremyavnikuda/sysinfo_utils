@@ -227,7 +227,7 @@ impl MetalBackend {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```ignore
     /// # #[cfg(feature = "macos-metal")]
     /// # {
     /// use gpu_info::providers::macos::backends::MetalBackend;
