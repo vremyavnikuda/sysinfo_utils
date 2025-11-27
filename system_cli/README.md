@@ -22,10 +22,13 @@ system_cli
 system_cli --all
 
 # Show specific OS information
-system_cli --system-type        # or -t
-system_cli --system-version
-system_cli --bit-depth          # or -b
+system_cli --type               # or -t
+system_cli --os-version         # or -o
+system_cli --bitness            # or -b
 system_cli --architecture       # or -a
+
+# Show CLI version
+system_cli --version            # or -v
 
 # Combine multiple flags
 system_cli -t -b
@@ -48,21 +51,26 @@ OS information:
 ### Show specific fields
 
 ```bash
-$ system_cli --system-type
+$ system_cli --type
 OS type: Windows
 
 $ system_cli -t -b
 OS type: Windows
 OS bitness: 64-bit
+
+$ system_cli --version
+system_cli 0.1.0
 ```
 
 ## Options
 
 - `--all`: Show all OS information (default if no flags specified)
-- `-t, --system-type`: Show OS type
-- `--system-version`: Show OS version
-- `-b, --bit-depth`: Show OS bitness (32-bit or 64-bit)
+- `-t, --type`: Show OS type
+- `-o, --os-version`: Show OS version
+- `-b, --bitness`: Show OS bitness (32-bit or 64-bit)
 - `-a, --architecture`: Show CPU architecture
+- `-v, --version`: Show CLI version
+- `-h, --help`: Show help information
 
 ## License
 

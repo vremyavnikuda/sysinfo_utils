@@ -66,10 +66,13 @@ system_cli
 system_cli --all
 
 # Show specific system information
-system_cli --system-type        # or -t
-system_cli --system-version
-system_cli --bit-depth          # or -b
+system_cli --type               # or -t
+system_cli --os-version         # or -o
+system_cli --bitness            # or -b
 system_cli --architecture       # or -a
+
+# Show CLI version
+system_cli --version            # or -v
 
 # Combine multiple flags
 system_cli -t -b -a
