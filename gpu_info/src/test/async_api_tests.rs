@@ -5,7 +5,7 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::async_api::{get_all_async, get_async, update_gpu_async};
+    use crate::async_api::{get_all_async, get_all_async_owned, get_async, update_gpu_async};
     use crate::gpu_info::GpuInfo;
     use crate::vendor::Vendor;
     use std::sync::Arc;
@@ -234,7 +234,7 @@ mod tests {
     async fn test_full_async_workflow() {
         let primary_gpu_result = get_async().await;
         println!("Primary GPU result: {:?}", primary_gpu_result.is_ok());
-        let all_gpus_result = get_all_async().await;
+        let all_gpus_result = get_all_async_owned().await;
         match &all_gpus_result {
             Ok(gpus) => println!("Found {} GPUs total", gpus.len()),
             Err(e) => println!("Failed to get all GPUs: {}", e),

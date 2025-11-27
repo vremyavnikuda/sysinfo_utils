@@ -1,5 +1,6 @@
 use crate::vendor::Vendor;
 use std::fmt::{Debug, Display, Formatter};
+use std::sync::Arc;
 use std::time::Duration;
 #[derive(Debug, thiserror::Error)]
 pub enum GpuError {
@@ -806,8 +807,12 @@ impl GpuInfoCache {
             cache: crate::cache_utils::GpuInfoCache::new(ttl),
         }
     }
-    pub fn get(&self) -> Option<GpuInfo> {
+    pub fn get(&self) -> Option<Arc<GpuInfo>> {
         self.cache.get()
+    }
+
+    pub fn get_owned(&self) -> Option<GpuInfo> {
+        self.cache.get_owned()
     }
     pub fn set(&self, info: GpuInfo) {
         self.cache.set(info);

@@ -14,7 +14,9 @@ pub mod provider_manager;
 pub mod providers;
 pub mod unknown;
 pub mod vendor;
-pub use async_api::{get_all_async, get_async, update_gpu_async};
+pub use async_api::{
+    get_all_async, get_all_async_owned, get_async, get_async_owned, update_gpu_async,
+};
 pub use extended_info::{ExtendedGpuInfo, GpuInfoExtensions};
 pub use gpu_manager::{GpuManager, GpuStatistics};
 pub use monitoring::{AlertType, GpuMonitor, GpuThresholds, MonitorConfig};

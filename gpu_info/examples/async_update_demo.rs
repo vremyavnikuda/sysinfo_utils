@@ -1,6 +1,6 @@
 //! Example demonstrating the corrected async GPU update functionality
 use gpu_info::{
-    async_api::{get_async, update_gpu_async},
+    async_api::{get_async_owned, update_gpu_async},
     vendor::Vendor,
 };
 use std::time::Duration;
@@ -8,7 +8,7 @@ use std::time::Duration;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Async GPU Update Demo");
-    let mut gpu = get_async().await?;
+    let mut gpu = get_async_owned().await?;
     println!("Initial GPU Info:");
     println!("-- Vendor: {}", gpu.vendor);
     println!("-- Name: {}", gpu.format_name_gpu());
@@ -31,7 +31,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Error: {}", e);
             }
         }
-        // Small delay between updates
         std::thread::sleep(Duration::from_millis(500));
     }
     println!("Vendor-specific update behavior:");
@@ -43,7 +42,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Vendor::Unknown => println!("-- Using fallback update method"),
         _ => println!("-- Using generic update method"),
     }
-
     println!("Demo completed successfully!");
     Ok(())
 }

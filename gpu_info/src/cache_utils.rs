@@ -2,6 +2,8 @@
 //!
 //! This module provides unified caching mechanisms to eliminate duplication
 //! in GPU information caching across different components.
+//!
+//! Uses `Arc<GpuInfo>` internally to avoid cloning on cache hits.
 use crate::gpu_info::GpuInfo;
 use log::debug;
 use std::collections::HashMap;
@@ -47,7 +49,8 @@ impl<T> CacheEntry<T> {
 /// Single-item cache for GPU information
 ///
 /// This cache eliminates duplication by providing a unified caching mechanism
-/// for single GPU information items.
+/// for single GPU information items. Uses `Arc<GpuInfo>` internally to avoid
+/// cloning on cache hits (zero-cost abstraction).
 ///
 /// # Examples
 /// ```
@@ -57,11 +60,11 @@ impl<T> CacheEntry<T> {
 /// let cache = GpuInfoCache::new(Duration::from_secs(1));
 /// let gpu_info = GpuInfo::unknown();
 /// cache.set(gpu_info.clone());
-/// assert_eq!(cache.get(), Some(gpu_info));
+/// assert!(cache.get().is_some());
 /// ```
 pub struct GpuInfoCache {
-    /// Cached GPU information with timestamp
-    info: RwLock<Option<CacheEntry<GpuInfo>>>,
+    /// Cached GPU information with timestamp (Arc for cheap cloning)
+    info: RwLock<Option<CacheEntry<Arc<GpuInfo>>>>,
     /// Time-to-live for cached entries
     ttl: Duration,
 }
@@ -74,13 +77,15 @@ impl GpuInfoCache {
         }
     }
     /// Get cached GPU information if it's still valid
-    pub fn get(&self) -> Option<GpuInfo> {
+    ///
+    /// Returns `Arc<GpuInfo>` for cheap cloning (no data duplication).
+    pub fn get(&self) -> Option<Arc<GpuInfo>> {
         let mut guard = self.info.write().ok()?;
         if let Some(entry) = guard.as_mut() {
             if entry.is_valid(self.ttl) {
                 entry.record_access();
                 debug!("Returning cached GPU info (age: {:?})", entry.age());
-                Some(entry.value.clone())
+                Some(Arc::clone(&entry.value))
             } else {
                 debug!("Cached GPU info expired (age: {:?})", entry.age());
                 None
@@ -89,10 +94,19 @@ impl GpuInfoCache {
             None
         }
     }
+
+    /// Get cached GPU information as owned value (clones the data)
+    ///
+    /// Use this when you need to mutate the GPU info.
+    /// For read-only access, prefer `get()` which returns `Arc<GpuInfo>`.
+    pub fn get_owned(&self) -> Option<GpuInfo> {
+        self.get().map(|arc| (*arc).clone())
+    }
+
     /// Set GPU information in the cache
     pub fn set(&self, info: GpuInfo) {
         if let Ok(mut guard) = self.info.write() {
-            *guard = Some(CacheEntry::new(info));
+            *guard = Some(CacheEntry::new(Arc::new(info)));
             debug!("Updated GPU info cache");
         }
     }
@@ -128,7 +142,8 @@ impl Default for GpuInfoCache {
 /// Multi-item cache for multiple GPU information entries
 ///
 /// This cache eliminates duplication by providing a unified caching mechanism
-/// for multiple GPU information items indexed by key.
+/// for multiple GPU information items indexed by key. Uses `Arc<GpuInfo>` internally
+/// to avoid cloning on cache hits.
 ///
 /// # Examples
 /// ```rust
@@ -138,12 +153,12 @@ impl Default for GpuInfoCache {
 /// let cache = MultiGpuInfoCache::new(Duration::from_secs(1));
 /// let gpu_info = GpuInfo::unknown();
 /// cache.set(0, gpu_info.clone());
-/// assert_eq!(cache.get(&0), Some(gpu_info));
+/// assert!(cache.get(&0).is_some());
 /// ```
 #[derive(Debug, Clone)]
 pub struct MultiGpuInfoCache {
-    /// Cached GPU information entries indexed by key
-    entries: Arc<Mutex<HashMap<usize, CacheEntry<GpuInfo>>>>,
+    /// Cached GPU information entries indexed by key (Arc for cheap cloning)
+    entries: Arc<Mutex<HashMap<usize, CacheEntry<Arc<GpuInfo>>>>>,
     /// Time-to-live for cached entries
     ttl: Duration,
     /// Maximum number of entries to keep in cache (0 = unlimited)
@@ -167,7 +182,9 @@ impl MultiGpuInfoCache {
         }
     }
     /// Get cached GPU information by key if it's still valid
-    pub fn get(&self, key: &usize) -> Option<GpuInfo> {
+    ///
+    /// Returns `Arc<GpuInfo>` for cheap cloning (no data duplication).
+    pub fn get(&self, key: &usize) -> Option<Arc<GpuInfo>> {
         let mut guard = self.entries.lock().ok()?;
         if let Some(entry) = guard.get_mut(key) {
             if entry.is_valid(self.ttl) {
@@ -177,7 +194,7 @@ impl MultiGpuInfoCache {
                     key,
                     entry.age()
                 );
-                Some(entry.value.clone())
+                Some(Arc::clone(&entry.value))
             } else {
                 debug!(
                     "Cached GPU info for key {} expired (age: {:?})",
@@ -191,10 +208,19 @@ impl MultiGpuInfoCache {
             None
         }
     }
+
+    /// Get cached GPU information as owned value (clones the data)
+    ///
+    /// Use this when you need to mutate the GPU info.
+    /// For read-only access, prefer `get()` which returns `Arc<GpuInfo>`.
+    pub fn get_owned(&self, key: &usize) -> Option<GpuInfo> {
+        self.get(key).map(|arc| (*arc).clone())
+    }
+
     /// Set GPU information in the cache by key
     pub fn set(&self, key: usize, info: GpuInfo) {
         if let Ok(mut guard) = self.entries.lock() {
-            guard.insert(key, CacheEntry::new(info));
+            guard.insert(key, CacheEntry::new(Arc::new(info)));
             // Apply LRU eviction if we have a limit
             if self.max_entries > 0 && guard.len() > self.max_entries {
                 self.evict_lru_entries(&mut guard);
@@ -203,7 +229,7 @@ impl MultiGpuInfoCache {
         }
     }
     /// Evict least recently used entries to maintain size limit
-    fn evict_lru_entries(&self, guard: &mut HashMap<usize, CacheEntry<GpuInfo>>) {
+    fn evict_lru_entries(&self, guard: &mut HashMap<usize, CacheEntry<Arc<GpuInfo>>>) {
         if guard.len() <= self.max_entries {
             return;
         }
@@ -335,9 +361,21 @@ impl AdaptiveGpuCache {
             frequency_factor,
         }
     }
-    /// Get cached GPU information by key with adaptive TTL
-    pub fn get(&self, key: &usize) -> Option<GpuInfo> {
+    /// Get cached GPU information by key with adaptive TTL (zero-copy)
+    ///
+    /// Returns `Arc<GpuInfo>` for efficient sharing without cloning.
+    /// Use `get_owned()` if you need to mutate the data.
+    pub fn get(&self, key: &usize) -> Option<Arc<GpuInfo>> {
         self.cache.get(key)
+    }
+
+    /// Get cached GPU information by key (owned copy)
+    ///
+    /// Returns a cloned copy of cached GPU information.
+    /// Use this when you need to mutate the GPU info.
+    /// For read-only access, prefer `get()` which is more efficient.
+    pub fn get_owned(&self, key: &usize) -> Option<GpuInfo> {
+        self.cache.get_owned(key)
     }
     /// Set GPU information in the cache with adaptive TTL
     pub fn set(&self, key: usize, info: GpuInfo) {
@@ -389,16 +427,16 @@ mod tests {
         let gpu_info = GpuInfo::unknown();
         cache.set(gpu_info.clone());
         assert!(cache.has_entry());
-        assert_eq!(cache.get(), Some(gpu_info));
+        assert_eq!(cache.get_owned(), Some(gpu_info));
     }
     #[test]
     fn test_gpu_info_cache_expiration() {
         let cache = GpuInfoCache::new(Duration::from_millis(10));
         let gpu_info = GpuInfo::unknown();
         cache.set(gpu_info.clone());
-        assert_eq!(cache.get(), Some(gpu_info));
+        assert_eq!(cache.get_owned(), Some(gpu_info));
         thread::sleep(Duration::from_millis(20));
-        assert_eq!(cache.get(), None);
+        assert_eq!(cache.get_owned(), None);
     }
     #[test]
     fn test_multi_gpu_info_cache_creation() {
@@ -412,7 +450,7 @@ mod tests {
         let gpu_info = GpuInfo::unknown();
         cache.set(0, gpu_info.clone());
         assert!(!cache.is_empty());
-        assert_eq!(cache.get(&0), Some(gpu_info));
+        assert_eq!(cache.get_owned(&0), Some(gpu_info));
     }
     #[test]
     fn test_multi_gpu_info_cache_multiple_keys() {
@@ -422,7 +460,7 @@ mod tests {
         cache.set(0, gpu_info1.clone());
         cache.set(1, gpu_info2.clone());
         assert_eq!(cache.len(), 2);
-        assert_eq!(cache.get(&0), Some(gpu_info1));
-        assert_eq!(cache.get(&1), Some(gpu_info2));
+        assert_eq!(cache.get_owned(&0), Some(gpu_info1));
+        assert_eq!(cache.get_owned(&1), Some(gpu_info2));
     }
 }

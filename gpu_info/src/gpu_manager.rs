@@ -3,12 +3,12 @@ use crate::vendor::Vendor;
 use log::{debug, error, info, warn};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-/// Менеджер для работы с множественными GPU в системе
+/// Manager for working with multiple GPUs in the system
 #[derive(Debug, Clone)]
 pub struct GpuManager {
-    /// Список всех обнаруженных GPU
+    /// List of all detected GPUs
     gpus: Vec<GpuInfo>,
-    /// Индекс основного GPU (используется по умолчанию)
+    /// Index of the primary GPU (used by default)
     primary_gpu_index: usize,
     /// GPU information cache with unified caching utilities
     ///
@@ -21,7 +21,7 @@ impl Default for GpuManager {
     }
 }
 impl GpuManager {
-    /// Создает новый менеджер GPU с автоматическим обнаружением
+    /// Creates a new GPU manager with automatic detection
     pub fn new() -> Self {
         let mut manager = Self {
             gpus: Vec::new(),
@@ -31,7 +31,7 @@ impl GpuManager {
         manager.detect_all_gpus();
         manager
     }
-    /// Создает менеджер с настраиваемым TTL кэша
+    /// Creates a manager with configurable cache TTL
     pub fn with_cache_ttl(cache_ttl: Duration) -> Self {
         let mut manager = Self {
             gpus: Vec::new(),
@@ -41,7 +41,7 @@ impl GpuManager {
         manager.detect_all_gpus();
         manager
     }
-    /// Создает менеджер с настраиваемым TTL кэша и максимальным размером
+    /// Creates a manager with configurable cache TTL and maximum size
     pub fn with_cache_config(cache_ttl: Duration, max_entries: usize) -> Self {
         let mut manager = Self {
             gpus: Vec::new(),
@@ -51,7 +51,7 @@ impl GpuManager {
         manager.detect_all_gpus();
         manager
     }
-    /// Обнаруживает все GPU в системе
+    /// Detects all GPUs in the system
     pub fn detect_all_gpus(&mut self) {
         self.gpus.clear();
         info!("Starting multi-GPU detection");
@@ -140,7 +140,7 @@ impl GpuManager {
             self.gpus.push(gpu);
         }
     }
-    /// Выбирает основной GPU (приоритет дискретным GPU)
+    /// Selects the primary GPU (priority to discrete GPUs)
     fn select_primary_gpu(&mut self) {
         for (index, gpu) in self.gpus.iter().enumerate() {
             match gpu.vendor {
@@ -166,42 +166,42 @@ impl GpuManager {
             );
         }
     }
-    /// Возвращает количество обнаруженных GPU
+    /// Returns the number of detected GPUs
     pub fn gpu_count(&self) -> usize {
         self.gpus.len()
     }
-    /// Возвращает информацию о всех GPU
+    /// Returns information about all GPUs
     pub fn get_all_gpus(&self) -> &Vec<GpuInfo> {
         &self.gpus
     }
-    /// Возвращает копию всех GPU
+    /// Returns a copy of all GPUs
     pub fn get_all_gpus_owned(&self) -> Vec<GpuInfo> {
         self.gpus.clone()
     }
-    /// Возвращает основной GPU
+    /// Returns the primary GPU
     pub fn get_primary_gpu(&self) -> Option<&GpuInfo> {
         self.gpus.get(self.primary_gpu_index)
     }
-    /// Возвращает копию основного GPU
+    /// Returns a copy of the primary GPU
     pub fn get_primary_gpu_owned(&self) -> Option<GpuInfo> {
         self.gpus.get(self.primary_gpu_index).cloned()
     }
-    /// Возвращает GPU по индексу
+    /// Returns GPU by index
     pub fn get_gpu_by_index(&self, index: usize) -> Option<&GpuInfo> {
         self.gpus.get(index)
     }
-    /// Возвращает копию GPU по индексу
+    /// Returns a copy of GPU by index
     pub fn get_gpu_by_index_owned(&self, index: usize) -> Option<GpuInfo> {
         self.gpus.get(index).cloned()
     }
-    /// Возвращает GPU по производителю
+    /// Returns GPUs by vendor
     pub fn get_gpus_by_vendor(&self, vendor: Vendor) -> Vec<&GpuInfo> {
         self.gpus
             .iter()
             .filter(|gpu| gpu.vendor == vendor)
             .collect()
     }
-    /// Возвращает копии GPU по производителю
+    /// Returns copies of GPUs by vendor
     pub fn get_gpus_by_vendor_owned(&self, vendor: Vendor) -> Vec<GpuInfo> {
         self.gpus
             .iter()
@@ -209,7 +209,7 @@ impl GpuManager {
             .cloned()
             .collect()
     }
-    /// Устанавливает основной GPU
+    /// Sets the primary GPU
     pub fn set_primary_gpu(&mut self, index: usize) -> Result<()> {
         if index >= self.gpus.len() {
             return Err(GpuError::GpuNotFound);
@@ -222,7 +222,7 @@ impl GpuManager {
         );
         Ok(())
     }
-    /// Обновляет информацию о всех GPU
+    /// Updates information about all GPUs
     pub fn refresh_all_gpus(&mut self) -> Result<()> {
         debug!("Refreshing information for all {} GPUs", self.gpus.len());
         let mut errors = Vec::new();
@@ -236,21 +236,25 @@ impl GpuManager {
         if errors.is_empty() {
             Ok(())
         } else {
-            Err(errors.into_iter().next().unwrap().1)
+            Err(errors
+                .into_iter()
+                .next()
+                .expect("errors vector should not be empty when errors.is_empty() is false")
+                .1)
         }
     }
-    /// Обновляет информацию о конкретном GPU
+    /// Updates information about a specific GPU
     pub fn refresh_gpu(&mut self, index: usize) -> Result<()> {
         let gpu = self.gpus.get_mut(index).ok_or(GpuError::GpuNotFound)?;
         Self::update_single_gpu_static(gpu)?;
         self.cache.set(index, gpu.clone());
         Ok(())
     }
-    /// Обновляет информацию об основном GPU
+    /// Updates information about the primary GPU
     pub fn refresh_primary_gpu(&mut self) -> Result<()> {
         self.refresh_gpu(self.primary_gpu_index)
     }
-    /// Внутренняя функция обновления одного GPU
+    /// Internal function for updating a single GPU
     fn update_single_gpu_static(gpu: &mut GpuInfo) -> Result<()> {
         #[cfg(target_os = "windows")]
         {
@@ -294,8 +298,11 @@ impl GpuManager {
             Ok(())
         }
     }
-    /// Возвращает GPU с кэшированием
-    pub fn get_gpu_cached(&self, index: usize) -> Option<GpuInfo> {
+    /// Returns GPU with caching (zero-copy)
+    ///
+    /// Returns `Arc<GpuInfo>` for efficient sharing without cloning.
+    /// Use `get_gpu_cached_owned()` if you need to mutate the data.
+    pub fn get_gpu_cached(&self, index: usize) -> Option<Arc<GpuInfo>> {
         if let Some(cached_gpu) = self.cache.get(&index) {
             debug!("Returning cached GPU #{}", index);
             return Some(cached_gpu);
@@ -303,16 +310,45 @@ impl GpuManager {
         if let Some(gpu) = self.get_gpu_by_index_owned(index) {
             self.cache.set(index, gpu.clone());
             debug!("Populated cache for GPU #{}", index);
-            Some(gpu)
+            self.cache.get(&index)
         } else {
             None
         }
     }
-    /// Возвращает основной GPU с кэшированием
-    pub fn get_primary_gpu_cached(&self) -> Option<GpuInfo> {
+
+    /// Returns GPU with caching (owned copy)
+    ///
+    /// Returns a cloned copy of cached GPU information.
+    /// Use this when you need to mutate the GPU info.
+    /// For read-only access, prefer `get_gpu_cached()` which is more efficient.
+    pub fn get_gpu_cached_owned(&self, index: usize) -> Option<GpuInfo> {
+        self.cache.get_owned(&index).or_else(|| {
+            if let Some(gpu) = self.get_gpu_by_index_owned(index) {
+                self.cache.set(index, gpu.clone());
+                Some(gpu)
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Returns primary GPU with caching (zero-copy)
+    ///
+    /// Returns `Arc<GpuInfo>` for efficient sharing without cloning.
+    /// Use `get_primary_gpu_cached_owned()` if you need to mutate the data.
+    pub fn get_primary_gpu_cached(&self) -> Option<Arc<GpuInfo>> {
         self.get_gpu_cached(self.primary_gpu_index)
     }
-    /// Возвращает статистику по GPU
+
+    /// Returns primary GPU with caching (owned copy)
+    ///
+    /// Returns a cloned copy of cached primary GPU information.
+    /// Use this when you need to mutate the GPU info.
+    /// For read-only access, prefer `get_primary_gpu_cached()` which is more efficient.
+    pub fn get_primary_gpu_cached_owned(&self) -> Option<GpuInfo> {
+        self.get_gpu_cached_owned(self.primary_gpu_index)
+    }
+    /// Returns GPU statistics
     pub fn get_gpu_statistics(&self) -> GpuStatistics {
         let mut stats = GpuStatistics::default();
         for gpu in &self.gpus {
@@ -345,11 +381,11 @@ impl GpuManager {
         stats.total_gpus = self.gpus.len();
         stats
     }
-    /// Проверяет, все ли GPU активны
+    /// Checks if all GPUs are active
     pub fn all_gpus_active(&self) -> bool {
         self.gpus.iter().all(|gpu| gpu.active.unwrap_or(false))
     }
-    /// Возвращает список индексов активных GPU
+    /// Returns a list of active GPU indices
     pub fn get_active_gpu_indices(&self) -> Vec<usize> {
         self.gpus
             .iter()
@@ -358,12 +394,12 @@ impl GpuManager {
             .map(|(index, _)| index)
             .collect()
     }
-    /// Получает статистику кэша
+    /// Gets cache statistics
     pub fn get_cache_stats(&self) -> Option<crate::cache_utils::CacheStats> {
         self.cache.get_stats()
     }
 }
-/// Статистика по GPU в системе
+/// GPU statistics in the system
 #[derive(Debug, Default, Clone)]
 pub struct GpuStatistics {
     pub total_gpus: usize,
@@ -378,7 +414,7 @@ pub struct GpuStatistics {
     pub power_readings: usize,
 }
 impl GpuStatistics {
-    /// Возвращает среднюю температуру по всем GPU
+    /// Returns the average temperature across all GPUs
     pub fn average_temperature(&self) -> Option<f32> {
         if self.temperature_readings > 0 {
             Some(self.total_temperature / (self.temperature_readings as f32))
@@ -386,7 +422,7 @@ impl GpuStatistics {
             None
         }
     }
-    /// Возвращает общее энергопотребление всех GPU
+    /// Returns the total power consumption of all GPUs
     pub fn total_power_consumption(&self) -> Option<f32> {
         if self.power_readings > 0 {
             Some(self.total_power_usage)
@@ -395,26 +431,38 @@ impl GpuStatistics {
         }
     }
 }
-// Глобальная статическая переменная для singleton доступа
+// Global static variable for singleton access
 use std::sync::OnceLock;
 static GPU_MANAGER: OnceLock<Arc<Mutex<GpuManager>>> = OnceLock::new();
-/// Возвращает глобальный экземпляр GpuManager
+/// Returns the global GpuManager instance
 pub fn global_gpu_manager() -> Arc<Mutex<GpuManager>> {
     GPU_MANAGER
         .get_or_init(|| Arc::new(Mutex::new(GpuManager::new())))
         .clone()
 }
-/// Convenience функция для получения основного GPU
+/// Convenience function for getting the primary GPU (owned copy)
+///
+/// Returns owned `GpuInfo` for backward compatibility.
+/// For more efficient access, use `GpuManager::get_primary_gpu_cached()`.
 pub fn get_primary_gpu() -> Option<GpuInfo> {
     let manager = global_gpu_manager();
     let result = if let Ok(mgr) = manager.lock() {
-        mgr.get_primary_gpu_cached()
+        mgr.get_primary_gpu_cached_owned()
     } else {
         None
     };
     result
 }
-/// Convenience функция для получения всех GPU
+
+/// Convenience function for getting the primary GPU (zero-copy)
+///
+/// Returns `Arc<GpuInfo>` for efficient sharing without cloning.
+pub fn get_primary_gpu_arc() -> Option<Arc<GpuInfo>> {
+    let manager = global_gpu_manager();
+    let mgr = manager.lock().ok()?;
+    mgr.get_primary_gpu_cached()
+}
+/// Convenience function for getting all GPUs
 pub fn get_all_gpus() -> Vec<GpuInfo> {
     let manager = global_gpu_manager();
     let result = if let Ok(mgr) = manager.lock() {
@@ -424,7 +472,7 @@ pub fn get_all_gpus() -> Vec<GpuInfo> {
     };
     result
 }
-/// Convenience функция для получения количества GPU
+/// Convenience function for getting the GPU count
 pub fn get_gpu_count() -> usize {
     let manager = global_gpu_manager();
     let result = if let Ok(mgr) = manager.lock() {

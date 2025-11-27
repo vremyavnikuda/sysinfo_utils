@@ -18,7 +18,7 @@ mod tests {
             let cache_clone = Arc::clone(&cache);
             let gpu_info_clone = gpu_info.clone();
             let handle = thread::spawn(move || {
-                let result = cache_clone.get(&key);
+                let result = cache_clone.get_owned(&key);
                 assert_eq!(result, Some(gpu_info_clone));
                 cache_clone.set(i + 100, GpuInfo::write_vendor(Vendor::Amd));
                 true
@@ -29,14 +29,14 @@ mod tests {
             assert!(handle.join().unwrap());
         }
         assert_eq!(cache.len(), 11);
-        assert_eq!(cache.get(&key), Some(gpu_info));
+        assert_eq!(cache.get_owned(&key), Some(gpu_info));
     }
     #[test]
     fn test_cache_with_very_short_ttl() {
         let cache = GpuInfoCache::new(Duration::from_nanos(1));
         let gpu_info = GpuInfo::write_vendor(Vendor::Nvidia);
         cache.set(gpu_info.clone());
-        assert_eq!(cache.get(), None);
+        assert_eq!(cache.get_owned(), None);
     }
     #[test]
     fn test_multi_cache_with_very_short_ttl() {
@@ -44,7 +44,7 @@ mod tests {
         let gpu_info = GpuInfo::write_vendor(Vendor::Nvidia);
         let key = 0;
         cache.set(key, gpu_info.clone());
-        assert_eq!(cache.get(&key), None);
+        assert_eq!(cache.get_owned(&key), None);
     }
     #[test]
     fn test_cache_with_zero_max_entries() {
@@ -88,7 +88,7 @@ mod tests {
     #[test]
     fn test_cache_get_on_nonexistent_key() {
         let cache = MultiGpuInfoCache::new(Duration::from_secs(1));
-        assert_eq!(cache.get(&999), None);
+        assert_eq!(cache.get_owned(&999), None);
     }
     #[test]
     fn test_cache_with_very_large_key() {
@@ -96,7 +96,7 @@ mod tests {
         let gpu_info = GpuInfo::write_vendor(Vendor::Nvidia);
         let large_key = usize::MAX;
         cache.set(large_key, gpu_info.clone());
-        assert_eq!(cache.get(&large_key), Some(gpu_info));
+        assert_eq!(cache.get_owned(&large_key), Some(gpu_info));
         assert!(cache.has_entry(&large_key));
         cache.clear_key(&large_key);
         assert!(!cache.has_entry(&large_key));
@@ -113,7 +113,7 @@ mod tests {
     fn test_gpubuffer_cache_methods_with_immediate_access() {
         let cache = GpuInfoCache::new(Duration::from_secs(1));
         assert!(!cache.has_entry());
-        assert_eq!(cache.get(), None);
+        assert_eq!(cache.get_owned(), None);
         assert_eq!(cache.age(), None);
     }
     #[test]
@@ -122,6 +122,6 @@ mod tests {
         assert!(cache.is_empty());
         assert_eq!(cache.len(), 0);
         assert!(!cache.has_entry(&0));
-        assert_eq!(cache.get(&0), None);
+        assert_eq!(cache.get_owned(&0), None);
     }
 }

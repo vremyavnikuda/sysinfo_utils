@@ -56,14 +56,14 @@ mod tests {
         let ttl = Duration::from_secs(1);
         let cache = GpuInfoCache::new(ttl);
         assert!(!cache.has_entry());
-        assert_eq!(cache.get(), None);
+        assert_eq!(cache.get_owned(), None);
         assert_eq!(cache.age(), None);
     }
     #[test]
     fn test_gpu_info_cache_default() {
         let cache = GpuInfoCache::default();
         assert!(!cache.has_entry());
-        assert_eq!(cache.get(), None);
+        assert_eq!(cache.get_owned(), None);
     }
     #[test]
     fn test_gpu_info_cache_set_and_get() {
@@ -71,7 +71,7 @@ mod tests {
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         cache.set(gpu_info.clone());
         assert!(cache.has_entry());
-        assert_eq!(cache.get(), Some(gpu_info));
+        assert_eq!(cache.get_owned(), Some(gpu_info));
         assert!(cache.age().unwrap() < Duration::from_millis(100));
     }
     #[test]
@@ -79,9 +79,9 @@ mod tests {
         let cache = GpuInfoCache::new(Duration::from_millis(10));
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         cache.set(gpu_info.clone());
-        assert_eq!(cache.get(), Some(gpu_info));
+        assert_eq!(cache.get_owned(), Some(gpu_info));
         thread::sleep(Duration::from_millis(20));
-        assert_eq!(cache.get(), None);
+        assert_eq!(cache.get_owned(), None);
     }
     #[test]
     fn test_gpu_info_cache_clear() {
@@ -89,10 +89,10 @@ mod tests {
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         cache.set(gpu_info.clone());
         assert!(cache.has_entry());
-        assert_eq!(cache.get(), Some(gpu_info));
+        assert_eq!(cache.get_owned(), Some(gpu_info));
         cache.clear();
         assert!(!cache.has_entry());
-        assert_eq!(cache.get(), None);
+        assert_eq!(cache.get_owned(), None);
     }
     #[test]
     fn test_gpu_info_cache_access_tracking() {
@@ -108,14 +108,14 @@ mod tests {
         let cache = MultiGpuInfoCache::new(ttl);
         assert!(cache.is_empty());
         assert_eq!(cache.len(), 0);
-        assert_eq!(cache.get(&0), None);
+        assert_eq!(cache.get_owned(&0), None);
     }
     #[test]
     fn test_multi_gpu_info_cache_default() {
         let cache = MultiGpuInfoCache::default();
         assert!(cache.is_empty());
         assert_eq!(cache.len(), 0);
-        assert_eq!(cache.get(&0), None);
+        assert_eq!(cache.get_owned(&0), None);
     }
     #[test]
     fn test_multi_gpu_info_cache_with_max_entries() {
@@ -124,7 +124,7 @@ mod tests {
         let cache = MultiGpuInfoCache::with_max_entries(ttl, max_entries);
         assert!(cache.is_empty());
         assert_eq!(cache.len(), 0);
-        assert_eq!(cache.get(&0), None);
+        assert_eq!(cache.get_owned(&0), None);
     }
     #[test]
     fn test_multi_gpu_info_cache_set_and_get() {
@@ -135,7 +135,7 @@ mod tests {
         assert!(!cache.is_empty());
         assert_eq!(cache.len(), 1);
         assert!(cache.has_entry(&key));
-        assert_eq!(cache.get(&key), Some(gpu_info));
+        assert_eq!(cache.get_owned(&key), Some(gpu_info));
     }
     #[test]
     fn test_multi_gpu_info_cache_multiple_entries() {
@@ -150,8 +150,8 @@ mod tests {
         assert_eq!(cache.len(), 2);
         assert!(cache.has_entry(&key1));
         assert!(cache.has_entry(&key2));
-        assert_eq!(cache.get(&key1), Some(gpu_info1));
-        assert_eq!(cache.get(&key2), Some(gpu_info2));
+        assert_eq!(cache.get_owned(&key1), Some(gpu_info1));
+        assert_eq!(cache.get_owned(&key2), Some(gpu_info2));
     }
     #[test]
     fn test_multi_gpu_info_cache_expiration() {
@@ -159,9 +159,9 @@ mod tests {
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         let key = 0;
         cache.set(key, gpu_info.clone());
-        assert_eq!(cache.get(&key), Some(gpu_info));
+        assert_eq!(cache.get_owned(&key), Some(gpu_info));
         thread::sleep(Duration::from_millis(20));
-        assert_eq!(cache.get(&key), None);
+        assert_eq!(cache.get_owned(&key), None);
         assert!(!cache.has_entry(&key));
     }
     #[test]
@@ -178,8 +178,8 @@ mod tests {
         assert_eq!(cache.len(), 1);
         assert!(!cache.has_entry(&key1));
         assert!(cache.has_entry(&key2));
-        assert_eq!(cache.get(&key1), None);
-        assert_eq!(cache.get(&key2), Some(gpu_info2));
+        assert_eq!(cache.get_owned(&key1), None);
+        assert_eq!(cache.get_owned(&key2), Some(gpu_info2));
     }
     #[test]
     fn test_multi_gpu_info_cache_clear_all() {
@@ -196,8 +196,8 @@ mod tests {
         assert!(cache.is_empty());
         assert!(!cache.has_entry(&key1));
         assert!(!cache.has_entry(&key2));
-        assert_eq!(cache.get(&key1), None);
-        assert_eq!(cache.get(&key2), None);
+        assert_eq!(cache.get_owned(&key1), None);
+        assert_eq!(cache.get_owned(&key2), None);
     }
     #[test]
     fn test_multi_gpu_info_cache_lru_eviction() {
@@ -210,7 +210,7 @@ mod tests {
         let key3 = 2;
         cache.set(key1, gpu_info1.clone());
         cache.set(key2, gpu_info2.clone());
-        assert_eq!(cache.get(&key1), Some(gpu_info1.clone()));
+        assert_eq!(cache.get_owned(&key1), Some(gpu_info1.clone()));
         cache.set(key3, gpu_info3.clone());
         assert_eq!(cache.len(), 2);
         assert!(!cache.has_entry(&key2));
@@ -223,8 +223,8 @@ mod tests {
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         let key = 0;
         cache.set(key, gpu_info.clone());
-        assert_eq!(cache.get(&key), Some(gpu_info.clone()));
-        assert_eq!(cache.get(&key), Some(gpu_info.clone()));
+        assert_eq!(cache.get_owned(&key), Some(gpu_info.clone()));
+        assert_eq!(cache.get_owned(&key), Some(gpu_info.clone()));
         let stats = cache.get_stats().unwrap();
         assert_eq!(stats.total_entries, 1);
         assert_eq!(stats.total_accesses, 2);
@@ -238,9 +238,9 @@ mod tests {
         let key2 = 1;
         cache.set(key1, gpu_info1.clone());
         cache.set(key2, gpu_info2.clone());
-        assert_eq!(cache.get(&key1), Some(gpu_info1.clone()));
-        assert_eq!(cache.get(&key1), Some(gpu_info1.clone()));
-        assert_eq!(cache.get(&key2), Some(gpu_info2.clone()));
+        assert_eq!(cache.get_owned(&key1), Some(gpu_info1.clone()));
+        assert_eq!(cache.get_owned(&key1), Some(gpu_info1.clone()));
+        assert_eq!(cache.get_owned(&key2), Some(gpu_info2.clone()));
         let stats = cache.get_stats().unwrap();
         assert_eq!(stats.total_entries, 2);
         assert_eq!(stats.total_accesses, 3);
@@ -284,8 +284,11 @@ mod tests {
         cache.set(gpu_info.clone());
         let result1 = cache.get();
         let result2 = cache.get();
-        assert_eq!(result1, Some(gpu_info.clone()));
-        assert_eq!(result2, Some(gpu_info));
+        // Both should return Arc pointing to same data
+        assert!(result1.is_some());
+        assert!(result2.is_some());
+        assert_eq!(*result1.unwrap(), gpu_info);
+        assert_eq!(*result2.unwrap(), gpu_info);
     }
     #[test]
     fn test_multi_gpu_info_cache_concurrent_access() {
@@ -295,15 +298,18 @@ mod tests {
         cache.set(key, gpu_info.clone());
         let result1 = cache.get(&key);
         let result2 = cache.get(&key);
-        assert_eq!(result1, Some(gpu_info.clone()));
-        assert_eq!(result2, Some(gpu_info));
+        // Both should return Arc pointing to same data
+        assert!(result1.is_some());
+        assert!(result2.is_some());
+        assert_eq!(*result1.unwrap(), gpu_info);
+        assert_eq!(*result2.unwrap(), gpu_info);
     }
     #[test]
     fn test_cache_with_zero_ttl() {
         let cache = GpuInfoCache::new(Duration::from_secs(0));
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         cache.set(gpu_info.clone());
-        assert_eq!(cache.get(), None);
+        assert_eq!(cache.get_owned(), None);
     }
     #[test]
     fn test_multi_cache_with_zero_ttl() {
@@ -311,14 +317,14 @@ mod tests {
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         let key = 0;
         cache.set(key, gpu_info.clone());
-        assert_eq!(cache.get(&key), None);
+        assert_eq!(cache.get_owned(&key), None);
     }
     #[test]
     fn test_cache_with_large_ttl() {
         let cache = GpuInfoCache::new(Duration::from_secs(3600));
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         cache.set(gpu_info.clone());
-        assert_eq!(cache.get(), Some(gpu_info));
+        assert_eq!(cache.get_owned(), Some(gpu_info));
     }
     #[test]
     fn test_multi_cache_with_large_ttl() {
@@ -326,7 +332,7 @@ mod tests {
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         let key = 0;
         cache.set(key, gpu_info.clone());
-        assert_eq!(cache.get(&key), Some(gpu_info));
+        assert_eq!(cache.get_owned(&key), Some(gpu_info));
     }
     #[test]
     fn test_cache_edge_cases() {
@@ -334,7 +340,7 @@ mod tests {
         let gpu_info = create_test_gpu(Vendor::Nvidia);
         let large_key = usize::MAX;
         cache.set(large_key, gpu_info.clone());
-        assert_eq!(cache.get(&large_key), Some(gpu_info));
+        assert_eq!(cache.get_owned(&large_key), Some(gpu_info));
     }
     #[test]
     fn test_cache_empty_string_values() {
@@ -342,6 +348,6 @@ mod tests {
         gpu_info.name_gpu = Some("".to_string());
         let cache = GpuInfoCache::new(Duration::from_secs(1));
         cache.set(gpu_info.clone());
-        assert_eq!(cache.get(), Some(gpu_info));
+        assert_eq!(cache.get_owned(), Some(gpu_info));
     }
 }
