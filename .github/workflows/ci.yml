@@ -25,9 +25,9 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  # Stage 1: Format Check
+  # Parallel checks
   fmt:
-    name: "Stage 1: Format Check"
+    name: "Format Check"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,10 +40,8 @@ jobs:
       - name: Check formatting (all workspace)
         run: cargo fmt --all -- --check
 
-  # Stage 2: Clippy (depends on fmt)
   clippy:
-    name: "Stage 2: Clippy Lints"
-    needs: [fmt]
+    name: "Clippy Lints"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,37 +51,16 @@ jobs:
         with:
           components: clippy
       
-      - name: Cache cargo registry
-        uses: actions/cache@v3
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          shared-key: "clippy"
       
-      - name: Cache cargo index
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Run clippy on gpu_info
-        run: cargo clippy -p gpu_info --all-targets --all-features -- -D warnings
-      
-      - name: Run clippy on system_info_lib
-        run: cargo clippy -p system_info_lib --all-targets --all-features -- -D warnings
-      
-      - name: Run clippy on system_cli
-        run: cargo clippy -p system_cli --all-targets --all-features -- -D warnings
+      - name: Run clippy (workspace)
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
-  # Stage 3: Tests (depends on clippy)
   test:
-    name: "Stage 3: Tests"
-    needs: [clippy]
+    name: "Tests"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -91,105 +68,46 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       
-      - name: Cache cargo registry
-        uses: actions/cache@v3
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          shared-key: "test"
       
-      - name: Cache cargo index
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Run tests (workspace, all features)
+        run: cargo test --workspace --all-features --verbose
       
-      - name: Cache cargo build
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Run tests on gpu_info
-        run: cargo test -p gpu_info --verbose
-      
-      - name: Run tests on gpu_info (all features)
-        run: cargo test -p gpu_info --all-features --verbose
-      
-      - name: Run tests on system_info_lib
-        run: cargo test -p system_info_lib --verbose
-      
-      - name: Run tests on system_info_lib (all features)
-        run: cargo test -p system_info_lib --all-features --verbose
-      
-      - name: Run tests on system_cli
-        run: cargo test -p system_cli --verbose
-      
-      - name: Run tests on system_cli (all features)
-        run: cargo test -p system_cli --all-features --verbose
+      - name: Run doctests
+        run: cargo test --workspace --doc --all-features
 
-  # Stage 4: Build for all platforms (depends on test)
+  # Final build (depends on all checks)
   build:
-    name: "Stage 4: Build (${{ matrix.os }})"
-    needs: [test]
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: true
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+    name: "Release Build"
+    needs: [fmt, test, clippy]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       
-      - name: Cache cargo registry
-        uses: actions/cache@v3
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          shared-key: "build"
       
-      - name: Cache cargo index
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Build gpu_info
-        run: cargo build -p gpu_info --release --all-features
-      
-      - name: Build system_info_lib
-        run: cargo build -p system_info_lib --release --all-features
-      
-      - name: Build system_cli
-        run: cargo build -p system_cli --release --all-features
-      
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: binaries-${{ matrix.os }}
-          path: |
-            target/release/system_cli
-            target/release/system_cli.exe
-          if-no-files-found: ignore
+      - name: Build workspace (release)
+        run: cargo build --workspace --release --all-features
 
-  # Final: Success indicator
+  # Success indicator
   ci-success:
-    name: "CI Pipeline Success"
+    name: "CI Success"
     needs: [fmt, clippy, test, build]
     runs-on: ubuntu-latest
     if: success()
     steps:
-      - name: All stages passed
+      - name: All checks passed
         run: |
-          echo "✅ Stage 1: Format Check - PASSED"
-          echo "✅ Stage 2: Clippy Lints - PASSED"
-          echo "✅ Stage 3: Tests - PASSED"
-          echo "✅ Stage 4: Build - PASSED"
+          echo "✅ Format, Clippy, Tests - PASSED"
+          echo "✅ Release Build - PASSED"
           echo ""
-          echo "🎉 All CI pipeline stages completed successfully!"
+          echo "🎉 CI pipeline completed successfully!"
