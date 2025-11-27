@@ -58,27 +58,33 @@ fn main() {
 
 ## Command-line Interface
 
-The package includes a command-line interface for both system and GPU information:
+The package includes a command-line interface for system information:
 
 ```bash
-# Show all system information
+# Show all system information (default)
+system_cli
 system_cli --all
 
 # Show specific system information
-system_cli --type
-system_cli --version
-system_cli --bit-depth
-system_cli --architecture
+system_cli --system-type        # or -t
+system_cli --system-version
+system_cli --bit-depth          # or -b
+system_cli --architecture       # or -a
 
-# Show all GPU information
-system_cli --all
+# Combine multiple flags
+system_cli -t -b -a
+```
 
-# Show specific GPU information
-system_cli --name-gpu
-system_cli --temperature
-system_cli --utilization
-system_cli --power
-system_cli --clock
+Example output:
+
+```
+$ system_cli --all
+OS information:
+  Type: Windows
+  Version: 10.0.19045
+  Edition: Professional
+  Bitness: 64-bit
+  Architecture: x86_64
 ```
 
 ## License

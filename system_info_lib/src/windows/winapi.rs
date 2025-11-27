@@ -356,25 +356,25 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Empty module name_gpu")]
+    #[should_panic(expected = "Module name should be zero-terminated")]
     fn empty_module_name() {
         get_proc_address(b"", b"RtlGetVersion\0");
     }
 
     #[test]
-    #[should_panic(expected = "Module name_gpu should be zero-terminated")]
+    #[should_panic(expected = "Module name should be zero-terminated")]
     fn non_zero_terminated_module_name() {
         get_proc_address(b"ntdll", b"RtlGetVersion\0");
     }
 
     #[test]
-    #[should_panic(expected = "Empty procedure name_gpu")]
+    #[should_panic(expected = "Procedure name should be zero-terminated")]
     fn empty_proc_name() {
         get_proc_address(b"ntdll\0", b"");
     }
 
     #[test]
-    #[should_panic(expected = "Procedure name_gpu should be zero-terminated")]
+    #[should_panic(expected = "Procedure name should be zero-terminated")]
     fn non_zero_terminated_proc_name() {
         get_proc_address(b"ntdll\0", b"RtlGetVersion");
     }

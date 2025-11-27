@@ -190,7 +190,7 @@ pub async fn get_all_async_owned() -> Result<Vec<GpuInfo>> {
 /// }
 /// ```
 pub async fn update_gpu_async(gpu: &mut GpuInfo) -> Result<()> {
-    let vendor = gpu.vendor.clone();
+    let vendor = gpu.vendor;
     let name_gpu = gpu.name_gpu.clone();
     let result = tokio::task::spawn_blocking(move || {
         let mut manager = crate::gpu_manager::GpuManager::new();

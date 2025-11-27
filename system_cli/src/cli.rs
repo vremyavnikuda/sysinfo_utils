@@ -1,7 +1,7 @@
 use clap::Parser;
 
 #[derive(Parser)]
-#[clap(about, version)]
+#[clap(about, disable_version_flag = true)]
 pub struct Options {
     /// Show all OS information.
     #[clap(long)]
@@ -10,35 +10,12 @@ pub struct Options {
     #[clap(short = 't', long = "type")]
     pub system_type: bool,
     /// Show OS version.
-    #[clap(short = 'v', long)]
+    #[clap(short = 'v', long = "version")]
     pub system_version: bool,
-    /// Show OS bit_depth.
-    #[clap(short, long)]
+    /// Show OS bitness.
+    #[clap(short = 'b', long = "bitness")]
     pub bit_depth: bool,
     /// Show OS architecture.
-    #[clap(short = 'A', long = "Arch")]
+    #[clap(short = 'a', long)]
     pub architecture: bool,
-}
-
-#[derive(Parser)]
-#[clap(about, version)]
-pub struct GpuOptions {
-    /// Show all GPU information.
-    #[clap(long)]
-    pub all: bool,
-    /// Show GPU vendor.
-    #[clap(short = 'n', long = "name_gpu")]
-    pub vendor: bool,
-    /// Show GPU temperature.
-    #[clap(short = 't', long = "temperature")]
-    pub temperature: bool,
-    /// Show GPU utilization.
-    #[clap(short = 'u', long = "utilization")]
-    pub utilization: bool,
-    /// Show GPU power usage.
-    #[clap(short = 'p', long = "power")]
-    pub power_usage: bool,
-    /// Show GPU clock speed.
-    #[clap(short = 'c', long = "clock")]
-    pub clock_speed: bool,
 }
