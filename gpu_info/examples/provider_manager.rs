@@ -4,6 +4,7 @@ use gpu_info::GpuProviderManager;
 fn main() {
     println!("GPU Provider Manager Example");
     let mut provider_manager = GpuProviderManager::new();
+
     #[cfg(target_os = "windows")]
     {
         provider_manager.register_provider(Vendor::Nvidia, gpu_info::providers::NvidiaProvider);
@@ -13,6 +14,7 @@ fn main() {
             gpu_info::providers::IntelProvider,
         );
     }
+
     println!("Registered vendors:");
     for vendor in provider_manager.get_registered_vendors() {
         println!("  - {:?}", vendor);
