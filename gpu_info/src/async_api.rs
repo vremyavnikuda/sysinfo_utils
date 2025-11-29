@@ -179,14 +179,16 @@ pub async fn get_all_async_owned() -> Result<Vec<GpuInfo>> {
 ///
 /// # Example
 /// ```rust
-/// use gpu_info::{async_api::update_gpu_async, get};
+/// use gpu_info::{async_api::update_gpu_async, get, gpu_info::GpuError};
 /// #[tokio::main]
-/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// async fn main() {
 ///     let mut gpu = get();
 ///     println!("Before: {}°C", gpu.format_temperature());
-///     update_gpu_async(&mut gpu).await?;
-///     println!("After: {}°C", gpu.format_temperature());
-///     Ok(())
+///     match update_gpu_async(&mut gpu).await {
+///         Ok(()) => println!("After: {}°C", gpu.format_temperature()),
+///         Err(GpuError::GpuNotFound) => println!("No GPU found to update"),
+///         Err(e) => println!("Update failed: {:?}", e),
+///     }
 /// }
 /// ```
 pub async fn update_gpu_async(gpu: &mut GpuInfo) -> Result<()> {

@@ -256,7 +256,6 @@ mod tests {
         for (lib_name, description) in test_cases {
             let loader = LibraryLoader::new(lib_name);
             let result = loader.load();
-            // TODO: что это такое ?
             // We don't expect these to load in test environment,
             // but the loader should handle them gracefully
             match result {
