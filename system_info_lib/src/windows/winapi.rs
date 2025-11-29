@@ -72,14 +72,20 @@ const PROCESSOR_ARCHITECTURE_ARM64: u16 = 12;
 
 fn native_system_info() -> SYSTEM_INFO {
     let mut system_info: MaybeUninit<SYSTEM_INFO> = MaybeUninit::zeroed();
+    // SAFETY: GetNativeSystemInfo always succeeds and writes to the provided pointer.
+    // The pointer is valid because it comes from MaybeUninit::as_mut_ptr().
     unsafe {
         GetNativeSystemInfo(system_info.as_mut_ptr());
     };
 
+    // SAFETY: GetNativeSystemInfo has initialized all fields of SYSTEM_INFO.
     unsafe { system_info.assume_init() }
 }
 
 fn architecture(system_info: SYSTEM_INFO) -> Option<String> {
+    // SAFETY: Accessing union field is safe because SYSTEM_INFO was properly initialized
+    // by GetNativeSystemInfo. The Anonymous.Anonymous.wProcessorArchitecture field
+    // is always valid for initialized SYSTEM_INFO structures.
     let cpu_architecture = unsafe { system_info.Anonymous.Anonymous.wProcessorArchitecture };
 
     match cpu_architecture {
@@ -136,11 +142,15 @@ fn version_info() -> Option<OSVERSIONINFOEX> {
     let rtl_get_version = get_proc_address(b"ntdll\0", b"RtlGetVersion\0")?;
 
     type RtlGetVersion = unsafe extern "system" fn(&mut OSVERSIONINFOEX) -> NTSTATUS;
+    // SAFETY: rtl_get_version is a valid function pointer obtained from GetProcAddress.
+    // The transmute is safe because RtlGetVersion has the expected signature.
     let rtl_get_version: RtlGetVersion = unsafe { mem::transmute(rtl_get_version) };
 
+    // SAFETY: OSVERSIONINFOEX is a POD type that can be safely zero-initialized.
     let mut info: OSVERSIONINFOEX = unsafe { mem::zeroed() };
     info.dwOSVersionInfoSize = mem::size_of::<OSVERSIONINFOEX>() as u32;
 
+    // SAFETY: info is a valid mutable reference to properly sized OSVERSIONINFOEX.
     if unsafe { rtl_get_version(&mut info) } == STATUS_SUCCESS {
         Some(info)
     } else {
@@ -151,6 +161,8 @@ fn version_info() -> Option<OSVERSIONINFOEX> {
 fn product_name(info: &OSVERSIONINFOEX) -> Option<String> {
     let sub_key = to_wide("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion");
     let mut key = Default::default();
+    // SAFETY: sub_key.as_ptr() is a valid null-terminated wide string,
+    // key is a valid mutable pointer to receive the opened key handle.
     if unsafe { RegOpenKeyExW(HKEY_LOCAL_MACHINE, sub_key.as_ptr(), 0, KEY_READ, &mut key) }
         != ERROR_SUCCESS
         || key == 0
@@ -169,6 +181,9 @@ fn product_name(info: &OSVERSIONINFOEX) -> Option<String> {
     });
     let mut data_type = 0;
     let mut data_size = 0;
+    // SAFETY: key is a valid registry key handle (checked above),
+    // name.as_ptr() is a valid null-terminated wide string.
+    // First call queries the size without reading data.
     if unsafe {
         RegQueryValueExW(
             key,
@@ -189,6 +204,8 @@ fn product_name(info: &OSVERSIONINFOEX) -> Option<String> {
 
     // Get the data.
     let mut data = vec![0u16; data_size as usize / 2];
+    // SAFETY: key is valid, name.as_ptr() is valid, data buffer is properly sized
+    // based on the size returned by the first RegQueryValueExW call.
     if unsafe {
         RegQueryValueExW(
             key,
@@ -254,8 +271,11 @@ fn edition(version_info: &OSVERSIONINFOEX) -> Option<String> {
         // Windows 2000, Home Server, 2003 Server, 2003 R2 Server, XP and XP Professional x64.
         (5, 1, _) => Some("Windows XP"),
         (5, 0, _) => Some("Windows 2000"),
+        // SAFETY: GetSystemMetrics is always safe to call with valid metric index.
         (5, 2, _) if unsafe { GetSystemMetrics(SM_SERVERR2) } == 0 => {
+            // SAFETY: SYSTEM_INFO is a POD type that can be safely zero-initialized.
             let mut info: SYSTEM_INFO = unsafe { mem::zeroed() };
+            // SAFETY: GetSystemInfo always succeeds with a valid pointer.
             unsafe { GetSystemInfo(&mut info) };
 
             if Into::<u32>::into(version_info.wSuiteMask) & VER_SUITE_WH_SERVER
@@ -263,6 +283,7 @@ fn edition(version_info: &OSVERSIONINFOEX) -> Option<String> {
             {
                 Some("Windows Home Server")
             } else if version_info.wProductType == VER_NT_WORKSTATION as u8
+                // SAFETY: Accessing union field is safe because SYSTEM_INFO was initialized.
                 && unsafe { info.Anonymous.Anonymous.wProcessorArchitecture }
                     == PROCESSOR_ARCHITECTURE_AMD64
             {
@@ -286,6 +307,7 @@ fn get_proc_address(module: &[u8], proc: &[u8]) -> Option<FARPROC> {
         "Procedure name should be zero-terminated"
     );
 
+    // SAFETY: module.as_ptr() points to a valid null-terminated string (asserted above).
     let handle = unsafe { GetModuleHandleA(module.as_ptr()) };
     if handle == 0 {
         log::error!(
@@ -295,7 +317,17 @@ fn get_proc_address(module: &[u8], proc: &[u8]) -> Option<FARPROC> {
         return None;
     }
 
-    unsafe { Some(GetProcAddress(handle, proc.as_ptr())) }
+    // SAFETY: handle is valid (checked above), proc.as_ptr() is null-terminated (asserted above).
+    // GetProcAddress returns FARPROC which is Option<fn>, so we wrap it in Some for our return type.
+    let proc_addr = unsafe { GetProcAddress(handle, proc.as_ptr()) };
+
+    // GetProcAddress returns None if the function is not found
+    if proc_addr.is_none() {
+        log::error!("GetProcAddress({}) failed", String::from_utf8_lossy(proc));
+        return None;
+    }
+
+    Some(proc_addr)
 }
 
 #[cfg(test)]
