@@ -285,13 +285,14 @@ mod tests {
             "  get_all_async() - Average: {:?}, Success rate: {}/{}",
             avg_get_all_time, successful_get_alls, BENCHMARK_ITERATIONS
         );
+        // With PDH metrics (500ms per cache miss), performance expectations are different
         assert!(
-            avg_get_time < Duration::from_millis(500),
+            avg_get_time < Duration::from_secs(1),
             "get_async too slow: {:?}",
             avg_get_time
         );
         assert!(
-            avg_get_all_time < Duration::from_secs(2),
+            avg_get_all_time < Duration::from_secs(3),
             "get_all_async too slow: {:?}",
             avg_get_all_time
         );

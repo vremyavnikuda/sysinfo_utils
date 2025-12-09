@@ -3,7 +3,7 @@
 //! This module implements the GpuProvider trait for Intel GPUs using WMI queries.
 use crate::gpu_info::{GpuInfo, GpuProvider, Result};
 use crate::vendor::{IntelGpuType, Vendor};
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use std::process::Command;
 /// Intel GPU provider
 pub struct IntelProvider;
@@ -52,7 +52,10 @@ impl IntelProvider {
         let memory_total = output_str
             .lines()
             .find(|line| line.contains("AdapterRAM"))
-            .and_then(|line| line.split(":").nth(1)?.trim().parse::<u32>().ok());
+            .and_then(|line| {
+                let bytes = line.split(":").nth(1)?.trim().parse::<u64>().ok()?;
+                Some((bytes / 1024 / 1024 / 1024) as u32)
+            });
         let core_clock = output_str
             .lines()
             .find(|line| line.contains("CurrentRefreshRate"))
@@ -115,12 +118,78 @@ impl GpuProvider for IntelProvider {
         info!("Updating Intel GPU information");
         let output_str = self.get_intel_gpu_info()?;
         if let Some(updated_gpu) = self.parse_gpu_info(&output_str) {
-            *gpu = updated_gpu;
+            gpu.name_gpu = updated_gpu.name_gpu;
+            gpu.vendor = updated_gpu.vendor;
+            gpu.driver_version = updated_gpu.driver_version;
+            gpu.memory_total = updated_gpu.memory_total;
+            gpu.core_clock = updated_gpu.core_clock;
+            gpu.max_clock_speed = updated_gpu.max_clock_speed;
+            gpu.active = updated_gpu.active;
+            // Don't overwrite: temperature, utilization, power_usage, power_limit, memory_util, memory_clock
         }
+
+        // Try to get additional metrics from Performance Counters
+        #[cfg(target_os = "windows")]
+        {
+            match super::windows::pdh::get_gpu_metrics(0) {
+                Ok(pdh_metrics) => {
+                    info!("Got PDH metrics for Intel GPU");
+
+                    if let Some(util) = pdh_metrics.utilization() {
+                        gpu.utilization = Some(util);
+                        info!("GPU utilization from PDH: {:.2}%", util);
+                    }
+
+                    if let Some(mem_mb) = pdh_metrics.memory_usage_mb() {
+                        // Calculate memory utilization percentage if we know total memory
+                        if let Some(total_mb) = gpu.memory_total {
+                            let mem_percent = (mem_mb as f32 / (total_mb * 1024) as f32) * 100.0;
+                            gpu.memory_util = Some(mem_percent.min(100.0));
+                            info!("GPU memory utilization from PDH: {:.2}%", mem_percent);
+                        }
+                    }
+                }
+                Err(e) => {
+                    warn!("Failed to get PDH metrics for Intel GPU: {:?}", e);
+                }
+            }
+        }
+
+        // Try to get additional metrics from Intel Metrics API (GPA Framework)
+        #[cfg(target_os = "windows")]
+        {
+            if let Ok(intel_metrics) = super::windows::intel_metrics::get_intel_metrics() {
+                info!("Got Intel Metrics API data");
+
+                if let Some(temp) = intel_metrics.temperature {
+                    gpu.temperature = Some(temp);
+                    info!("GPU temperature from Intel Metrics: {:.2} C", temp);
+                }
+
+                if let Some(power) = intel_metrics.power_usage {
+                    gpu.power_usage = Some(power);
+                    info!("GPU power usage from Intel Metrics: {:.2}W", power);
+                }
+
+                if let Some(clock) = intel_metrics.core_clock {
+                    gpu.core_clock = Some(clock);
+                    info!("GPU core clock from Intel Metrics: {} MHz", clock);
+                }
+
+                if let Some(mem_clock) = intel_metrics.memory_clock {
+                    gpu.memory_clock = Some(mem_clock);
+                    info!("GPU memory clock from Intel Metrics: {} MHz", mem_clock);
+                }
+            } else {
+                debug!("Intel Metrics API not available or not implemented yet");
+            }
+        }
+
         if !gpu.is_valid() {
             warn!("GPU data validation failed");
             return Err(crate::gpu_info::GpuError::GpuNotActive);
         }
+
         info!("Successfully updated Intel GPU information");
         Ok(())
     }

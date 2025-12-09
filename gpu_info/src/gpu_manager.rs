@@ -302,14 +302,24 @@ impl GpuManager {
     ///
     /// Returns `Arc<GpuInfo>` for efficient sharing without cloning.
     /// Use `get_gpu_cached_owned()` if you need to mutate the data.
+    ///
+    /// This method automatically updates GPU metrics if cache is expired.
     pub fn get_gpu_cached(&self, index: usize) -> Option<Arc<GpuInfo>> {
         if let Some(cached_gpu) = self.cache.get(&index) {
             debug!("Returning cached GPU #{}", index);
             return Some(cached_gpu);
         }
-        if let Some(gpu) = self.get_gpu_by_index_owned(index) {
+
+        // Cache miss - get fresh data with updated metrics
+        if let Some(mut gpu) = self.get_gpu_by_index_owned(index) {
+            // Update metrics before caching
+            if let Err(e) = Self::update_single_gpu_static(&mut gpu) {
+                warn!("Failed to update GPU #{} metrics: {}", index, e);
+                // Still cache the GPU info even if update fails
+            }
+
             self.cache.set(index, gpu.clone());
-            debug!("Populated cache for GPU #{}", index);
+            debug!("Populated cache for GPU #{} with updated metrics", index);
             self.cache.get(&index)
         } else {
             None

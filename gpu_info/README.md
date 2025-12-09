@@ -39,6 +39,7 @@ The library follows a modular architecture with unified provider interfaces:
 gpu_info/
 ├── src/
 │   ├── gpu_info.rs          # Core data structures and traits
+│   ├── macros.rs            # Code generation macros for reduced duplication
 │   ├── provider_manager.rs   # Centralized provider manager
 │   ├── providers/            # GPU provider implementations
 │   │   ├── nvidia.rs        # NVIDIA provider
@@ -46,7 +47,10 @@ gpu_info/
 │   │   ├── intel.rs         # Intel provider
 │   │   ├── linux/           # Linux-specific providers
 │   │   ├── macos/           # macOS-specific providers
-│   │   └── windows/         # Windows-specific providers
+│   │   └── windows/         # Windows-specific provider utilities
+│   │       ├── mod.rs       # Module exports
+│   │       ├── pdh.rs       # Performance Data Helper API
+│   │       └── intel_metrics.rs  # Intel Metrics API (GPA)
 │   ├── ffi_utils.rs         # Common FFI utilities
 │   ├── nvml_api.rs          # NVML API abstraction
 │   ├── adl_api.rs           # ADL API abstraction
@@ -154,19 +158,28 @@ fn main() {
 ### Working with Multiple GPUs
 
 ```rust
-use gpu_info::GpuManager;
+use gpu_info::GpuManager;use std::time::Duration;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut manager = GpuManager::new();
+    // Create manager with caching enabled
+    let manager = GpuManager::with_cache_config(Duration::from_secs(2), 10);
+    
+    // Get all GPUs (owned copies)
     let gpus = manager.get_all_gpus_owned();
     println!("Found {} GPU(s)", gpus.len());
-    for (i, gpu) in gpus.iter().enumerate() {
-        println!("GPU #{}: {} ({})", i, gpu.format_name_gpu(), gpu.vendor);
-        println!("  Temperature: {}°C", gpu.format_temperature());
-        println!("  Utilization: {}%", gpu.format_utilization());
-        println!("  Power Usage: {}W", gpu.format_power_usage());
+    
+    for i in 0..gpus.len() {
+        // Use cached access for better performance (zero-copy via Arc)
+        if let Some(gpu) = manager.get_gpu_cached(i) {
+            println!("GPU #{}: {} ({})", i, gpu.format_name_gpu(), gpu.vendor);
+            println!("  Temperature: {}°C", gpu.format_temperature());
+            println!("  Utilization: {}%", gpu.format_utilization());
+            println!("  Power Usage: {}W", gpu.format_power_usage());
+        }
     }
-    if let Some(primary_gpu) = manager.get_primary_gpu_owned() {
+    
+    // Get primary GPU with caching (zero-copy)
+    if let Some(primary_gpu) = manager.get_primary_gpu_cached() {
         println!("Primary GPU: {}", primary_gpu.format_name_gpu());
     }
     Ok(())

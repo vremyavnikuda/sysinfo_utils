@@ -44,14 +44,24 @@ gpu_info/CI_CD_SETUP.md
 gpu_info/.github/workflows/README.md
 
 # Exclude examples folder from git but keep locally
+#gpu_info/examples/async_example.rs
+#gpu_info/examples/async_performance_demo.rs
+#gpu_info/examples/cache.rs
+#gpu_info/examples/cache_performance.rs
+#gpu_info/examples/cache_benchmark.rs
+#gpu_info/examples/async_update_demo.rs
+#gpu_info/examples/async_update_demo.rs
+#gpu_info/examples/provider_manager.rs
+#gpu_info/examples/enhanced_cache.rs
+#gpu_info/examples/detailed.rs
+#gpu_info/examples/cross_platform.rs
 gpu_info/examples/async_example.rs
 gpu_info/examples/async_performance_demo.rs
-gpu_info/examples/cache.rs
-gpu_info/examples/cache_performance.rs
+gpu_info/examples/async_update_demo.rs
 gpu_info/examples/cache_benchmark.rs
-gpu_info/examples/async_update_demo.rs
-gpu_info/examples/async_update_demo.rs
-gpu_info/examples/provider_manager.rs
-gpu_info/examples/enhanced_cache.rs
-gpu_info/examples/detailed.rs
+gpu_info/examples/cache_performance.rs
+gpu_info/examples/cache.rs
 gpu_info/examples/cross_platform.rs
+gpu_info/examples/detailed.rs
+gpu_info/examples/enhanced_cache.rs
+gpu_info/examples/provider_manager.rs

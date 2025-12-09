@@ -1,4 +1,6 @@
-pub use crate::gpu_info::{GpuError, GpuInfo, Result};
+pub use crate::gpu_info::{GpuError, GpuInfo, GpuInfoBuilder, Result};
+#[macro_use]
+pub mod macros;
 pub mod adl_api;
 pub mod async_api;
 pub mod cache_utils;
@@ -36,7 +38,8 @@ pub mod imp;
 #[cfg(target_os = "linux")]
 #[path = "linux/mod.rs"]
 pub mod linux;
-pub mod test;
+#[cfg(test)]
+mod test;
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))]
 /// Gets the `GpuInfo` of the primary GPU in the system.
 ///
