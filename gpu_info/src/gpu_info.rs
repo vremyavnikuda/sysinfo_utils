@@ -247,7 +247,7 @@ impl GpuInfo {
     /// such as "NVIDIA GeForce RTX 3080" or "AMD Radeon RX 6800 XT".
     ///
     /// The name may not be available if:
-    /// - The GPU driver doesn't report this informationq
+    /// - The GPU driver doesn't report this information
     /// - The system doesn't have a dedicated GPU
     /// - The GPU information couldn't be accessed due to permission issues
     ///
@@ -296,20 +296,19 @@ impl GpuInfo {
     /// # Performance
     /// This is a lightweight accessor method that simply returns stored data.
     /// It performs no I/O operations or complex calculations.
-    ///.
     pub fn temperature(&self) -> Option<f32> {
         self.temperature
     }
-    /// Returns the current power usage of the GPU.
+    /// Returns the current utilization of the GPU as a percentage.
     ///
     /// # Returns
-    /// * `Some(f32)` - The current power usage of the GPU in watts.
-    /// * `None` - If the power usage of the GPU is unknown.
+    /// * `Some(f32)` - The current utilization of the GPU (0.0-100.0).
+    /// * `None` - If the utilization of the GPU is unknown.
     ///
     /// # Example
     /// ```rust
     /// let gpu = gpu_info::get();
-    /// println!("Power Usage: {:?}", gpu.power_usage());
+    /// println!("Utilization: {:?}", gpu.utilization());
     /// ```
     pub fn utilization(&self) -> Option<f32> {
         self.utilization
