@@ -3,6 +3,7 @@
 //! This module implements the GpuProvider trait for Intel GPUs using WMI queries.
 use crate::gpu_info::{GpuInfo, GpuProvider, Result};
 use crate::vendor::{IntelGpuType, Vendor};
+#[allow(unused_imports)]
 use log::{debug, error, info, warn};
 use std::process::Command;
 /// Intel GPU provider
