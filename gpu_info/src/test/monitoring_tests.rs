@@ -32,13 +32,19 @@ mod tests {
         }
 
         fn get_alerts(&self) -> Vec<AlertType> {
-            self.alerts_received.lock().unwrap().clone()
+            match self.alerts_received.lock() {
+                Ok(guard) => guard.clone(),
+                Err(poisoned) => poisoned.into_inner().clone(),
+            }
         }
     }
 
     impl AlertHandler for MockAlertHandler {
         fn handle_alert(&self, alert: &AlertType) -> crate::gpu_info::Result<()> {
-            self.alerts_received.lock().unwrap().push(alert.clone());
+            match self.alerts_received.lock() {
+                Ok(mut guard) => guard.push(alert.clone()),
+                Err(poisoned) => poisoned.into_inner().push(alert.clone()),
+            }
             Ok(())
         }
 
@@ -208,9 +214,13 @@ mod tests {
             ..Default::default()
         };
         let monitor = GpuMonitor::new(config);
-        monitor.start_monitoring().unwrap();
+        if let Err(e) = monitor.start_monitoring() {
+            panic!("Failed to start monitoring: {:?}", e);
+        }
         sleep(Duration::from_millis(500)).await;
-        monitor.stop_monitoring().unwrap();
+        if let Err(e) = monitor.stop_monitoring() {
+            panic!("Failed to stop monitoring: {:?}", e);
+        }
         let stats = monitor.get_stats();
         println!("Constrained environment stats:");
         println!("  Total measurements: {}", stats.total_measurements);
@@ -240,10 +250,16 @@ mod tests {
         };
         let monitor = GpuMonitor::new(config);
         let mock_handler = MockAlertHandler::new();
-        monitor.add_alert_handler(Box::new(mock_handler)).unwrap();
-        monitor.start_monitoring().unwrap();
+        if let Err(e) = monitor.add_alert_handler(Box::new(mock_handler)) {
+            panic!("Failed to add alert handler: {:?}", e);
+        }
+        if let Err(e) = monitor.start_monitoring() {
+            panic!("Failed to start monitoring: {:?}", e);
+        }
         sleep(Duration::from_secs(1)).await;
-        monitor.stop_monitoring().unwrap();
+        if let Err(e) = monitor.stop_monitoring() {
+            panic!("Failed to stop monitoring: {:?}", e);
+        }
         let stats = monitor.get_stats();
         println!("Long-running test stats:");
         println!("  Total measurements: {}", stats.total_measurements);
@@ -286,12 +302,16 @@ mod tests {
         let monitor = GpuMonitor::new(config);
         let mock_handler = Arc::new(MockAlertHandler::new());
         let _handler_clone = mock_handler.clone();
-        monitor
-            .add_alert_handler(Box::new(MockAlertHandler::new()))
-            .unwrap();
-        monitor.start_monitoring().unwrap();
+        if let Err(e) = monitor.add_alert_handler(Box::new(MockAlertHandler::new())) {
+            panic!("Failed to add alert handler: {:?}", e);
+        }
+        if let Err(e) = monitor.start_monitoring() {
+            panic!("Failed to start monitoring: {:?}", e);
+        }
         sleep(Duration::from_millis(300)).await;
-        monitor.stop_monitoring().unwrap();
+        if let Err(e) = monitor.stop_monitoring() {
+            panic!("Failed to stop monitoring: {:?}", e);
+        }
         let alerts = mock_handler.get_alerts();
         println!("Generated {} alerts during test", alerts.len());
         // In test environment, alerts may or may not be generated
@@ -313,18 +333,27 @@ mod tests {
         assert_eq!(initial_stats.total_measurements, 0);
         assert_eq!(initial_stats.total_errors, 0);
         assert!(initial_stats.start_time.is_none());
-        monitor.start_monitoring().unwrap();
+        if let Err(e) = monitor.start_monitoring() {
+            panic!("Failed to start monitoring: {:?}", e);
+        }
         let run_duration = Duration::from_millis(250);
         sleep(run_duration).await;
-        monitor.stop_monitoring().unwrap();
+        if let Err(e) = monitor.stop_monitoring() {
+            panic!("Failed to stop monitoring: {:?}", e);
+        }
         let final_stats = monitor.get_stats();
         println!("Statistics accuracy test:");
         println!("  Measurements: {}", final_stats.total_measurements);
         println!("  Errors: {}", final_stats.total_errors);
-        println!("  Runtime: {:?}", final_stats.start_time.unwrap().elapsed());
+        if let Some(start_time) = final_stats.start_time {
+            println!("  Runtime: {:?}", start_time.elapsed());
+        }
         assert!(final_stats.start_time.is_some());
         assert!(final_stats.total_measurements > 0 || final_stats.total_errors > 0);
-        let runtime = final_stats.start_time.unwrap().elapsed();
+        let runtime = match final_stats.start_time {
+            Some(start_time) => start_time.elapsed(),
+            None => panic!("Expected start_time to be Some after monitoring"),
+        };
         assert!(
             runtime >= run_duration * 8 / 10,
             "Runtime too short: {:?} < {:?}",
@@ -446,9 +475,9 @@ mod tests {
         let monitor = GpuMonitor::new(config);
         let mock_handler = MockAlertHandler::new();
         let _handler_ref = Arc::new(Mutex::new(mock_handler));
-        monitor
-            .add_alert_handler(Box::new(LogAlertHandler))
-            .unwrap();
+        if let Err(e) = monitor.add_alert_handler(Box::new(LogAlertHandler)) {
+            panic!("Failed to add alert handler: {:?}", e);
+        }
         assert!(monitor.start_monitoring().is_ok());
         assert!(monitor.is_monitoring());
         sleep(Duration::from_millis(200)).await;

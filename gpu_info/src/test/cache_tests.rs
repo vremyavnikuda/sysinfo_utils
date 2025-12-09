@@ -72,7 +72,11 @@ mod tests {
         cache.set(gpu_info.clone());
         assert!(cache.has_entry());
         assert_eq!(cache.get_owned(), Some(gpu_info));
-        assert!(cache.age().unwrap() < Duration::from_millis(100));
+        if let Some(age) = cache.age() {
+            assert!(age < Duration::from_millis(100));
+        } else {
+            panic!("cache should have age after set()");
+        }
     }
     #[test]
     fn test_gpu_info_cache_expiration() {
@@ -225,9 +229,12 @@ mod tests {
         cache.set(key, gpu_info.clone());
         assert_eq!(cache.get_owned(&key), Some(gpu_info.clone()));
         assert_eq!(cache.get_owned(&key), Some(gpu_info.clone()));
-        let stats = cache.get_stats().unwrap();
-        assert_eq!(stats.total_entries, 1);
-        assert_eq!(stats.total_accesses, 2);
+        if let Some(stats) = cache.get_stats() {
+            assert_eq!(stats.total_entries, 1);
+            assert_eq!(stats.total_accesses, 2);
+        } else {
+            panic!("cache stats should be available");
+        }
     }
     #[test]
     fn test_multi_gpu_info_cache_stats() {
@@ -241,10 +248,13 @@ mod tests {
         assert_eq!(cache.get_owned(&key1), Some(gpu_info1.clone()));
         assert_eq!(cache.get_owned(&key1), Some(gpu_info1.clone()));
         assert_eq!(cache.get_owned(&key2), Some(gpu_info2.clone()));
-        let stats = cache.get_stats().unwrap();
-        assert_eq!(stats.total_entries, 2);
-        assert_eq!(stats.total_accesses, 3);
-        assert!(stats.oldest_entry_age < Duration::from_millis(100));
+        if let Some(stats) = cache.get_stats() {
+            assert_eq!(stats.total_entries, 2);
+            assert_eq!(stats.total_accesses, 3);
+            assert!(stats.oldest_entry_age < Duration::from_millis(100));
+        } else {
+            panic!("cache stats should be available");
+        }
     }
     #[test]
     fn test_cache_stats_default_values() {
@@ -265,10 +275,13 @@ mod tests {
         let result1 = cache.get();
         let result2 = cache.get();
         // Both should return Arc pointing to same data
-        assert!(result1.is_some());
-        assert!(result2.is_some());
-        assert_eq!(*result1.unwrap(), gpu_info);
-        assert_eq!(*result2.unwrap(), gpu_info);
+        match (result1, result2) {
+            (Some(r1), Some(r2)) => {
+                assert_eq!(*r1, gpu_info);
+                assert_eq!(*r2, gpu_info);
+            }
+            _ => panic!("Expected both cache results to be Some"),
+        }
     }
     #[test]
     fn test_multi_gpu_info_cache_concurrent_access() {
@@ -279,10 +292,13 @@ mod tests {
         let result1 = cache.get(&key);
         let result2 = cache.get(&key);
         // Both should return Arc pointing to same data
-        assert!(result1.is_some());
-        assert!(result2.is_some());
-        assert_eq!(*result1.unwrap(), gpu_info);
-        assert_eq!(*result2.unwrap(), gpu_info);
+        match (result1, result2) {
+            (Some(r1), Some(r2)) => {
+                assert_eq!(*r1, gpu_info);
+                assert_eq!(*r2, gpu_info);
+            }
+            _ => panic!("Expected both cache results to be Some"),
+        }
     }
     #[test]
     fn test_cache_with_zero_ttl() {

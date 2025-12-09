@@ -233,14 +233,10 @@ impl GpuManager {
             }
         }
         self.cache.clear_all();
-        if errors.is_empty() {
-            Ok(())
+        if let Some((_, err)) = errors.into_iter().next() {
+            Err(err)
         } else {
-            Err(errors
-                .into_iter()
-                .next()
-                .expect("errors vector should not be empty when errors.is_empty() is false")
-                .1)
+            Ok(())
         }
     }
     /// Updates information about a specific GPU
