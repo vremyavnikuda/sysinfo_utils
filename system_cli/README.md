@@ -17,7 +17,7 @@ cargo build --release
 ## Usage
 
 ```bash
-# Show all OS information (default behavior)
+# Show all information (default behavior)
 system_cli
 system_cli --all
 
@@ -27,11 +27,14 @@ system_cli --os-version         # or -o
 system_cli --bitness            # or -b
 system_cli --architecture       # or -a
 
+# Show GPU information
+system_cli --gpu                # or -g
+
 # Show CLI version
 system_cli --version            # or -v
 
 # Combine multiple flags
-system_cli -t -b
+system_cli -t -b -g
 ```
 
 ## Examples
@@ -46,6 +49,18 @@ OS information:
   Edition: Professional
   Bitness: 64-bit
   Architecture: x86_64
+
+GPU information:
+  Vendor: Nvidia
+  Name: NVIDIA GeForce RTX 3080
+  Driver: 537.42
+  Temperature: 45 C
+  Utilization: 12%
+  Core Clock: 1440 MHz
+  Memory: 10 GB
+  Memory Usage: 23%
+  Power: 85 W
+  Status: Active
 ```
 
 ### Show specific fields
@@ -58,17 +73,31 @@ $ system_cli -t -b
 OS type: Windows
 OS bitness: 64-bit
 
+$ system_cli --gpu
+GPU information:
+  Vendor: Nvidia
+  Name: NVIDIA GeForce RTX 3080
+  Driver: 537.42
+  Temperature: 45 C
+  Utilization: 12%
+  Core Clock: 1440 MHz
+  Memory: 10 GB
+  Memory Usage: 23%
+  Power: 85 W
+  Status: Active
+
 $ system_cli --version
 system_cli 0.1.0
 ```
 
 ## Options
 
-- `--all`: Show all OS information (default if no flags specified)
+- `--all`: Show all information (default if no flags specified)
 - `-t, --type`: Show OS type
 - `-o, --os-version`: Show OS version
 - `-b, --bitness`: Show OS bitness (32-bit or 64-bit)
 - `-a, --architecture`: Show CPU architecture
+- `-g, --gpu`: Show GPU information
 - `-v, --version`: Show CLI version
 - `-h, --help`: Show help information
 

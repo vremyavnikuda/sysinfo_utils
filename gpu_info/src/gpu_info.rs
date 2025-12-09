@@ -94,7 +94,10 @@ where
         Err(GpuError::GpuNotActive)
     }
 }
-/// Trait fmt_string (форматируем результат<T> в строковое представление)  defines a method for formatting GPU information.
+/// Trait for formatting values into string representation.
+///
+/// This trait defines a method for formatting GPU information fields
+/// into human-readable strings, with "N/A" for unavailable values.
 pub trait Formattable: Debug {
     fn fmt_string(&self) -> String;
 }
@@ -130,7 +133,7 @@ pub struct GpuInfo {
     pub max_clock_speed: Option<u32>, // maximum GPU clock speed (MHz)
 }
 // Macros are defined in crate::macros and imported via #[macro_use]
-/// Реализация Formattable для Option<f32> с форматированием до одного знака после запятой
+/// Implementation of Formattable for Option<f32> with one decimal place formatting.
 impl Formattable for Option<f32> {
     fn fmt_string(&self) -> String {
         match self {
@@ -139,7 +142,7 @@ impl Formattable for Option<f32> {
         }
     }
 }
-// Используем макрос для реализации Formattable для других Option<T> типов
+// Use macro to implement Formattable for other Option<T> types
 impl_formattable_for_option!(u32);
 impl_formattable_for_option!(bool);
 impl_formattable_for_option!(String);

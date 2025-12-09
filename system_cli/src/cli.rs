@@ -18,4 +18,7 @@ pub struct Options {
     /// Show OS architecture.
     #[clap(short = 'a', long = "architecture")]
     pub architecture: bool,
+    /// Show GPU information.
+    #[clap(short = 'g', long = "gpu")]
+    pub gpu: bool,
 }
