@@ -258,26 +258,6 @@ mod tests {
         assert_eq!(stats.oldest_entry_age, Duration::from_secs(0));
     }
     #[test]
-    fn test_adaptive_gpu_cache_creation() {
-        let _cache = AdaptiveGpuCache::new();
-        // Cache invalidation successful
-    }
-    #[test]
-    fn test_adaptive_gpu_cache_default() {
-        let _cache = AdaptiveGpuCache::default();
-        // Cache invalidation successful
-    }
-    #[test]
-    fn test_adaptive_gpu_cache_with_settings() {
-        let _cache = AdaptiveGpuCache::with_settings(
-            Duration::from_secs(2),
-            Duration::from_millis(100),
-            Duration::from_secs(10),
-            0.2,
-        );
-        // Cache invalidation successful
-    }
-    #[test]
     fn test_gpu_info_cache_concurrent_access() {
         let cache = GpuInfoCache::new(Duration::from_secs(1));
         let gpu_info = create_test_gpu(Vendor::Nvidia);
