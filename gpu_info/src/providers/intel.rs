@@ -129,62 +129,8 @@ impl GpuProvider for IntelProvider {
             // Don't overwrite: temperature, utilization, power_usage, power_limit, memory_util, memory_clock
         }
 
-        // Try to get additional metrics from Performance Counters
-        #[cfg(target_os = "windows")]
-        {
-            match super::windows::pdh::get_gpu_metrics(0) {
-                Ok(pdh_metrics) => {
-                    info!("Got PDH metrics for Intel GPU");
-
-                    if let Some(util) = pdh_metrics.utilization() {
-                        gpu.utilization = Some(util);
-                        info!("GPU utilization from PDH: {:.2}%", util);
-                    }
-
-                    if let Some(mem_mb) = pdh_metrics.memory_usage_mb() {
-                        // Calculate memory utilization percentage if we know total memory
-                        if let Some(total_mb) = gpu.memory_total {
-                            let mem_percent = (mem_mb as f32 / (total_mb * 1024) as f32) * 100.0;
-                            gpu.memory_util = Some(mem_percent.min(100.0));
-                            info!("GPU memory utilization from PDH: {:.2}%", mem_percent);
-                        }
-                    }
-                }
-                Err(e) => {
-                    warn!("Failed to get PDH metrics for Intel GPU: {:?}", e);
-                }
-            }
-        }
-
-        // Try to get additional metrics from Intel Metrics API (GPA Framework)
-        #[cfg(target_os = "windows")]
-        {
-            if let Ok(intel_metrics) = super::windows::intel_metrics::get_intel_metrics() {
-                info!("Got Intel Metrics API data");
-
-                if let Some(temp) = intel_metrics.temperature {
-                    gpu.temperature = Some(temp);
-                    info!("GPU temperature from Intel Metrics: {:.2} C", temp);
-                }
-
-                if let Some(power) = intel_metrics.power_usage {
-                    gpu.power_usage = Some(power);
-                    info!("GPU power usage from Intel Metrics: {:.2}W", power);
-                }
-
-                if let Some(clock) = intel_metrics.core_clock {
-                    gpu.core_clock = Some(clock);
-                    info!("GPU core clock from Intel Metrics: {} MHz", clock);
-                }
-
-                if let Some(mem_clock) = intel_metrics.memory_clock {
-                    gpu.memory_clock = Some(mem_clock);
-                    info!("GPU memory clock from Intel Metrics: {} MHz", mem_clock);
-                }
-            } else {
-                debug!("Intel Metrics API not available or not implemented yet");
-            }
-        }
+        // Note: This is the platform-agnostic Intel provider that only uses WMI.
+        // For advanced metrics (PDH, Intel MD API), use IntelWindowsProvider on Windows.
 
         if !gpu.is_valid() {
             warn!("GPU data validation failed");
@@ -205,8 +151,18 @@ pub fn detect_intel_gpus() -> Vec<GpuInfo> {
     provider.detect_gpus().unwrap_or_default()
 }
 pub fn update_intel_info(gpu: &mut GpuInfo) -> Result<()> {
-    let provider = IntelProvider::new();
-    provider.update_gpu(gpu)
+    #[cfg(target_os = "windows")]
+    {
+        // Use IntelWindowsProvider for better metrics via Intel MD API
+        let provider = super::windows::intel::IntelWindowsProvider::new();
+        provider.update_gpu(gpu)
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        let provider = IntelProvider::new();
+        provider.update_gpu(gpu)
+    }
 }
 #[cfg(test)]
 mod tests {

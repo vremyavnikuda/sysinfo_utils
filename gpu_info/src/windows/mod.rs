@@ -29,6 +29,13 @@ pub fn info_gpu() -> GpuInfo {
             }
         }
         Some(Vendor::Intel(_)) => {
+            use crate::gpu_info::GpuProvider;
+            let provider = crate::providers::windows::intel::IntelWindowsProvider::new();
+            if let Ok(intel_gpus) = provider.detect_gpus() {
+                if !intel_gpus.is_empty() {
+                    return intel_gpus[0].clone();
+                }
+            }
             let intel_gpu = intel::detect_intel_gpus();
             if !intel_gpu.is_empty() {
                 let mut gpu = intel_gpu[0].clone();

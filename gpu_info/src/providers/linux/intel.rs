@@ -61,12 +61,16 @@ impl IntelLinuxProvider {
         let driver_version = self.get_driver_version();
 
         // Get power management info if available
+        let power_usage = self.get_power_usage(&device_path);
         let temperature = self.get_temperature(&device_path);
         let utilization = self.get_gpu_utilization(&device_path);
         let memory_info = self.get_memory_info(&device_path);
 
-        // Get clock info
+        // Get clock and power info
         let core_clock = self.get_core_clock(&device_path);
+        let memory_clock = self.get_memory_clock(&device_path);
+        let power_limit = self.get_power_limit(&device_path);
+        let max_clock_speed = self.get_max_clock_speed(&device_path);
 
         info!("Found Intel GPU: {}", name);
 
@@ -75,15 +79,15 @@ impl IntelLinuxProvider {
             name_gpu: Some(name),
             temperature,
             utilization,
-            power_usage: None, // Intel integrated GPUs don't typically expose power usage via sysfs
+            power_usage,
             memory_total: memory_info.0,
             memory_util: memory_info.1,
             driver_version,
             active: Some(true),
             core_clock,
-            memory_clock: None, // Memory clock not typically available for Intel iGPUs
-            power_limit: None,  // Power limit not typically available via sysfs
-            max_clock_speed: self.get_max_clock_speed(&device_path),
+            memory_clock,
+            power_limit,
+            max_clock_speed,
         })
     }
 
@@ -123,6 +127,23 @@ impl IntelLinuxProvider {
             }
         }
 
+        None
+    }
+
+    fn get_power_usage(&self, device_path: &Path) -> Option<f32> {
+        // Intel integrated GPUs typically don't expose power usage via sysfs
+        // Try hwmon interface anyway (some discrete Intel GPUs might support it)
+        let hwmon_path = device_path.join("hwmon");
+        if let Ok(entries) = fs::read_dir(&hwmon_path) {
+            for entry in entries.flatten() {
+                let hwmon_device = entry.path();
+                if let Ok(power_str) = fs::read_to_string(hwmon_device.join("power1_average")) {
+                    if let Ok(power_microwatts) = power_str.trim().parse::<u64>() {
+                        return Some((power_microwatts as f32) / 1_000_000.0); // Convert to watts
+                    }
+                }
+            }
+        }
         None
     }
 
@@ -183,6 +204,37 @@ impl IntelLinuxProvider {
         if let Ok(content) = fs::read_to_string(device_path.join("gt_act_freq_mhz")) {
             if let Ok(freq) = content.trim().parse::<u32>() {
                 return Some(freq);
+            }
+        }
+
+        None
+    }
+
+    fn get_memory_clock(&self, device_path: &Path) -> Option<u32> {
+        // Intel integrated GPUs typically don't expose memory clock separately
+        // Memory clock is tied to system RAM frequency
+        // Try to read from sysfs anyway (some discrete Intel GPUs might support it)
+        if let Ok(content) = fs::read_to_string(device_path.join("gt_mem_freq_mhz")) {
+            if let Ok(freq) = content.trim().parse::<u32>() {
+                return Some(freq);
+            }
+        }
+
+        None
+    }
+
+    fn get_power_limit(&self, device_path: &Path) -> Option<f32> {
+        // Intel integrated GPUs typically don't expose power limit via sysfs
+        // Try hwmon interface anyway (some discrete Intel GPUs might support it)
+        let hwmon_path = device_path.join("hwmon");
+        if let Ok(entries) = fs::read_dir(&hwmon_path) {
+            for entry in entries.flatten() {
+                let hwmon_device = entry.path();
+                if let Ok(power_str) = fs::read_to_string(hwmon_device.join("power1_cap")) {
+                    if let Ok(power_microwatts) = power_str.trim().parse::<u64>() {
+                        return Some((power_microwatts as f32) / 1_000_000.0); // Convert to watts
+                    }
+                }
             }
         }
 
