@@ -18,11 +18,8 @@ use crate::{
 };
 use log::{debug, warn};
 use std::{fs, path::Path};
-/// Detect GPU vendor by reading sysfs
-///
-/// Returns the detected vendor or Vendor::Unknown if detection fails.
-/// This function reads `/sys/class/drm/card0/device/vendor` to identify the GPU vendor.
-fn detect_vendor() -> Vendor {
+
+pub(crate) fn detect_vendor() -> Vendor {
     let vendor_path = Path::new("/sys/class/drm/card0/device/vendor");
 
     if let Ok(vendor_id) = fs::read_to_string(vendor_path) {
@@ -35,7 +32,6 @@ fn detect_vendor() -> Vendor {
         }
     }
 
-    // Fallback: check if NVIDIA libraries are available
     if Path::new("/usr/lib/libnvidia-ml.so.1").exists()
         || Path::new("/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1").exists()
     {
@@ -44,28 +40,6 @@ fn detect_vendor() -> Vendor {
 
     Vendor::Unknown
 }
-/// Fetches detailed information about the primary GPU.
-///
-/// This function now uses the modern provider system internally to detect and query GPUs.
-/// It automatically detects the GPU vendor and uses the appropriate provider.
-///
-/// # Returns
-///
-/// Returns a `GpuInfo` struct with information about the primary GPU, or a default
-/// `GpuInfo` with `Vendor::Unknown` if no supported GPU is found.
-///
-/// # Note
-///
-/// For multi-GPU systems or more control, use `GpuManager` or providers directly.
-/// This function only returns information about the first detected GPU.
-///
-/// # Example
-///
-/// ```no_run
-/// use gpu_info::linux;
-/// let gpu = linux::info_gpu();
-/// println!("GPU: {:?}", gpu.name_gpu);
-/// ```
 pub fn info_gpu() -> GpuInfo {
     debug!("Fetching primary GPU info using provider system");
 
@@ -104,40 +78,5 @@ pub fn info_gpu() -> GpuInfo {
             warn!("Failed to detect GPUs: {:?}", e);
             GpuInfo::default()
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_detect_vendor_returns_valid_vendor() {
-        let vendor = detect_vendor();
-        // Should return either a valid vendor or Unknown
-        // We can't test exact value as it depends on the system
-        assert!(matches!(
-            vendor,
-            Vendor::Nvidia | Vendor::Amd | Vendor::Intel(_) | Vendor::Unknown
-        ));
-    }
-
-    #[test]
-    fn test_info_gpu_returns_gpuinfo() {
-        // Should always return GpuInfo, never panic
-        let gpu = info_gpu();
-        // Verify it's a valid GpuInfo struct
-        assert!(matches!(
-            gpu.vendor,
-            Vendor::Nvidia | Vendor::Amd | Vendor::Intel(_) | Vendor::Unknown
-        ));
-    }
-
-    #[test]
-    fn test_info_gpu_does_not_panic_without_gpu() {
-        // This test ensures backward compatibility
-        // Even without GPU, should return default GpuInfo, not panic
-        let _gpu = info_gpu();
-        // If we reached here, no panic occurred
     }
 }

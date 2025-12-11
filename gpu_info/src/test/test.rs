@@ -699,7 +699,7 @@ fn _test_power_state_check() {
     let _ = manager.power_usage();
     assert_eq!(manager.power_usage(), None);
 }
-// Реализация моков для системных команд
+// Mock implementation for system commands
 #[cfg(all(not(target_os = "hermit"), any(unix, windows)))]
 mod mock_impl {
     #[cfg(unix)]
@@ -725,8 +725,8 @@ mod mock_impl {
     ///   the corresponding status and output; otherwise, it defaults to a
     ///   success status with empty output.
     pub fn _command_mock(_cmd: &mut Command) -> Result<Output, std::io::Error> {
-        // Это только заглушка для совместимости
-        // MOCK_COMMAND недоступен здесь, поэтому возвращаем пустой результат
+        // This is just a stub for compatibility
+        // MOCK_COMMAND is not available here, so return empty result
         Ok(Output {
             status: ExitStatus::from_raw(0),
             stdout: vec![],

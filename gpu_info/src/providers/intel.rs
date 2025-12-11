@@ -55,7 +55,7 @@ impl IntelProvider {
             .find(|line| line.contains("AdapterRAM"))
             .and_then(|line| {
                 let bytes = line.split(":").nth(1)?.trim().parse::<u64>().ok()?;
-                Some((bytes / 1024 / 1024 / 1024) as u32)
+                Some((bytes / 1024 / 1024) as u32) // Convert bytes to MB
             });
         let core_clock = output_str
             .lines()
@@ -74,7 +74,7 @@ impl IntelProvider {
             info!("Driver version: {}", ver);
         }
         if let Some(mem) = memory_total {
-            info!("Total memory: {} GB", mem);
+            info!("Total memory: {} MB", mem);
         }
         if let Some(clock) = core_clock {
             info!("Current clock speed: {} MHz", clock);

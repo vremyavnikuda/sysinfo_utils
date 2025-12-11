@@ -5,173 +5,173 @@ use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
-/// Система мониторинга GPU с поддержкой алертов и истории
+/// GPU monitoring system with alert and history support
 #[derive(Debug)]
 pub struct GpuMonitor {
-    /// Менеджер GPU
+    /// GPU manager
     gpu_manager: Arc<Mutex<GpuManager>>,
 
-    /// Настройки мониторинга
+    /// Monitoring configuration
     config: MonitorConfig,
 
-    /// История метрик
+    /// Metrics history
     history: Arc<Mutex<GpuHistory>>,
 
-    /// Обработчики алертов
+    /// Alert handlers
     alert_handlers: Arc<Mutex<Vec<Box<dyn AlertHandler + Send + Sync>>>>,
 
-    /// Состояние мониторинга
+    /// Monitoring state
     is_running: Arc<Mutex<bool>>,
 
-    /// Статистика мониторинга
+    /// Monitoring statistics
     stats: Arc<Mutex<MonitorStats>>,
 
-    /// Handle к потоку мониторинга
+    /// Monitoring thread handle
     thread_handle: Arc<Mutex<Option<JoinHandle<()>>>>,
 }
-/// Конфигурация мониторинга
+/// Monitoring configuration
 #[derive(Debug, Clone)]
 pub struct MonitorConfig {
-    /// Интервал опроса
+    /// Polling interval
     pub polling_interval: Duration,
 
-    /// Размер истории (количество записей)
+    /// History size (number of entries)
     pub history_size: usize,
 
-    /// Пороговые значения для алертов
+    /// Threshold values for alerts
     pub thresholds: GpuThresholds,
 
-    /// Включить автоматические алерты
+    /// Enable automatic alerts
     pub enable_alerts: bool,
 
-    /// Логировать метрики
+    /// Log metrics
     pub log_metrics: bool,
 
-    /// Сохранять метрики в файл
+    /// Save metrics to file
     pub save_to_file: Option<String>,
 }
-/// Пороговые значения для алертов
+/// Threshold values for alerts
 #[derive(Debug, Clone)]
 pub struct GpuThresholds {
-    /// Предупреждение о температуре (°C)
+    /// Temperature warning threshold (°C)
     pub temperature_warning: f32,
 
-    /// Критическая температура (°C)
+    /// Critical temperature threshold (°C)
     pub temperature_critical: f32,
 
-    /// Предупреждение об использовании памяти (%)
+    /// Memory usage warning threshold (%)
     pub memory_warning: f32,
 
-    /// Критическое использование памяти (%)
+    /// Critical memory usage threshold (%)
     pub memory_critical: f32,
 
-    /// Предупреждение о потреблении энергии (W)
+    /// Power usage warning threshold (W)
     pub power_warning: f32,
 
-    /// Критическое потребление энергии (W)
+    /// Critical power usage threshold (W)
     pub power_critical: f32,
 
-    /// Предупреждение о загрузке GPU (%)
+    /// GPU utilization warning threshold (%)
     pub utilization_warning: f32,
 
-    /// Минимальная скорость вентилятора для предупреждения (%)
+    /// Minimum fan speed for warning (%)
     pub fan_speed_min: f32,
 }
-/// История метрик GPU
+/// GPU metrics history
 #[derive(Debug)]
 pub struct GpuHistory {
-    /// Записи истории для каждого GPU
+    /// History entries for each GPU
     pub gpu_histories: Vec<SingleGpuHistory>,
 
-    /// Максимальный размер истории
+    /// Maximum history size
     pub max_size: usize,
 }
-/// История метрик для одного GPU
+/// Metrics history for a single GPU
 #[derive(Debug)]
 pub struct SingleGpuHistory {
-    /// Временные метки
+    /// Timestamps
     pub timestamps: VecDeque<Instant>,
 
-    /// Температуры
+    /// Temperatures
     pub temperatures: VecDeque<f32>,
 
-    /// Загрузка GPU
+    /// GPU utilization
     pub utilizations: VecDeque<f32>,
 
-    /// Потребление энергии
+    /// Power usage
     pub power_usage: VecDeque<f32>,
 
-    /// Использование памяти
+    /// Memory utilization
     pub memory_utilizations: VecDeque<f32>,
 
-    /// Частоты ядра
+    /// Core clock frequencies
     pub core_clocks: VecDeque<u32>,
 
-    /// Скорости вентиляторов
+    /// Fan speeds
     pub fan_speeds: VecDeque<f32>,
 }
-/// Статистика мониторинга
+/// Monitoring statistics
 #[derive(Debug, Default, Clone)]
 pub struct MonitorStats {
-    /// Время запуска мониторинга
+    /// Monitoring start time
     pub start_time: Option<Instant>,
 
-    /// Общее количество собранных метрик
+    /// Total number of collected metrics
     pub total_measurements: u64,
 
-    /// Количество алертов
+    /// Number of alerts
     pub total_alerts: u64,
 
-    /// Количество ошибок
+    /// Number of errors
     pub total_errors: u64,
 
-    /// Среднее время сбора метрик
+    /// Average collection time
     pub avg_collection_time: Duration,
 
-    /// Последнее время сбора
+    /// Last collection time
     pub last_collection_time: Option<Instant>,
 }
-/// Типы алертов
+/// Alert types
 #[derive(Debug, Clone, PartialEq)]
 pub enum AlertType {
-    /// Высокая температура
+    /// High temperature
     HighTemperature { gpu_index: usize, temperature: f32 },
 
-    /// Критическая температура
+    /// Critical temperature
     CriticalTemperature { gpu_index: usize, temperature: f32 },
 
-    /// Высокое использование памяти
+    /// High memory usage
     HighMemoryUsage { gpu_index: usize, usage: f32 },
 
-    /// Критическое использование памяти
+    /// Critical memory usage
     CriticalMemoryUsage { gpu_index: usize, usage: f32 },
 
-    /// Высокое потребление энергии
+    /// High power usage
     HighPowerUsage { gpu_index: usize, power: f32 },
 
-    /// Критическое потребление энергии
+    /// Critical power usage
     CriticalPowerUsage { gpu_index: usize, power: f32 },
 
-    /// Высокая загрузка GPU
+    /// High GPU utilization
     HighUtilization { gpu_index: usize, utilization: f32 },
 
-    /// Низкая скорость вентилятора
+    /// Low fan speed
     LowFanSpeed { gpu_index: usize, fan_speed: f32 },
 
-    /// GPU стал неактивным
+    /// GPU became inactive
     GpuInactive { gpu_index: usize },
 
-    /// Ошибка сбора данных
+    /// Data collection error
     CollectionError { gpu_index: usize, error: String },
 }
-/// Трейт для обработки алертов
+/// Trait for handling alerts
 pub trait AlertHandler: std::fmt::Debug {
-    /// Обработать алерт
+    /// Handle an alert
     fn handle_alert(&self, alert: &AlertType) -> Result<()>;
-    /// Получить имя обработчика
+    /// Get handler name
     fn name(&self) -> &str;
 }
-/// Простой логгер алертов
+/// Simple alert logger
 #[derive(Debug)]
 pub struct LogAlertHandler;
 impl AlertHandler for LogAlertHandler {
@@ -256,7 +256,7 @@ impl Default for GpuThresholds {
     }
 }
 impl GpuMonitor {
-    /// Создает новый монитор GPU
+    /// Creates a new GPU monitor
     pub fn new(config: MonitorConfig) -> Self {
         let gpu_manager = Arc::new(Mutex::new(GpuManager::new()));
         let gpu_count = if let Ok(mgr) = gpu_manager.lock() {
@@ -275,11 +275,11 @@ impl GpuMonitor {
             thread_handle: Arc::new(Mutex::new(None)),
         }
     }
-    /// Создает монитор с настройками по умолчанию
+    /// Creates a monitor with default settings
     pub fn with_defaults() -> Self {
         Self::new(MonitorConfig::default())
     }
-    /// Добавляет обработчик алертов
+    /// Adds an alert handler
     pub fn add_alert_handler(&self, handler: Box<dyn AlertHandler + Send + Sync>) -> Result<()> {
         if let Ok(mut handlers) = self.alert_handlers.lock() {
             info!("Added alert handler: {}", handler.name());
@@ -289,7 +289,7 @@ impl GpuMonitor {
             Err(GpuError::GpuNotActive)
         }
     }
-    /// Запускает мониторинг в отдельном потоке
+    /// Starts monitoring in a separate thread
     pub fn start_monitoring(&self) -> Result<()> {
         // Check if already running
         if let Ok(mut is_running) = self.is_running.lock() {
@@ -348,7 +348,7 @@ impl GpuMonitor {
 
         Ok(())
     }
-    /// Останавливает мониторинг
+    /// Stops monitoring
     pub fn stop_monitoring(&self) -> Result<()> {
         // Set the running flag to false
         if let Ok(mut is_running) = self.is_running.lock() {
@@ -380,15 +380,15 @@ impl GpuMonitor {
 
         Ok(())
     }
-    /// Проверяет, запущен ли мониторинг
+    /// Checks if monitoring is running
     pub fn is_monitoring(&self) -> bool {
         self.is_running.lock().map(|r| *r).unwrap_or(false)
     }
-    /// Возвращает статистику мониторинга
+    /// Returns monitoring statistics
     pub fn get_stats(&self) -> MonitorStats {
         self.stats.lock().map(|s| s.clone()).unwrap_or_default()
     }
-    /// Возвращает историю для конкретного GPU
+    /// Returns history for a specific GPU
     pub fn get_gpu_history(&self, gpu_index: usize) -> Option<SingleGpuHistory> {
         if let Ok(history) = self.history.lock() {
             history.gpu_histories.get(gpu_index).cloned()
@@ -396,7 +396,7 @@ impl GpuMonitor {
             None
         }
     }
-    /// Основной цикл мониторинга
+    /// Main monitoring loop
     fn monitoring_loop(
         gpu_manager: Arc<Mutex<GpuManager>>,
         history: Arc<Mutex<GpuHistory>>,
@@ -484,11 +484,11 @@ impl GpuMonitor {
             iteration_count
         );
     }
-    /// Проверяет, нужно ли продолжать мониторинг
+    /// Checks if monitoring should continue
     fn should_continue_monitoring(is_running: &Arc<Mutex<bool>>) -> bool {
         is_running.lock().map(|r| *r).unwrap_or(false)
     }
-    /// Обновляет историю метрик
+    /// Updates metrics history
     fn update_history(history: &Arc<Mutex<GpuHistory>>, gpus: &[GpuInfo], timestamp: Instant) {
         if let Ok(mut hist) = history.lock() {
             for (gpu_index, gpu) in gpus.iter().enumerate() {
@@ -498,7 +498,7 @@ impl GpuMonitor {
             }
         }
     }
-    /// Проверяет алерты
+    /// Checks alerts
     fn check_alerts(
         gpus: &[GpuInfo],
         thresholds: &GpuThresholds,
@@ -563,7 +563,7 @@ impl GpuMonitor {
             }
         }
     }
-    /// Логирует метрики
+    /// Logs metrics
     fn log_metrics(gpus: &[GpuInfo]) {
         for (index, gpu) in gpus.iter().enumerate() {
             debug!(
@@ -578,7 +578,7 @@ impl GpuMonitor {
             );
         }
     }
-    /// Обновляет статистику
+    /// Updates statistics
     fn update_stats(stats: &Arc<Mutex<MonitorStats>>, collection_start: Instant) {
         if let Ok(mut s) = stats.lock() {
             s.total_measurements += 1;
@@ -596,7 +596,7 @@ impl GpuMonitor {
     }
 }
 impl GpuHistory {
-    /// Создает новую историю для указанного количества GPU
+    /// Creates a new history for the specified number of GPUs
     pub fn new(gpu_count: usize, max_size: usize) -> Self {
         let gpu_histories = (0..gpu_count)
             .map(|_| SingleGpuHistory::new(max_size))
@@ -608,7 +608,7 @@ impl GpuHistory {
     }
 }
 impl SingleGpuHistory {
-    /// Создает новую историю для одного GPU
+    /// Creates a new history for a single GPU
     pub fn new(max_size: usize) -> Self {
         Self {
             timestamps: VecDeque::with_capacity(max_size),
@@ -620,7 +620,7 @@ impl SingleGpuHistory {
             fan_speeds: VecDeque::with_capacity(max_size),
         }
     }
-    /// Добавляет новое измерение
+    /// Adds a new measurement
     pub fn add_measurement(&mut self, gpu: &GpuInfo, timestamp: Instant) {
         self.timestamps.push_back(timestamp);
         self.temperatures.push_back(gpu.temperature.unwrap_or(0.0));
@@ -641,7 +641,7 @@ impl SingleGpuHistory {
             self.fan_speeds.pop_front();
         }
     }
-    /// Возвращает среднюю температуру за указанный период
+    /// Returns average temperature for the specified period
     pub fn avg_temperature(&self, duration: Duration) -> Option<f32> {
         let cutoff = Instant::now() - duration;
         let values: Vec<f32> = self
@@ -657,7 +657,7 @@ impl SingleGpuHistory {
             Some(values.iter().sum::<f32>() / values.len() as f32)
         }
     }
-    /// Возвращает максимальную температуру за указанный период
+    /// Returns maximum temperature for the specified period
     pub fn max_temperature(&self, duration: Duration) -> Option<f32> {
         let cutoff = Instant::now() - duration;
         self.timestamps

@@ -221,20 +221,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ```rust
 use gpu_info::{get_async, get_all_async};
+use log::info;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::init();
+    
     let gpu = get_async().await?;
-    println!("Primary GPU: {}", gpu.format_name_gpu());
-    println!("Temperature: {}°C", gpu.format_temperature());
-    println!("Utilization: {}%", gpu.format_utilization());
+    info!("Primary GPU: {}", gpu.format_name_gpu());
+    info!("Temperature: {}°C", gpu.format_temperature());
+    info!("Utilization: {}%", gpu.format_utilization());
+    
     let gpus = get_all_async().await?;
-    println!("Found {} GPU(s)", gpus.len());
+    info!("Found {} GPU(s)", gpus.len());
     for (i, gpu) in gpus.iter().enumerate() {
-        println!("GPU {}: {}", i, gpu.format_name_gpu());
-        println!("  Temperature: {}°C", gpu.format_temperature());
-        println!("  Utilization: {}%", gpu.format_utilization());
-        println!("  Power Usage: {}W", gpu.format_power_usage());
+        info!("GPU {}: {}", i, gpu.format_name_gpu());
+        info!("  Temperature: {}°C", gpu.format_temperature());
+        info!("  Utilization: {}%", gpu.format_utilization());
+        info!("  Power Usage: {}W", gpu.format_power_usage());
     }
     Ok(())
 }
@@ -265,6 +269,9 @@ cargo run --example provider_manager
 Run the async API example:
 ```bash
 cargo run --example async_example
+
+# With logging enabled:
+RUST_LOG=info cargo run --example async_example
 ```
 
 ## Dependencies

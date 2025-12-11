@@ -1,6 +1,4 @@
-//! Linux NVIDIA GPU provider implementation
-//!
-//! This module implements the GpuProvider trait for NVIDIA GPUs on Linux using the NVML API.
+//! Linux NVIDIA GPU provider using NVML API
 use crate::gpu_info::{GpuInfo, GpuProvider, Result};
 use crate::vendor::Vendor;
 use libloading::{Library, Symbol};
@@ -42,20 +40,21 @@ type NvmlDeviceGetClockInfoFn = unsafe extern "C" fn(NvmlDevice_t, u32, *mut u32
 type NvmlDeviceGetMemoryInfoFn =
     unsafe extern "C" fn(NvmlDevice_t, *mut NvmlMemory) -> nvmlReturn_t;
 const NVML_CLOCK_GRAPHICS: u32 = 0;
-/// NVIDIA GPU provider for Linux
 pub struct NvidiaLinuxProvider;
+
 impl NvidiaLinuxProvider {
     pub fn new() -> Self {
         Self
     }
 }
+
 impl Default for NvidiaLinuxProvider {
     fn default() -> Self {
         Self::new()
     }
 }
+
 impl GpuProvider for NvidiaLinuxProvider {
-    /// Detect all NVIDIA GPUs on Linux using dynamic NVML loading
     fn detect_gpus(&self) -> Result<Vec<GpuInfo>> {
         debug!("Detecting NVIDIA GPUs using dynamic NVML loading on Linux");
         unsafe {
@@ -207,7 +206,6 @@ impl GpuProvider for NvidiaLinuxProvider {
             Ok(vec![gpu_info])
         }
     }
-    /// Update NVIDIA GPU information on Linux
     fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
         let gpus = self.detect_gpus()?;
         if let Some(updated_gpu) = gpus.first() {
@@ -215,17 +213,8 @@ impl GpuProvider for NvidiaLinuxProvider {
         }
         Ok(())
     }
-    /// Get the vendor for this provider
+
     fn get_vendor(&self) -> Vendor {
         Vendor::Nvidia
-    }
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn test_nvidia_linux_provider_vendor() {
-        let provider = NvidiaLinuxProvider::new();
-        assert_eq!(provider.get_vendor(), Vendor::Nvidia);
     }
 }

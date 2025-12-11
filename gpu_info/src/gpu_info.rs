@@ -513,7 +513,8 @@ impl GpuInfo {
             }
         }
         if let Some(mem) = self.memory_total {
-            if mem > 128 {
+            if mem > 131072 {
+                // 128 GB in MB
                 return Err(GpuError::InvalidMemory(mem));
             }
         }

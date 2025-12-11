@@ -52,14 +52,14 @@
 //!   │     └─► Name, Driver, Memory Total
 //!   │
 //!   ├─► enhance_with_md_api()       [Intel MD API]
-//!   │     ├─► Temperature  ✓ Primary
-//!   │     ├─► Power Usage  ✓ Primary
-//!   │     ├─► Frequency    ✓ Primary
-//!   │     └─► Utilization  ✓ Primary (if available)
+//!   │     ├─► Temperature  (Primary)
+//!   │     ├─► Power Usage  (Primary)
+//!   │     ├─► Frequency    (Primary)
+//!   │     └─► Utilization  (Primary if available)
 //!   │
 //!   └─► enhance_with_pdh()          [PDH Fallback]
-//!         ├─► Utilization  ✓ Fallback (if MD API failed)
-//!         └─► Memory Usage ✓ Primary (MD API doesn't provide)
+//!         ├─► Utilization  (Fallback if MD API failed)
+//!         └─► Memory Usage (Primary - MD API doesn't provide)
 //! ```
 //!
 //! # Why This Design?
@@ -1268,51 +1268,51 @@ impl IntelWindowsProvider {
     /// Utilization is NOT collected here - PDH is more reliable for that metric.
     fn enhance_with_md_api(&self, gpu: &mut GpuInfo) {
         if let Ok(device) = IntelMetricsDevice::new() {
-            debug!("✓ Intel Metrics Discovery API available, collecting metrics");
+            debug!("Intel Metrics Discovery API available, collecting metrics");
 
             // Temperature - primary source
             if let Ok(temp) = device.get_temperature() {
                 gpu.temperature = Some(temp);
-                info!("✓ Temperature from Intel MD API: {:.1}°C", temp);
+                info!("Temperature from Intel MD API: {:.1}°C", temp);
             } else {
-                debug!("✗ Temperature not available from Intel MD API");
+                debug!("Temperature not available from Intel MD API");
             }
 
             // Power usage - primary source
             if let Ok(power) = device.get_power() {
                 gpu.power_usage = Some(power);
-                info!("✓ Power usage from Intel MD API: {:.1}W", power);
+                info!("Power usage from Intel MD API: {:.1}W", power);
             } else {
-                debug!("✗ Power usage not available from Intel MD API");
+                debug!("Power usage not available from Intel MD API");
             }
 
             // Core frequency - primary source
             if let Ok(freq) = device.get_frequency() {
                 gpu.core_clock = Some(freq);
-                info!("✓ Core clock from Intel MD API: {} MHz", freq);
+                info!("Core clock from Intel MD API: {} MHz", freq);
             } else {
-                debug!("✗ Core clock not available from Intel MD API");
+                debug!("Core clock not available from Intel MD API");
             }
 
             // Max frequency - primary source
             if let Ok(max_freq) = device.get_max_frequency() {
                 gpu.max_clock_speed = Some(max_freq);
-                info!("✓ Max clock from Intel MD API: {} MHz", max_freq);
+                info!("Max clock from Intel MD API: {} MHz", max_freq);
             } else {
-                debug!("✗ Max clock not available from Intel MD API");
+                debug!("Max clock not available from Intel MD API");
             }
 
             // Memory frequency - primary source
             if let Ok(mem_freq) = device.get_memory_frequency() {
                 gpu.memory_clock = Some(mem_freq);
-                info!("✓ Memory clock from Intel MD API: {} MHz", mem_freq);
+                info!("Memory clock from Intel MD API: {} MHz", mem_freq);
             } else {
-                debug!("✗ Memory clock not available from Intel MD API");
+                debug!("Memory clock not available from Intel MD API");
             }
 
             debug!("Intel MD API metrics collection complete");
         } else {
-            debug!("✗ Intel Metrics Discovery API not available (igdmd64.dll not found)");
+            debug!("Intel Metrics Discovery API not available (igdmd64.dll not found)");
         }
     }
 
@@ -1332,7 +1332,7 @@ impl IntelWindowsProvider {
         let query = match super::pdh::open_query() {
             Ok(q) => q,
             Err(e) => {
-                warn!("✗ Failed to open PDH query: {:?}", e);
+                warn!("Failed to open PDH query: {:?}", e);
                 return;
             }
         };
@@ -1363,14 +1363,14 @@ impl IntelWindowsProvider {
         }
 
         if util_counters.is_empty() && mem_counters.is_empty() {
-            warn!("✗ No PDH counters available");
+            warn!("No PDH counters available");
             super::pdh::close_query(query);
             return;
         }
 
         // Collect first snapshot
         if let Err(e) = super::pdh::collect_query_data(query) {
-            warn!("✗ First PDH collection failed: {:?}", e);
+            warn!("First PDH collection failed: {:?}", e);
             super::pdh::close_query(query);
             return;
         }
@@ -1382,7 +1382,7 @@ impl IntelWindowsProvider {
 
         // Collect second snapshot
         if let Err(e) = super::pdh::collect_query_data(query) {
-            warn!("✗ Second PDH collection failed: {:?}", e);
+            warn!("Second PDH collection failed: {:?}", e);
             super::pdh::close_query(query);
             return;
         }
@@ -1402,7 +1402,7 @@ impl IntelWindowsProvider {
 
             // Total utilization is the sum of all engine utilizations
             gpu.utilization = Some(total_util as f32);
-            info!("✓ Utilization from PDH: {:.2}%", total_util);
+            info!("Utilization from PDH: {:.2}%", total_util);
         }
 
         // Calculate total memory usage
@@ -1420,19 +1420,17 @@ impl IntelWindowsProvider {
             if valid_count > 0 {
                 let mem_mb = (total_mem_bytes / (1024.0 * 1024.0)) as u64;
                 if let Some(total_mb) = gpu.memory_total {
-                    let mem_percent = (mem_mb as f32 / (total_mb * 1024) as f32) * 100.0;
+                    let mem_percent = (mem_mb as f32 / total_mb as f32) * 100.0;
                     gpu.memory_util = Some(mem_percent.min(100.0));
                     info!(
-                        "✓ Memory utilization from PDH: {:.2}% ({} MB / {} MB)",
-                        mem_percent,
-                        mem_mb,
-                        total_mb * 1024
+                        "Memory utilization from PDH: {:.2}% ({} MB / {} MB)",
+                        mem_percent, mem_mb, total_mb
                     );
                 } else {
-                    debug!("  Cannot calculate memory %: total memory unknown");
+                    debug!("Cannot calculate memory %: total memory unknown");
                 }
             } else {
-                debug!("✗ No valid memory values from PDH");
+                debug!("No valid memory values from PDH");
             }
         }
 

@@ -3,19 +3,19 @@ use crate::{bit_depth, system_os::Type, system_uname::uname, Info, SystemVersion
 use log::{error, trace};
 use std::process::Command;
 
-/// Возвращает информацию о текущей платформе, включая тип системы, версию и разрядность.
+/// Returns information about the current platform, including system type, version, and bitness.
 ///
-/// Эта функция определяет текущую платформу, используя:
-/// - `uname` для получения версии системы.
-/// - Вспомогательную функцию `get_os` для определения типа системы.
-/// - Функцию `bit_depth::get` для определения разрядности системы.
+/// This function determines the current platform using:
+/// - `uname` to get the system version.
+/// - Helper function `get_os` to determine the system type.
+/// - Function `bit_depth::get` to determine system bitness.
 ///
-/// Возвращаемая структура `Info` содержит следующие данные:
-/// - `system_type`: тип операционной системы (например, FreeBSD, MidnightBSD).
-/// - `version`: версия системы, определенная с помощью `uname -r`.
-/// - `bit_depth`: разрядность системы.
+/// The returned `Info` structure contains the following data:
+/// - `system_type`: operating system type (e.g., FreeBSD, MidnightBSD).
+/// - `version`: system version determined using `uname -r`.
+/// - `bit_depth`: system bitness.
 ///
-/// # Пример
+/// # Example
 /// ```
 /// let platform_info = current_platform();
 /// println!("System type: {:?}", platform_info.system_type);
@@ -74,7 +74,7 @@ mod freebsd_tests {
     use crate::system_os::Type;
     use pretty_assertions::assert_eq;
 
-    /// Проверяет, что текущая платформа правильно определяется как FreeBSD.
+    /// Verifies that the current platform is correctly detected as FreeBSD.
     #[test]
     fn current_platform_freebsd() {
         let platform = current_platform();

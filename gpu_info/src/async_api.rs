@@ -195,15 +195,24 @@ pub async fn update_gpu_async(gpu: &mut GpuInfo) -> Result<()> {
     let vendor = gpu.vendor;
     let name_gpu = gpu.name_gpu.clone();
     let result = tokio::task::spawn_blocking(move || {
-        let mut manager = crate::gpu_manager::GpuManager::new();
-        manager.detect_all_gpus();
-        let _ = manager.refresh_all_gpus();
-        let gpu_count = manager.gpu_count();
+        // Use global cached manager instead of creating new one
+        let manager = crate::gpu_manager::global_gpu_manager();
+        let mut manager_lock = manager.lock().unwrap();
+
+        // If no GPUs detected yet, detect them once
+        if manager_lock.gpu_count() == 0 {
+            manager_lock.detect_all_gpus();
+        }
+
+        // Refresh to get latest metrics (this updates GPUs and clears cache)
+        let _ = manager_lock.refresh_all_gpus();
+
+        // Find matching GPU directly without triggering cache update
+        let gpu_count = manager_lock.gpu_count();
         for i in 0..gpu_count {
-            if let Some(gpu_arc) = manager.get_gpu_cached(i) {
-                if gpu_arc.vendor == vendor && gpu_arc.name_gpu == name_gpu {
-                    // Clone only once when we found the match
-                    return Ok(Arc::try_unwrap(gpu_arc).unwrap_or_else(|arc| (*arc).clone()));
+            if let Some(gpu) = manager_lock.get_gpu_by_index_owned(i) {
+                if gpu.vendor == vendor && gpu.name_gpu == name_gpu {
+                    return Ok(gpu);
                 }
             }
         }
@@ -218,25 +227,5 @@ pub async fn update_gpu_async(gpu: &mut GpuInfo) -> Result<()> {
         }
         Ok(Err(e)) => Err(e),
         Err(_) => Err(GpuError::GpuNotActive),
-    }
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[tokio::test]
-    async fn test_get_async() {
-        let result = get_async().await;
-        assert!(result.is_ok() || result.is_err());
-    }
-    #[tokio::test]
-    async fn test_get_all_async() {
-        let result = get_all_async().await;
-        assert!(result.is_ok() || result.is_err());
-    }
-    #[tokio::test]
-    async fn test_update_gpu_async() {
-        let mut gpu = GpuInfo::unknown();
-        let result = update_gpu_async(&mut gpu).await;
-        assert!(result.is_ok() || result.is_err());
     }
 }

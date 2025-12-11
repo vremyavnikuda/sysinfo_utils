@@ -46,7 +46,7 @@ impl MacosProvider {
     pub fn new() -> Self {
         Self
     }
-    /// Получает список всех GPU в системе macOS
+    /// Gets list of all GPUs in macOS system
     fn detect_all_gpus(&self) -> Vec<GpuInfo> {
         let mut gpus = Vec::new();
         gpus.extend(self.get_basic_gpu_info());
@@ -58,7 +58,7 @@ impl MacosProvider {
         }
         gpus
     }
-    /// Базовая информация через system_profiler
+    /// Basic information via system_profiler
     fn get_basic_gpu_info(&self) -> Vec<GpuInfo> {
         let mut gpus = Vec::new();
         let output = Command::new("system_profiler")
@@ -72,7 +72,7 @@ impl MacosProvider {
         }
         gpus
     }
-    /// Парсинг вывода system_profiler
+    /// Parse system_profiler output
     fn parse_system_profiler_output(&self, xml_output: &str) -> Vec<GpuInfo> {
         let mut gpus = Vec::new();
         let lines: Vec<&str> = xml_output.lines().collect();
@@ -92,7 +92,7 @@ impl MacosProvider {
         info!("Found {} GPU(s) via system_profiler", gpus.len());
         gpus
     }
-    /// Парсинг словаря GPU из XML
+    /// Parse GPU dictionary from XML
     fn parse_gpu_dict(&self, lines: &[&str], index: &mut usize) -> Option<GpuInfo> {
         let mut gpu = GpuInfo::unknown();
         let mut found_gpu_info = false;
@@ -131,7 +131,7 @@ impl MacosProvider {
             None
         }
     }
-    /// Извлечение строкового значения из XML тега
+    /// Extract string value from XML tag
     fn extract_string_value(&self, line: &str) -> Option<String> {
         if line.starts_with("<string>") && line.ends_with("</string>") {
             Some(
@@ -143,7 +143,7 @@ impl MacosProvider {
             None
         }
     }
-    /// Простой парсинг для обратной совместимости
+    /// Simple parsing for backward compatibility
     fn simple_parse_system_profiler(&self, xml_output: &str) -> Vec<GpuInfo> {
         let mut gpus = Vec::new();
         let mut current_gpu = GpuInfo::unknown();
@@ -170,11 +170,11 @@ impl MacosProvider {
         }
         gpus
     }
-    /// Определение производителя по имени GPU
+    /// Determine vendor from GPU name
     fn determine_vendor(&self, name: &str) -> Vendor {
         crate::vendor::determine_vendor_from_name(name)
     }
-    /// Извлечение информации о VRAM из названия GPU
+    /// Extract VRAM information from GPU name
     fn extract_vram_from_name(&self, name: &str) -> Option<u32> {
         let words: Vec<&str> = name.split_whitespace().collect();
         for word in words {
@@ -190,7 +190,7 @@ impl MacosProvider {
         }
         None
     }
-    /// Парсинг строки VRAM (например, "4096 MB", "8 GB")
+    /// Parse VRAM string (e.g., "4096 MB", "8 GB")
     fn parse_vram_string(&self, vram_str: &str) -> Option<u32> {
         let vram_lower = vram_str.to_lowercase();
         if let Some(mb_pos) = vram_lower.find("mb") {
@@ -207,7 +207,7 @@ impl MacosProvider {
         }
         None
     }
-    /// Парсинг частоты (например, "1200 MHz", "2.5 GHz")
+    /// Parse clock speed (e.g., "1200 MHz", "2.5 GHz")
     fn parse_clock_speed(&self, speed_str: &str) -> Option<u32> {
         let speed_lower = speed_str.to_lowercase();
         if let Some(mhz_pos) = speed_lower.find("mhz") {
@@ -219,12 +219,12 @@ impl MacosProvider {
         if let Some(ghz_pos) = speed_lower.find("ghz") {
             let number_part = &speed_str[..ghz_pos].trim();
             if let Ok(ghz_value) = number_part.parse::<f32>() {
-                return Some((ghz_value * 1000.0) as u32); // Конвертация GHz в MHz
+                return Some((ghz_value * 1000.0) as u32); // Convert GHz to MHz
             }
         }
         None
     }
-    /// Детекция Apple Silicon GPU
+    /// Detect Apple Silicon GPU
     fn detect_apple_silicon_gpu(&self) -> Option<GpuInfo> {
         let cpu_output = Command::new("sysctl")
             .args(["-n", "machdep.cpu.brand_string"])
@@ -260,52 +260,52 @@ impl MacosProvider {
         }
         None
     }
-    /// Определение информации о Apple GPU
+    /// Determine Apple GPU information
     fn determine_apple_gpu_info(&self, cpu_info: &str) -> (String, Option<u32>) {
         if cpu_info.contains("M3") {
             if cpu_info.contains("Pro") {
-                ("Apple M3 Pro GPU".to_string(), Some(18)) // M3 Pro имеет до 18 GPU ядер
+                ("Apple M3 Pro GPU".to_string(), Some(18)) // M3 Pro has up to 18 GPU cores
             } else if cpu_info.contains("Max") {
-                ("Apple M3 Max GPU".to_string(), Some(40)) // M3 Max имеет до 40 GPU ядер
+                ("Apple M3 Max GPU".to_string(), Some(40)) // M3 Max has up to 40 GPU cores
             } else {
-                ("Apple M3 GPU".to_string(), Some(10)) // Базовый M3 имеет 8-10 GPU ядер
+                ("Apple M3 GPU".to_string(), Some(10)) // Base M3 has 8-10 GPU cores
             }
         } else if cpu_info.contains("M2") {
             if cpu_info.contains("Pro") {
-                ("Apple M2 Pro GPU".to_string(), Some(19)) // M2 Pro имеет 19 GPU ядер
+                ("Apple M2 Pro GPU".to_string(), Some(19)) // M2 Pro has 19 GPU cores
             } else if cpu_info.contains("Max") {
-                ("Apple M2 Max GPU".to_string(), Some(38)) // M2 Max имеет 38 GPU ядер
+                ("Apple M2 Max GPU".to_string(), Some(38)) // M2 Max has 38 GPU cores
             } else {
-                ("Apple M2 GPU".to_string(), Some(8)) // Базовый M2 имеет 8-10 GPU ядер
+                ("Apple M2 GPU".to_string(), Some(8)) // Base M2 has 8-10 GPU cores
             }
         } else if cpu_info.contains("M1") {
             if cpu_info.contains("Pro") {
-                ("Apple M1 Pro GPU".to_string(), Some(16)) // M1 Pro имеет 14-16 GPU ядер
+                ("Apple M1 Pro GPU".to_string(), Some(16)) // M1 Pro has 14-16 GPU cores
             } else if cpu_info.contains("Max") {
-                ("Apple M1 Max GPU".to_string(), Some(32)) // M1 Max имеет 24-32 GPU ядра
+                ("Apple M1 Max GPU".to_string(), Some(32)) // M1 Max has 24-32 GPU cores
             } else {
-                ("Apple M1 GPU".to_string(), Some(8)) // Базовый M1 имеет 7-8 GPU ядер
+                ("Apple M1 GPU".to_string(), Some(8)) // Base M1 has 7-8 GPU cores
             }
         } else {
             ("Apple Silicon GPU".to_string(), None)
         }
     }
-    /// Оценка частоты Apple GPU
+    /// Estimate Apple GPU clock speed
     fn estimate_apple_gpu_clock(&self, cpu_info: &str) -> Option<u32> {
-        // Оценка основанная на типе чипа
+        // Estimate based on chip type
         if cpu_info.contains("M3") {
-            Some(1400) // M3 GPU частота около 1.4 GHz
+            Some(1400) // M3 GPU clock around 1.4 GHz
         } else if cpu_info.contains("M2") {
-            Some(1300) // M2 GPU частота около 1.3 GHz
+            Some(1300) // M2 GPU clock around 1.3 GHz
         } else if cpu_info.contains("M1") {
-            Some(1200) // M1 GPU частота около 1.2 GHz
+            Some(1200) // M1 GPU clock around 1.2 GHz
         } else {
-            Some(1000) // Общая оценка
+            Some(1000) // General estimate
         }
     }
-    /// Получение использования Apple GPU
+    /// Get Apple GPU utilization
     fn get_apple_gpu_utilization(&self) -> Option<f32> {
-        // Попытаемся получить через powermetrics (если доступно)
+        // Try to get via powermetrics (if available)
         let output = Command::new("powermetrics")
             .args(["-n", "1", "-s", "gpu_power", "--show-initial-usage"])
             .output();
@@ -317,7 +317,7 @@ impl MacosProvider {
         }
         None
     }
-    /// Получение температуры Apple GPU
+    /// Get Apple GPU temperature
     fn get_apple_gpu_temperature(&self) -> Option<f32> {
         let output = Command::new("sysctl").args(["-a"]).output();
         if let Ok(out) = output {
@@ -332,7 +332,7 @@ impl MacosProvider {
         }
         None
     }
-    /// Парсинг использования GPU из powermetrics
+    /// Parse GPU usage from powermetrics
     fn parse_gpu_usage_from_powermetrics(&self, output: &str) -> Option<f32> {
         for line in output.lines() {
             if line.contains("GPU") && line.contains("%") {
@@ -348,7 +348,7 @@ impl MacosProvider {
         }
         None
     }
-    /// Парсинг температуры из sysctl
+    /// Parse temperature from sysctl
     fn parse_temperature_from_sysctl(&self, line: &str) -> Option<f32> {
         if let Some(colon_pos) = line.find(':') {
             let value_part = &line[colon_pos + 1..].trim();
@@ -362,7 +362,7 @@ impl MacosProvider {
         }
         None
     }
-    /// Получение размера unified memory для Apple Silicon
+    /// Get unified memory size for Apple Silicon
     fn get_unified_memory_size(&self) -> Option<u32> {
         let output = Command::new("sysctl").args(["-n", "hw.memsize"]).output();
         if let Ok(out) = output {
@@ -373,7 +373,7 @@ impl MacosProvider {
         }
         None
     }
-    /// Расширение информации через дополнительные системные вызовы
+    /// Enhance information via additional system calls
     fn enhance_with_additional_info(&self, gpus: &mut [GpuInfo]) {
         debug!("Attempting to enhance GPU information via additional system calls");
         for gpu in gpus.iter_mut() {
@@ -385,7 +385,7 @@ impl MacosProvider {
             }
         }
     }
-    /// Примерная оценка загрузки GPU
+    /// Approximate GPU utilization estimate
     fn get_gpu_utilization_estimate(&self) -> Option<f32> {
         let output = Command::new("vm_stat").output();
         if let Ok(out) = output {

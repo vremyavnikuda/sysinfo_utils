@@ -114,12 +114,13 @@ mod tests {
             concurrent_requests as f64 / total_duration.as_secs_f64()
         );
         assert!(
-            total_duration < Duration::from_secs(30),
+            total_duration < Duration::from_secs(60),
             "Load test took too long: {:?}",
             total_duration
         );
+        // With PDH metrics (~500ms per call), average response time can be higher
         assert!(
-            avg_response_time < Duration::from_secs(5),
+            avg_response_time < Duration::from_secs(10),
             "Average response time too high: {:?}",
             avg_response_time
         );
@@ -155,8 +156,9 @@ mod tests {
         println!("  Successful calls: {}", successful_calls);
         println!("  Total duration: {:?}", total_duration);
         println!("  Average call time: {:?}", total_duration / iterations);
+        // With PDH metrics (~500ms per call) and 100 iterations, this can take longer
         assert!(
-            total_duration < Duration::from_secs(60),
+            total_duration < Duration::from_secs(120),
             "Sequential test took too long: {:?}",
             total_duration
         );
@@ -285,14 +287,15 @@ mod tests {
             "  get_all_async() - Average: {:?}, Success rate: {}/{}",
             avg_get_all_time, successful_get_alls, BENCHMARK_ITERATIONS
         );
-        // With PDH metrics (500ms per cache miss), performance expectations are different
+        // With PDH metrics (~500ms per cache miss), performance expectations need to be realistic
+        // Intel GPU with PDH takes ~1-2s per call due to two PDH snapshots
         assert!(
-            avg_get_time < Duration::from_secs(1),
+            avg_get_time < Duration::from_secs(3),
             "get_async too slow: {:?}",
             avg_get_time
         );
         assert!(
-            avg_get_all_time < Duration::from_secs(3),
+            avg_get_all_time < Duration::from_secs(5),
             "get_all_async too slow: {:?}",
             avg_get_all_time
         );

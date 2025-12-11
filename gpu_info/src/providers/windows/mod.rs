@@ -18,14 +18,15 @@
 //!
 //! # Usage
 //!
-//! ```rust,no_run
-//! use gpu_info::providers::windows::intel::IntelWindowsProvider;
-//! use gpu_info::gpu_info::GpuProvider;
+//! ```rust,ignore
+//! // Internal module - use via public API
+//! use crate::providers::windows::intel::IntelWindowsProvider;
+//! use crate::gpu_info::GpuProvider;
 //!
 //! let provider = IntelWindowsProvider::new();
 //! let gpus = provider.detect_gpus()?;
 //! // All metrics (WMI + Intel MD API + PDH) collected automatically
-//! # Ok::<(), gpu_info::gpu_info::GpuError>(())
+//! # Ok::<(), crate::gpu_info::GpuError>(())
 //! ```
 //!
 //! # Design Principles

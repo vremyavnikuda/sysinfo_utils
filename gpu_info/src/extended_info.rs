@@ -3,139 +3,139 @@ use crate::gpu_info::{GpuInfo, Result};
 use crate::vendor::Vendor;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
-/// Расширенная информация о GPU с дополнительными метриками
+/// Extended GPU information with additional metrics
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ExtendedGpuInfo {
-    /// Базовая информация о GPU
+    /// Basic GPU information
     pub base_info: GpuInfo,
 
-    /// Информация о вентиляторах
+    /// Fan information
     pub fan_info: FanInfo,
 
-    /// Информация о видеокодеках
+    /// Video encoder/decoder information
     pub encoder_info: EncoderInfo,
 
-    /// Информация о памяти
+    /// Memory information
     pub memory_info: MemoryInfo,
 
-    /// Информация о шинах и подключении
+    /// Bus and connection information
     pub connection_info: ConnectionInfo,
 
-    /// Тепловая информация
+    /// Thermal information
     pub thermal_info: ThermalInfo,
 
-    /// Информация о производительности
+    /// Performance information
     pub performance_info: PerformanceInfo,
 }
-/// Информация о системе охлаждения
+/// Cooling system information
 #[derive(Debug, Clone, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct FanInfo {
-    /// Скорость вентилятора в RPM
+    /// Fan speed in RPM
     pub fan_speed_rpm: Option<u32>,
 
-    /// Скорость вентилятора в процентах (0-100)
+    /// Fan speed in percent (0-100)
     pub fan_speed_percent: Option<f32>,
 
-    /// Количество вентиляторов
+    /// Number of fans
     pub fan_count: Option<u8>,
 
-    /// Информация о каждом вентиляторе
+    /// Information about each individual fan
     pub individual_fans: Vec<IndividualFanInfo>,
 
-    /// Автоматический режим управления вентиляторами
+    /// Automatic fan control mode
     pub auto_fan_control: Option<bool>,
 
-    /// Целевая температура для авто-управления
+    /// Target temperature for auto control
     pub target_temperature: Option<f32>,
 }
-/// Информация об отдельном вентиляторе
+/// Individual fan information
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct IndividualFanInfo {
-    /// Индекс вентилятора
+    /// Fan index
     pub index: u8,
 
-    /// Скорость в RPM
+    /// Speed in RPM
     pub speed_rpm: Option<u32>,
 
-    /// Скорость в процентах
+    /// Speed in percent
     pub speed_percent: Option<f32>,
 
-    /// Максимальная скорость
+    /// Maximum speed
     pub max_speed_rpm: Option<u32>,
 }
-/// Информация о видеокодеках
+/// Video encoder/decoder information
 #[derive(Debug, Clone, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct EncoderInfo {
-    /// Загрузка видеокодера (%)
+    /// Video encoder utilization (%)
     pub encoder_utilization: Option<f32>,
 
-    /// Загрузка видеодекодера (%)
+    /// Video decoder utilization (%)
     pub decoder_utilization: Option<f32>,
 
-    /// Поддерживаемые кодеки
+    /// Supported codecs
     pub supported_codecs: Vec<String>,
 
-    /// Текущий активный кодек
+    /// Currently active codec
     pub active_codec: Option<String>,
 
-    /// Количество активных сессий кодирования
+    /// Number of active encoding sessions
     pub active_encoding_sessions: Option<u32>,
 
-    /// Количество активных сессий декодирования
+    /// Number of active decoding sessions
     pub active_decoding_sessions: Option<u32>,
 }
-/// Расширенная информация о памяти
+/// Extended memory information
 #[derive(Debug, Clone, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MemoryInfo {
-    /// Общий объем видеопамяти в MB
+    /// Total video memory in MB
     pub total_memory_mb: Option<u64>,
 
-    /// Используемая память в MB
+    /// Used memory in MB
     pub used_memory_mb: Option<u64>,
 
-    /// Свободная память в MB
+    /// Free memory in MB
     pub free_memory_mb: Option<u64>,
 
-    /// Пропускная способность памяти в GB/s
+    /// Memory bandwidth in GB/s
     pub memory_bandwidth_gb_s: Option<f32>,
 
-    /// Использование пропускной способности памяти (%)
+    /// Memory bandwidth utilization (%)
     pub memory_bandwidth_utilization: Option<f32>,
 
-    /// Тип памяти (GDDR6, HBM2, etc.)
+    /// Memory type (GDDR6, HBM2, etc.)
     pub memory_type: Option<String>,
 
-    /// Ширина шины памяти в битах
+    /// Memory bus width in bits
     pub memory_bus_width: Option<u32>,
 
-    /// ECC статус (если поддерживается)
+    /// ECC status (if supported)
     pub ecc_enabled: Option<bool>,
 
-    /// Количество ошибок ECC
+    /// Number of ECC errors
     pub ecc_errors: Option<u64>,
 }
-/// Информация о подключении
+/// Connection information
 #[derive(Debug, Clone, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ConnectionInfo {
-    /// Поколение PCIe (3, 4, 5, etc.)
+    /// PCIe generation (3, 4, 5, etc.)
     pub pcie_generation: Option<u8>,
 
-    /// Ширина PCIe линии (x1, x4, x8, x16)
+    /// PCIe lane width (x1, x4, x8, x16)
     pub pcie_width: Option<u8>,
 
-    /// Текущая пропускная способность PCIe в GB/s
+    /// Current PCIe throughput in GB/s
     pub pcie_throughput_gb_s: Option<f32>,
 
-    /// Максимальная пропускная способность PCIe в GB/s
+    /// Maximum PCIe throughput in GB/s
     pub pcie_max_throughput_gb_s: Option<f32>,
 
-    /// Использование PCIe пропускной способности (%)
+    /// PCIe bandwidth utilization (%)
     pub pcie_utilization: Option<f32>,
 
     /// Bus ID
@@ -150,35 +150,35 @@ pub struct ConnectionInfo {
     /// Subsystem ID
     pub subsystem_id: Option<String>,
 }
-/// Расширенная тепловая информация
+/// Extended thermal information
 #[derive(Debug, Clone, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ThermalInfo {
-    /// Температура GPU в °C
+    /// GPU temperature in °C
     pub gpu_temperature: Option<f32>,
 
-    /// Температура памяти в °C
+    /// Memory temperature in °C
     pub memory_temperature: Option<f32>,
 
-    /// Температура VRM в °C
+    /// VRM temperature in °C
     pub vrm_temperature: Option<f32>,
 
-    /// Максимальная безопасная температура
+    /// Maximum safe temperature
     pub max_safe_temperature: Option<f32>,
 
-    /// Температура начала троттлинга
+    /// Throttling start temperature
     pub throttle_temperature: Option<f32>,
 
-    /// Критическая температура отключения
+    /// Critical shutdown temperature
     pub critical_temperature: Option<f32>,
 
-    /// Текущее состояние троттлинга
+    /// Current throttling state
     pub is_throttling: Option<bool>,
 
-    /// Причина троттлинга
+    /// Throttling reason
     pub throttle_reason: Option<ThrottleReason>,
 }
-/// Причины троттлинга
+/// Throttling reasons
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ThrottleReason {
@@ -188,78 +188,78 @@ pub enum ThrottleReason {
     VoltageLimit,
     Unknown,
 }
-/// Информация о производительности
+/// Performance information
 #[derive(Debug, Clone, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PerformanceInfo {
-    /// Базовая частота ядра в MHz
+    /// Base core clock in MHz
     pub base_core_clock: Option<u32>,
 
-    /// Boost частота ядра в MHz
+    /// Boost core clock in MHz
     pub boost_core_clock: Option<u32>,
 
-    /// Частота шейдеров в MHz (для NVIDIA)
+    /// Shader clock in MHz (for NVIDIA)
     pub shader_clock: Option<u32>,
 
-    /// Базовая частота памяти в MHz
+    /// Base memory clock in MHz
     pub base_memory_clock: Option<u32>,
 
-    /// Boost частота памяти в MHz
+    /// Boost memory clock in MHz
     pub boost_memory_clock: Option<u32>,
 
-    /// Текущее состояние производительности
+    /// Current performance state
     pub performance_state: Option<PerformanceState>,
 
-    /// Доступные состояния производительности
+    /// Available performance states
     pub available_performance_states: Vec<PerformanceState>,
 
-    /// Возможности разгона
+    /// Overclocking capabilities
     pub overclocking_info: OverclockingInfo,
 }
-/// Состояния производительности GPU
+/// GPU performance states
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum PerformanceState {
-    /// Максимальная производительность
+    /// Maximum performance
     Maximum,
-    /// Высокая производительность
+    /// High performance
     High,
-    /// Средняя производительность
+    /// Medium performance
     Medium,
-    /// Энергосбережение
+    /// Power saver
     PowerSaver,
-    /// Адаптивная
+    /// Adaptive
     Adaptive,
-    /// Неизвестно
+    /// Unknown
     Unknown,
 }
-/// Информация о разгоне
+/// Overclocking information
 #[derive(Debug, Clone, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct OverclockingInfo {
-    /// Поддержка разгона
+    /// Overclocking support
     pub overclocking_supported: Option<bool>,
 
-    /// Текущее смещение частоты ядра в MHz
+    /// Current core clock offset in MHz
     pub core_clock_offset: Option<i32>,
 
-    /// Текущее смещение частоты памяти в MHz
+    /// Current memory clock offset in MHz
     pub memory_clock_offset: Option<i32>,
 
-    /// Максимальное безопасное смещение ядра
+    /// Maximum safe core clock offset
     pub max_core_clock_offset: Option<i32>,
 
-    /// Максимальное безопасное смещение памяти
+    /// Maximum safe memory clock offset
     pub max_memory_clock_offset: Option<i32>,
 
-    /// Текущий лимит напряжения в mV
+    /// Current voltage limit in mV
     pub voltage_limit: Option<u32>,
 
-    /// Максимальный лимит напряжения
+    /// Maximum voltage limit
     pub max_voltage_limit: Option<u32>,
 }
 impl ExtendedGpuInfo {
-    /// Создает ExtendedGpuInfo из базового GpuInfo
+    /// Creates ExtendedGpuInfo from basic GpuInfo
     pub fn from_basic(gpu_info: GpuInfo) -> Self {
         Self {
             base_info: gpu_info,
@@ -271,7 +271,7 @@ impl ExtendedGpuInfo {
             performance_info: PerformanceInfo::default(),
         }
     }
-    /// Создает неизвестный ExtendedGpuInfo
+    /// Creates an unknown ExtendedGpuInfo
     pub fn unknown() -> Self {
         Self {
             base_info: GpuInfo::unknown(),
@@ -283,11 +283,11 @@ impl ExtendedGpuInfo {
             performance_info: PerformanceInfo::default(),
         }
     }
-    /// Возвращает базовую информацию
+    /// Returns basic information
     pub fn base(&self) -> &GpuInfo {
         &self.base_info
     }
-    /// Возвращает общую эффективность охлаждения
+    /// Returns overall cooling efficiency
     pub fn cooling_efficiency(&self) -> Option<f32> {
         if let (Some(temp), Some(fan_speed)) = (
             self.thermal_info.gpu_temperature,
@@ -302,7 +302,7 @@ impl ExtendedGpuInfo {
             None
         }
     }
-    /// Возвращает общий health score GPU (0-100)
+    /// Returns overall GPU health score (0-100)
     pub fn health_score(&self) -> f32 {
         let mut score: f32 = 100.0;
         let mut factors = 0;
@@ -340,7 +340,7 @@ impl ExtendedGpuInfo {
             score.clamp(0.0, 100.0)
         }
     }
-    /// Проверяет, требует ли GPU внимания
+    /// Checks if GPU needs attention
     pub fn needs_attention(&self) -> bool {
         self.health_score() < 70.0
     }
@@ -371,7 +371,7 @@ impl Default for ExtendedGpuInfo {
         Self::unknown()
     }
 }
-/// Трейт для преобразования базового GpuInfo в расширенный
+/// Trait for converting basic GpuInfo to extended
 pub trait GpuInfoExtensions {
     fn to_extended(self) -> ExtendedGpuInfo;
     fn enhance(&mut self) -> Result<()>;

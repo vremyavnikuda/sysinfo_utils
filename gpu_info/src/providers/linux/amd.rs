@@ -1,18 +1,16 @@
-//! Linux AMD GPU provider implementation
-//!
-//! This module implements the GpuProvider trait for AMD GPUs on Linux using sysfs.
+//! Linux AMD GPU provider using sysfs
 use crate::gpu_info::{GpuError, GpuInfo, GpuProvider, Result};
 use crate::vendor::Vendor;
 use log::{debug, info, warn};
 use std::fs;
 use std::path::Path;
-/// AMD GPU provider for Linux
+
 pub struct AmdLinuxProvider;
 impl AmdLinuxProvider {
     pub fn new() -> Self {
         Self
     }
-    /// Detect AMD GPUs through sysfs interface
+
     fn detect_amd_gpus(&self) -> Result<Vec<GpuInfo>> {
         let mut gpus = Vec::new();
         let drm_path = Path::new("/sys/class/drm");
@@ -38,10 +36,8 @@ impl AmdLinuxProvider {
             Ok(gpus)
         }
     }
-    /// Probe specific AMD card for information
     fn probe_amd_card(&self, card_path: &Path) -> Result<GpuInfo> {
         let device_path = card_path.join("device");
-        // Check vendor ID for AMD (0x1002)
         let vendor_id = self.read_hex_file(&device_path.join("vendor"))?;
         if vendor_id != 0x1002 {
             return Err(GpuError::GpuNotFound);
@@ -54,7 +50,6 @@ impl AmdLinuxProvider {
         let temperature = self.get_temperature(&device_path);
         let utilization = self.get_gpu_utilization(&device_path);
         let memory_info = self.get_memory_info(&device_path);
-        // Get clock and power info
         let core_clock = self.get_core_clock(&device_path);
         let memory_clock = self.get_memory_clock(&device_path);
         let power_limit = self.get_power_limit(&device_path);
@@ -92,12 +87,12 @@ impl AmdLinuxProvider {
         Ok("AMD GPU".to_string())
     }
     fn get_driver_version(&self) -> Option<String> {
-        // Try to get AMDGPU driver version
         if let Ok(content) = fs::read_to_string("/sys/module/amdgpu/version") {
             return Some(content.trim().to_string());
         }
         None
     }
+
     fn get_power_usage(&self, device_path: &Path) -> Option<f32> {
         let hwmon_path = device_path.join("hwmon");
         if let Ok(entries) = fs::read_dir(&hwmon_path) {
@@ -105,37 +100,35 @@ impl AmdLinuxProvider {
                 let hwmon_device = entry.path();
                 if let Ok(power_str) = fs::read_to_string(hwmon_device.join("power1_average")) {
                     if let Ok(power_microwatts) = power_str.trim().parse::<u64>() {
-                        return Some((power_microwatts as f32) / 1_000_000.0); // Convert to watts
+                        return Some((power_microwatts as f32) / 1_000_000.0);
                     }
                 }
             }
         }
         None
     }
+
     fn get_temperature(&self, device_path: &Path) -> Option<f32> {
-        // Check hwmon for temperature
         let hwmon_path = device_path.join("hwmon");
         if let Ok(entries) = fs::read_dir(&hwmon_path) {
             for entry in entries.flatten() {
                 let hwmon_device = entry.path();
                 if let Ok(temp_str) = fs::read_to_string(hwmon_device.join("temp1_input")) {
                     if let Ok(temp_millidegrees) = temp_str.trim().parse::<u32>() {
-                        return Some((temp_millidegrees as f32) / 1000.0); // Convert to Celsius
+                        return Some((temp_millidegrees as f32) / 1000.0);
                     }
                 }
             }
         }
         None
     }
+
     fn get_gpu_utilization(&self, device_path: &Path) -> Option<f32> {
-        // Try to get GPU utilization from DRM engine interface first
         let drm_path = Path::new("/sys/class/drm");
         if drm_path.exists() {
-            // Find the card directory that matches our device
             if let Some(card_name) = device_path.parent().and_then(|p| p.file_name()) {
                 let engine_path = drm_path.join(card_name).join("engine");
                 if engine_path.exists() {
-                    // Try different engine types in order of preference
                     for engine_type in &["gfx", "compute"] {
                         let busy_percent_path = engine_path.join(engine_type).join("busy_percent");
                         if let Ok(content) = fs::read_to_string(&busy_percent_path) {
@@ -148,12 +141,10 @@ impl AmdLinuxProvider {
             }
         }
 
-        // Fallback to hwmon interface
         let hwmon_path = device_path.join("hwmon");
         if let Ok(entries) = fs::read_dir(&hwmon_path) {
             for entry in entries.flatten() {
                 let hwmon_device = entry.path();
-                // Check if this hwmon device is for amdgpu
                 if let Ok(name) = fs::read_to_string(hwmon_device.join("name")) {
                     if name.trim() == "amdgpu" {
                         if let Ok(content) =
@@ -317,7 +308,7 @@ impl AmdLinuxProvider {
         None
     }
 
-    fn get_memory_info(&self, device_path: &Path) -> (Option<u32>, Option<f32>) {
+    pub(crate) fn get_memory_info(&self, device_path: &Path) -> (Option<u32>, Option<f32>) {
         // Try to get memory information from sysfs
         // Check /sys/class/drm/cardX/device/mem_info_* files
 
@@ -365,45 +356,21 @@ impl Default for AmdLinuxProvider {
     }
 }
 impl GpuProvider for AmdLinuxProvider {
-    /// Detect all AMD GPUs on Linux using sysfs
     fn detect_gpus(&self) -> Result<Vec<GpuInfo>> {
         debug!("Detecting AMD GPUs on Linux using sysfs");
         self.detect_amd_gpus()
     }
-    /// Update AMD GPU information on Linux
+
     fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
         debug!("Updating AMD GPU information on Linux");
-        // For now, we'll re-detect the GPU
-        // In a more sophisticated implementation, we'd maintain device handles
         let gpus = self.detect_gpus()?;
         if let Some(updated_gpu) = gpus.first() {
             *gpu = updated_gpu.clone();
         }
         Ok(())
     }
-    /// Get the vendor for this provider
+
     fn get_vendor(&self) -> Vendor {
         Vendor::Amd
-    }
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::vendor::Vendor;
-
-    #[test]
-    fn test_amd_linux_provider_vendor() {
-        let provider = AmdLinuxProvider::new();
-        assert_eq!(provider.get_vendor(), Vendor::Amd);
-    }
-
-    #[test]
-    fn test_get_memory_info_with_nonexistent_paths() {
-        let provider = AmdLinuxProvider::new();
-        let temp_dir = std::env::temp_dir();
-        // This tests that the function doesn't panic with non-existent paths
-        let result = provider.get_memory_info(&temp_dir);
-        // Should return (None, None) for non-existent files
-        assert_eq!(result, (None, None));
     }
 }

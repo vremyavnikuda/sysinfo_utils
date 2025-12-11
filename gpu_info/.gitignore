@@ -62,3 +62,4 @@ src/libs/*.dll
 src/libs/*.lib
 src/libs/*.so
 src/libs/*.dylib
+examples
