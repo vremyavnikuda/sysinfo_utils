@@ -48,7 +48,7 @@ mod tests {
         // Verify temperature is physically possible if present
         if let Some(temp) = gpu.temperature {
             assert!(
-                temp >= -273.15 && temp <= 1000.0,
+                (-273.15..=1000.0).contains(&temp),
                 "Temperature should be physically possible: {}°C",
                 temp
             );
@@ -57,7 +57,7 @@ mod tests {
         // Verify utilization is in valid range if present
         if let Some(util) = gpu.utilization {
             assert!(
-                util >= 0.0 && util <= 100.0,
+                (0.0..=100.0).contains(&util),
                 "Utilization should be 0-100%: {}%",
                 util
             );
@@ -66,7 +66,7 @@ mod tests {
         // Verify memory utilization is in valid range if present
         if let Some(mem_util) = gpu.memory_util {
             assert!(
-                mem_util >= 0.0 && mem_util <= 100.0,
+                (0.0..=100.0).contains(&mem_util),
                 "Memory utilization should be 0-100%: {}%",
                 mem_util
             );
