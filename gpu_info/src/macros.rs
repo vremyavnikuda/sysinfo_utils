@@ -17,12 +17,12 @@
 //!     .name("RTX 3080")
 //!     .build();
 //!
-//! // format_* methods use these macros internally
-//! assert_eq!(gpu.format_temperature(), 65.5);
+//! // format_* methods return String with units
+//! assert_eq!(gpu.format_temperature(), "65.50°C");
 //! assert_eq!(gpu.format_name_gpu(), "RTX 3080");
 //! ```
 
-/// Macro for implementing Formattable for Option<T> types.
+/// Macro for implementing Formattable for `Option<T>` types.
 ///
 /// This macro generates an implementation of the `Formattable` trait for `Option<$type>`,
 /// where the `fmt_string` method returns the string representation of the value
@@ -88,7 +88,7 @@ macro_rules! impl_format_numeric {
 
 /// Macro for generating format_* methods that return String with default values.
 ///
-/// This macro handles Option<String> fields that need to return owned String values.
+/// This macro handles `Option<String>` fields that need to return owned String values.
 ///
 /// # Arguments
 /// * `$method_name` - The name of the generated method

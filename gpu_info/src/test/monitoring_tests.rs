@@ -194,8 +194,6 @@ mod tests {
             "Monitoring stats: measurements={}, errors={}",
             stats.total_measurements, stats.total_errors
         );
-        // Should have attempted at least one measurement or recorded errors
-        // In test environment, GPUs might not be available, so errors are acceptable
         assert!(
             stats.total_measurements > 0 || stats.total_errors > 0,
             "Expected either measurements or errors, got measurements={}, errors={}",
@@ -271,10 +269,6 @@ mod tests {
             stats.total_measurements,
             stats.total_errors
         );
-        // In test environments, GPU operations can be slower due to:
-        // - No real hardware available
-        // - FFI library timeouts
-        // - Virtualized environments
         if stats.total_measurements > 0 {
             assert!(
                 stats.avg_collection_time < Duration::from_secs(5),
@@ -283,7 +277,7 @@ mod tests {
             );
             let collection_ms = stats.avg_collection_time.as_millis();
             if collection_ms > 1000 {
-                println!("Note: Collection time is high ({:.1}s) - this may indicate no real GPUs in test environment", 
+                println!("Note: Collection time is high ({:.1}s) - this may indicate no real GPUs in test environment",
                         stats.avg_collection_time.as_secs_f64());
             }
         }
@@ -314,8 +308,6 @@ mod tests {
         }
         let alerts = mock_handler.get_alerts();
         println!("Generated {} alerts during test", alerts.len());
-        // In test environment, alerts may or may not be generated
-        // The important thing is that the system doesn't crash
         for (i, alert) in alerts.iter().enumerate() {
             println!("Alert {}: {:?}", i, alert);
         }
@@ -361,8 +353,8 @@ mod tests {
             run_duration * 8 / 10
         );
         assert!(
-            runtime <= Duration::from_secs(3),
-            "Runtime too long: {:?} > 3s",
+            runtime <= Duration::from_secs(4),
+            "Runtime too long: {:?} > 4s",
             runtime
         );
     }

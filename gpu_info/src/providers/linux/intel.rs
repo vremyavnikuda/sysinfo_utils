@@ -1,13 +1,42 @@
-//! Linux Intel GPU provider using sysfs
+//! Linux Intel GPU provider using sysfs.
+//!
+//! This module implements the [`GpuProvider`] trait for Intel GPUs on Linux
+//! using sysfs interfaces.
+//!
+//! # Sysfs Paths
+//!
+//! - `/sys/class/drm/cardX/device/` - Device information
+//! - `/sys/class/drm/cardX/device/hwmon/` - Hardware monitoring (temperature, power)
+//! - `/sys/class/drm/cardX/device/gt_cur_freq_mhz` - Current GPU frequency
+//! - `/sys/class/drm/cardX/device/gt_max_freq_mhz` - Maximum GPU frequency
+//!
+//! [`GpuProvider`]: crate::gpu_info::GpuProvider
+
 use crate::gpu_info::{GpuError, GpuInfo, GpuProvider, Result};
 use crate::vendor::{IntelGpuType, Vendor};
 use log::{debug, info, warn};
 use std::fs;
 use std::path::Path;
 
+/// Intel GPU provider for Linux.
+///
+/// Implements [`GpuProvider`] for Intel GPUs on Linux using sysfs interfaces.
+/// This provider reads GPU information from `/sys/class/drm/` and collects
+/// metrics from hwmon sensors and i915 driver interfaces.
+///
+/// # Supported Metrics
+///
+/// - Temperature (from hwmon temp1_input)
+/// - Power usage (from hwmon power1_average)
+/// - Core clock (from gt_cur_freq_mhz or gt_act_freq_mhz)
+/// - Max clock speed (from gt_max_freq_mhz or gt_boost_freq_mhz)
+/// - Power limit (from hwmon power1_cap)
+///
+/// [`GpuProvider`]: crate::gpu_info::GpuProvider
 pub struct IntelLinuxProvider;
 
 impl IntelLinuxProvider {
+    /// Create a new Intel Linux provider instance.
     pub fn new() -> Self {
         Self
     }
@@ -69,6 +98,7 @@ impl IntelLinuxProvider {
             utilization,
             power_usage,
             memory_total: memory_info.0,
+            memory_used: None,
             memory_util: memory_info.1,
             driver_version,
             active: Some(true),

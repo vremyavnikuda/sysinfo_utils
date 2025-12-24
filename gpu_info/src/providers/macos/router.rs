@@ -7,6 +7,7 @@ use super::config::{MacosBackend, MacosConfig};
 
 /// Type of GPU operation to perform
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum Operation {
     /// Detect GPUs in the system
     DetectGpu,
@@ -178,6 +179,7 @@ impl BackendRouter {
     }
 }
 
+// TODO: there should be no tests here. Transfer them to gpu_info\src\test
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -186,8 +188,6 @@ mod tests {
     fn test_router_creation() {
         let config = MacosConfig::default();
         let router = BackendRouter::new(config);
-
-        // Should have at least SystemProfiler
         assert!(!router.available_backends.is_empty());
         assert!(router.is_backend_available(MacosBackend::SystemProfiler));
     }
@@ -199,12 +199,8 @@ mod tests {
             ..Default::default()
         };
         let router = BackendRouter::new(config);
-
-        // Should select appropriate backends for different operations
         let detection = router.select_backend(Operation::DetectGpu);
         let metrics = router.select_backend(Operation::GetDynamicMetrics);
-
-        // Both should be valid backends
         assert!(router.is_backend_available(detection));
         assert!(router.is_backend_available(metrics));
     }
@@ -213,16 +209,12 @@ mod tests {
     fn test_available_count() {
         let router = BackendRouter::new(MacosConfig::default());
         let count = router.available_count();
-
-        // Should have at least 1 (SystemProfiler)
         assert!(count >= 1);
     }
 
     #[test]
     fn test_backend_selection_consistency() {
         let router = BackendRouter::new(MacosConfig::default());
-
-        // Same operation should return same backend
         let backend1 = router.select_backend(Operation::DetectGpu);
         let backend2 = router.select_backend(Operation::DetectGpu);
 

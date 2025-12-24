@@ -131,38 +131,90 @@ pub struct MonitorStats {
     /// Last collection time
     pub last_collection_time: Option<Instant>,
 }
-/// Alert types
+/// Alert types for GPU monitoring.
+///
+/// This enum is marked `#[non_exhaustive]` to allow adding new alert types
+/// in future versions without breaking existing code.
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub enum AlertType {
-    /// High temperature
-    HighTemperature { gpu_index: usize, temperature: f32 },
+    /// High temperature alert - triggered when GPU temperature exceeds warning threshold.
+    HighTemperature {
+        /// Index of the GPU that triggered the alert.
+        gpu_index: usize,
+        /// Current temperature in degrees Celsius.
+        temperature: f32,
+    },
 
-    /// Critical temperature
-    CriticalTemperature { gpu_index: usize, temperature: f32 },
+    /// Critical temperature alert - triggered when GPU temperature exceeds critical threshold.
+    CriticalTemperature {
+        /// Index of the GPU that triggered the alert.
+        gpu_index: usize,
+        /// Current temperature in degrees Celsius.
+        temperature: f32,
+    },
 
-    /// High memory usage
-    HighMemoryUsage { gpu_index: usize, usage: f32 },
+    /// High memory usage alert - triggered when GPU memory usage exceeds warning threshold.
+    HighMemoryUsage {
+        /// Index of the GPU that triggered the alert.
+        gpu_index: usize,
+        /// Current memory usage as a percentage (0-100).
+        usage: f32,
+    },
 
-    /// Critical memory usage
-    CriticalMemoryUsage { gpu_index: usize, usage: f32 },
+    /// Critical memory usage alert - triggered when GPU memory usage exceeds critical threshold.
+    CriticalMemoryUsage {
+        /// Index of the GPU that triggered the alert.
+        gpu_index: usize,
+        /// Current memory usage as a percentage (0-100).
+        usage: f32,
+    },
 
-    /// High power usage
-    HighPowerUsage { gpu_index: usize, power: f32 },
+    /// High power usage alert - triggered when GPU power consumption exceeds warning threshold.
+    HighPowerUsage {
+        /// Index of the GPU that triggered the alert.
+        gpu_index: usize,
+        /// Current power consumption in watts.
+        power: f32,
+    },
 
-    /// Critical power usage
-    CriticalPowerUsage { gpu_index: usize, power: f32 },
+    /// Critical power usage alert - triggered when GPU power consumption exceeds critical threshold.
+    CriticalPowerUsage {
+        /// Index of the GPU that triggered the alert.
+        gpu_index: usize,
+        /// Current power consumption in watts.
+        power: f32,
+    },
 
-    /// High GPU utilization
-    HighUtilization { gpu_index: usize, utilization: f32 },
+    /// High GPU utilization alert - triggered when GPU utilization exceeds warning threshold.
+    HighUtilization {
+        /// Index of the GPU that triggered the alert.
+        gpu_index: usize,
+        /// Current GPU utilization as a percentage (0-100).
+        utilization: f32,
+    },
 
-    /// Low fan speed
-    LowFanSpeed { gpu_index: usize, fan_speed: f32 },
+    /// Low fan speed alert - triggered when GPU fan speed falls below minimum threshold.
+    LowFanSpeed {
+        /// Index of the GPU that triggered the alert.
+        gpu_index: usize,
+        /// Current fan speed as a percentage (0-100).
+        fan_speed: f32,
+    },
 
-    /// GPU became inactive
-    GpuInactive { gpu_index: usize },
+    /// GPU inactive alert - triggered when a GPU becomes inactive or unresponsive.
+    GpuInactive {
+        /// Index of the GPU that triggered the alert.
+        gpu_index: usize,
+    },
 
-    /// Data collection error
-    CollectionError { gpu_index: usize, error: String },
+    /// Data collection error alert - triggered when GPU metrics cannot be collected.
+    CollectionError {
+        /// Index of the GPU that triggered the alert.
+        gpu_index: usize,
+        /// Error message describing the collection failure.
+        error: String,
+    },
 }
 /// Trait for handling alerts
 pub trait AlertHandler: std::fmt::Debug {
@@ -239,6 +291,215 @@ impl Default for MonitorConfig {
             log_metrics: false,
             save_to_file: None,
         }
+    }
+}
+
+impl MonitorConfig {
+    /// Creates a new `MonitorConfig` with default values.
+    ///
+    /// # Default Values
+    ///
+    /// - `polling_interval`: 1 second
+    /// - `history_size`: 300 entries
+    /// - `thresholds`: Default thresholds
+    /// - `enable_alerts`: true
+    /// - `log_metrics`: false
+    /// - `save_to_file`: None
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Sets the polling interval.
+    ///
+    /// # Arguments
+    ///
+    /// * `interval` - The interval between metric collections.
+    ///
+    /// # Returns
+    ///
+    /// The modified configuration for method chaining.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use gpu_info::MonitorConfig;
+    /// use std::time::Duration;
+    ///
+    /// let config = MonitorConfig::new()
+    ///     .with_polling_interval(Duration::from_millis(500));
+    /// ```
+    pub fn with_polling_interval(mut self, interval: Duration) -> Self {
+        self.polling_interval = interval;
+        self
+    }
+
+    /// Sets the history size.
+    ///
+    /// # Arguments
+    ///
+    /// * `size` - The maximum number of history entries to keep.
+    ///
+    /// # Returns
+    ///
+    /// The modified configuration for method chaining.
+    pub fn with_history_size(mut self, size: usize) -> Self {
+        self.history_size = size;
+        self
+    }
+
+    /// Sets the alert thresholds.
+    ///
+    /// # Arguments
+    ///
+    /// * `thresholds` - The threshold values for alerts.
+    ///
+    /// # Returns
+    ///
+    /// The modified configuration for method chaining.
+    pub fn with_thresholds(mut self, thresholds: GpuThresholds) -> Self {
+        self.thresholds = thresholds;
+        self
+    }
+
+    /// Enables or disables automatic alerts.
+    ///
+    /// # Arguments
+    ///
+    /// * `enabled` - Whether to enable alerts.
+    ///
+    /// # Returns
+    ///
+    /// The modified configuration for method chaining.
+    pub fn with_alerts_enabled(mut self, enabled: bool) -> Self {
+        self.enable_alerts = enabled;
+        self
+    }
+
+    /// Enables or disables metric logging.
+    ///
+    /// # Arguments
+    ///
+    /// * `enabled` - Whether to log metrics.
+    ///
+    /// # Returns
+    ///
+    /// The modified configuration for method chaining.
+    pub fn with_log_metrics(mut self, enabled: bool) -> Self {
+        self.log_metrics = enabled;
+        self
+    }
+
+    /// Sets the file path for saving metrics.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The file path, or `None` to disable file saving.
+    ///
+    /// # Returns
+    ///
+    /// The modified configuration for method chaining.
+    pub fn with_save_to_file(mut self, path: Option<String>) -> Self {
+        self.save_to_file = path;
+        self
+    }
+
+    // BORROWING CHAIN PATTERN: &mut self -> &mut Self
+    // Use for in-place modification of existing config
+
+    /// Sets the polling interval (borrowing pattern).
+    ///
+    /// # Arguments
+    ///
+    /// * `interval` - The interval between metric collections.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to self for method chaining.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use gpu_info::MonitorConfig;
+    /// use std::time::Duration;
+    ///
+    /// let mut config = MonitorConfig::default();
+    /// config
+    ///     .polling_interval(Duration::from_millis(500))
+    ///     .history_size(100);
+    /// ```
+    pub fn polling_interval(&mut self, interval: Duration) -> &mut Self {
+        self.polling_interval = interval;
+        self
+    }
+
+    /// Sets the history size (borrowing pattern).
+    ///
+    /// # Arguments
+    ///
+    /// * `size` - The maximum number of history entries to keep.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to self for method chaining.
+    pub fn history_size(&mut self, size: usize) -> &mut Self {
+        self.history_size = size;
+        self
+    }
+
+    /// Sets the alert thresholds (borrowing pattern).
+    ///
+    /// # Arguments
+    ///
+    /// * `thresholds` - The threshold values for alerts.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to self for method chaining.
+    pub fn thresholds(&mut self, thresholds: GpuThresholds) -> &mut Self {
+        self.thresholds = thresholds;
+        self
+    }
+
+    /// Enables or disables automatic alerts (borrowing pattern).
+    ///
+    /// # Arguments
+    ///
+    /// * `enabled` - Whether to enable alerts.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to self for method chaining.
+    pub fn alerts_enabled(&mut self, enabled: bool) -> &mut Self {
+        self.enable_alerts = enabled;
+        self
+    }
+
+    /// Enables or disables metric logging (borrowing pattern).
+    ///
+    /// # Arguments
+    ///
+    /// * `enabled` - Whether to log metrics.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to self for method chaining.
+    pub fn log_metrics(&mut self, enabled: bool) -> &mut Self {
+        self.log_metrics = enabled;
+        self
+    }
+
+    /// Sets the file path for saving metrics (borrowing pattern).
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The file path, or `None` to disable file saving.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to self for method chaining.
+    pub fn save_to_file(&mut self, path: Option<String>) -> &mut Self {
+        self.save_to_file = path;
+        self
     }
 }
 impl Default for GpuThresholds {
@@ -419,16 +680,10 @@ impl GpuMonitor {
 
             let collection_start = Instant::now();
             let collection_result = if let Ok(mut manager) = gpu_manager.lock() {
-                // Try to refresh GPU data
                 let refresh_result = manager.refresh_all_gpus();
-
-                // If refresh fails, try to detect GPUs first
                 if refresh_result.is_err() && manager.gpu_count() == 0 {
                     debug!("No GPUs found, attempting detection...");
-                    // In test environment, we might not have real GPUs
-                    // This is acceptable for testing the monitoring system
                 }
-
                 refresh_result
             } else {
                 Err(GpuError::GpuNotActive)
@@ -440,7 +695,6 @@ impl GpuMonitor {
                     if let Ok(manager) = gpu_manager.lock() {
                         let gpus = manager.get_all_gpus();
                         debug!("Successfully collected data for {} GPUs", gpus.len());
-
                         Self::update_history(&history, gpus, collection_start);
                         if config.enable_alerts {
                             Self::check_alerts(gpus, &config.thresholds, &alert_handlers);
@@ -457,28 +711,21 @@ impl GpuMonitor {
                         "GPU data collection failed (attempt {}): {}",
                         consecutive_errors, e
                     );
-
-                    // In test environment, this is expected behavior
-                    // Still count as an error for statistics
                     if let Ok(mut s) = stats.lock() {
                         s.total_errors += 1;
                     }
-
                     if consecutive_errors >= MAX_CONSECUTIVE_ERRORS {
                         warn!(
                             "Too many consecutive errors ({}), taking a longer break",
                             consecutive_errors
                         );
-                        thread::sleep(Duration::from_secs(1)); // Shorter break for tests
+                        thread::sleep(Duration::from_secs(1));
                         consecutive_errors = 0;
                     }
                 }
             }
-
-            // Always sleep for the polling interval
             thread::sleep(config.polling_interval);
         }
-
         info!(
             "GPU monitoring loop ended after {} iterations",
             iteration_count

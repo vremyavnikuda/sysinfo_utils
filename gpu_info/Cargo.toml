@@ -16,14 +16,59 @@ rust-version = "1.70"
 name = "gpu_info"
 path = "src/lib.rs"
 
+# All features are additive - enabling more features never breaks existing code.
+#
+# ## Serialization Features
+#
+# - `serde`: Enables serde serialization/deserialization for GpuInfo and related types.
+#            Required for JSON export, API responses, and data persistence.
+#
+# - `serde_json`: Enables JSON parsing via TryFrom<&str> for GpuInfo.
+#                 Requires `serde` feature.
+#
+# ## Vendor-Specific Features (currently no-op, reserved for future use)
+#
+# - `nvidia`: Reserved for NVIDIA-specific optimizations or features.
+# - `intel`: Reserved for Intel-specific optimizations or features.
+# - `amd`: Reserved for AMD-specific optimizations or features.
+#
+# ## macOS-Specific Features
+#
+# - `macos-iokit`: Enables IOKit backend for basic GPU information on macOS.
+#                  Provides hardware detection and basic metrics.
+#
+# - `macos-metal`: Enables Metal backend for advanced GPU metrics on macOS.
+#                  Provides GPU utilization, memory usage, and performance data.
+#
+# - `macos-full`: Enables all macOS backends (iokit + metal).
+#                 Recommended for full macOS support.
+#
+# ## Default Features
+#
+# By default, `serde` and `serde_json` are enabled for JSON serialization support.
+# To disable defaults: `gpu_info = { version = "0.0.1", default-features = false }`
+
 [features]
+# Default features: JSON serialization support
 default = ["serde", "serde_json"]
+
+# Serialization support via serde
+serde = ["dep:serde"]
+
+# JSON parsing support (requires serde)
+serde_json = ["dep:serde_json", "serde"]
+
+# Vendor-specific features (reserved for future use)
 nvidia = []
 intel = []
 amd = []
+
 # macOS-specific features
+# IOKit backend for basic GPU information
 macos-iokit = ["core-foundation", "io-kit-sys"]
+# Metal backend for advanced GPU metrics
 macos-metal = ["metal-rs"]
+# Full macOS support (all backends)
 macos-full = ["macos-iokit", "macos-metal"]
 
 [dependencies]
@@ -52,6 +97,7 @@ tokio = { version = "1.0", features = ["rt", "sync", "macros", "time"] }
 pretty_assertions = "1.0"
 doc-comment = "0.3"
 tokio = { version = "1.0", features = ["rt", "sync", "macros", "rt-multi-thread", "time"] }
+proptest = "1.4"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.52", features = [

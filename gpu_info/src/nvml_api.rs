@@ -2,6 +2,16 @@
 //!
 //! This module provides a clean abstraction over NVML (NVIDIA Management Library)
 //! using the common FFI utilities to reduce code duplication.
+//!
+//! # Safety
+//!
+//! This module contains unsafe FFI code for interacting with NVIDIA's NVML library.
+//! All unsafe operations are isolated here and wrapped in safe abstractions.
+//!
+//! # Platform Support
+//!
+//! NVML is supported on Windows and Linux. On macOS, NVIDIA GPUs are not supported.
+
 use crate::ffi_utils::{
     ApiResult, ApiTable, DynamicLibrary, LibraryLoader, NvmlResult, SymbolResolver,
 };
@@ -12,71 +22,126 @@ use libloading::Symbol;
 use log::error;
 use std::ffi::{c_char, c_uint, CStr};
 use std::ptr;
-/// NVML constants
+
+/// NVML success return code.
 pub const NVML_SUCCESS: i32 = 0;
+
+/// NVML temperature sensor type for GPU core temperature.
 pub const NVML_TEMPERATURE_GPU: i32 = 0;
+
+/// NVML clock type for graphics (core) clock.
 pub const NVML_CLOCK_GRAPHICS: i32 = 0;
-/// NVML device handle
+
+/// NVML device handle (opaque pointer).
+///
+/// This is an opaque type representing an NVML device handle.
+/// It should only be obtained through NVML API calls and passed
+/// to other NVML functions.
 #[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct nvmlDevice_st {
     _private: [u8; 0],
 }
-/// NVML utilization structure
-#[allow(non_camel_case_types)]
+
+/// NVML utilization structure.
+///
+/// This is a direct mirror of the C `nvmlUtilization_t` struct from the NVML SDK.
+/// Contains GPU and memory utilization percentages.
+#[allow(non_camel_case_types, missing_docs)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct nvmlUtilization_t {
+    /// GPU utilization percentage (0-100).
     pub gpu: c_uint,
+    /// Memory utilization percentage (0-100).
     pub memory: c_uint,
 }
-/// NVML memory information structure
-#[allow(non_camel_case_types)]
+
+/// NVML memory information structure.
+///
+/// This is a direct mirror of the C `nvmlMemory_t` struct from the NVML SDK.
+/// Contains total, free, and used memory in bytes.
+#[allow(non_camel_case_types, missing_docs)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct nvmlMemory_t {
+    /// Total installed GPU memory in bytes.
     pub total: u64,
+    /// Unallocated GPU memory in bytes.
     pub free: u64,
+    /// Allocated GPU memory in bytes.
     pub used: u64,
 }
-/// NVML function pointer types
+
+/// NVML function pointer types for Windows.
+///
+/// Contains function pointers to NVML library functions loaded at runtime.
+/// These are direct mappings to the NVML SDK function signatures.
 #[cfg(windows)]
+#[allow(missing_docs)]
 pub struct NvmlFunctions {
+    /// nvmlInit_v2 - Initialize NVML library.
     pub init: unsafe extern "C" fn() -> i32,
+    /// nvmlShutdown - Shutdown NVML and release resources.
     pub shutdown: unsafe extern "C" fn() -> i32,
+    /// nvmlDeviceGetCount_v2 - Get number of NVIDIA GPUs.
     pub device_get_count: unsafe extern "C" fn(*mut c_uint) -> i32,
+    /// nvmlDeviceGetHandleByIndex_v2 - Get device handle by index.
     pub device_get_handle_by_index: unsafe extern "C" fn(c_uint, *mut *mut nvmlDevice_st) -> i32,
+    /// nvmlDeviceGetName - Get device name string.
     pub device_get_name: unsafe extern "C" fn(*mut nvmlDevice_st, *mut c_char, c_uint) -> i32,
+    /// nvmlDeviceGetTemperature - Get device temperature.
     pub device_get_temperature: unsafe extern "C" fn(*mut nvmlDevice_st, i32, *mut c_uint) -> i32,
+    /// nvmlDeviceGetUtilizationRates - Get GPU and memory utilization.
     pub device_get_utilization_rates:
         unsafe extern "C" fn(*mut nvmlDevice_st, *mut nvmlUtilization_t) -> i32,
+    /// nvmlDeviceGetPowerUsage - Get power usage in milliwatts.
     pub device_get_power_usage: unsafe extern "C" fn(*mut nvmlDevice_st, *mut c_uint) -> i32,
+    /// nvmlDeviceGetClockInfo - Get current clock speed.
     pub device_get_clock_info: unsafe extern "C" fn(*mut nvmlDevice_st, i32, *mut c_uint) -> i32,
+    /// nvmlDeviceGetMaxClockInfo - Get maximum clock speed.
     pub device_get_max_clock_info:
         unsafe extern "C" fn(*mut nvmlDevice_st, i32, *mut c_uint) -> i32,
+    /// nvmlDeviceGetPowerManagementLimit - Get power limit in milliwatts.
     pub device_get_power_management_limit:
         unsafe extern "C" fn(*mut nvmlDevice_st, *mut c_uint) -> i32,
+    /// nvmlDeviceGetMemoryInfo - Get memory information.
     pub device_get_memory_info: unsafe extern "C" fn(*mut nvmlDevice_st, *mut nvmlMemory_t) -> i32,
+    /// nvmlSystemGetDriverVersion - Get driver version string.
     pub system_get_driver_version: unsafe extern "C" fn(*mut c_char, c_uint) -> i32,
 }
-/// Unix function pointer types
+
+/// Unix function pointer types for NVML.
+///
+/// Contains function pointers to NVML library functions loaded at runtime.
+/// Uses libloading Symbol types for Unix platforms.
 #[cfg(unix)]
+#[allow(missing_docs)]
 pub struct NvmlFunctions<'a> {
+    /// nvmlInit_v2 - Initialize NVML library.
     pub init: Symbol<'a, unsafe extern "C" fn() -> i32>,
+    /// nvmlShutdown - Shutdown NVML and release resources.
     pub shutdown: Symbol<'a, unsafe extern "C" fn() -> i32>,
+    /// nvmlDeviceGetHandleByIndex_v2 - Get device handle by index.
     pub device_get_handle_by_index:
         Symbol<'a, unsafe extern "C" fn(u32, *mut *mut nvmlDevice_st) -> i32>,
+    /// nvmlDeviceGetName - Get device name string.
     pub device_get_name:
         Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, *mut c_char, u32) -> i32>,
+    /// nvmlDeviceGetTemperature - Get device temperature.
     pub device_get_temperature:
         Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, u32, *mut u32) -> i32>,
+    /// nvmlDeviceGetUtilizationRates - Get GPU and memory utilization.
     pub device_get_utilization_rates:
         Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, *mut nvmlUtilization_t) -> i32>,
+    /// nvmlDeviceGetPowerUsage - Get power usage in milliwatts.
     pub device_get_power_usage:
         Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, *mut u32) -> i32>,
+    /// nvmlDeviceGetClockInfo - Get current clock speed.
     pub device_get_clock_info:
         Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, u32, *mut u32) -> i32>,
+    /// nvmlDeviceGetMemoryInfo - Get memory information.
     pub device_get_memory_info:
         Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, *mut nvmlMemory_t) -> i32>,
 }
@@ -100,7 +165,7 @@ impl NvmlClient {
     /// Load NVML library and initialize API table
     pub fn new() -> Option<Self> {
         // Try loading from system paths
-        // Priority: NVIDIA installation → System32 → System PATH
+        // NVIDIA installation → System32 → System PATH
         let library = LibraryLoader::new("nvml.dll")
             .with_fallback_path("C:\\Program Files\\NVIDIA Corporation\\NVSMI\\nvml.dll")
             .with_fallback_path("C:\\Windows\\System32\\nvml.dll")
@@ -310,7 +375,7 @@ impl NvmlClient {
             unsafe { (self.api_table.functions().device_get_power_usage)(device, &mut power) };
         NvmlResult {
             code,
-            // Convert mW to W
+            // mW to W
             value: (power as f32) / 1000.0,
         }
     }
@@ -383,7 +448,7 @@ impl NvmlClient {
             self.get_device_clock_info(device),
             "Failed to get device clock info"
         );
-        let (total_memory, _free_memory, _used_memory) = handle_api_result!(
+        let (total_memory, _free_memory, used_memory) = handle_api_result!(
             self.get_device_memory_info(device),
             "Failed to get device memory info"
         );
@@ -395,12 +460,19 @@ impl NvmlClient {
             memory_util: Some(mem_util),
             power_usage: Some(power_usage),
             core_clock: Some(core_clock),
-            memory_total: Some((total_memory / (1024 * 1024 * 1024)) as u32), // Convert bytes to GB
-            memory_clock: None, // Not available in this version
+            // Convert bytes to MB
+            memory_total: Some((total_memory / (1024 * 1024)) as u32),
+            // Convert bytes to MB
+            memory_used: Some((used_memory / (1024 * 1024)) as u32),
+            // Not available in this version
+            memory_clock: None,
             active: Some(true),
-            power_limit: None,     // Could be added later
-            driver_version: None,  // Could be added later
-            max_clock_speed: None, // Could be added later
+            // Could be added later
+            power_limit: None,
+            // Could be added later
+            driver_version: None,
+            // Could be added later
+            max_clock_speed: None,
         })
     }
 }

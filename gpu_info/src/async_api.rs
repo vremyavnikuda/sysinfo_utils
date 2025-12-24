@@ -16,9 +16,11 @@ use std::sync::Arc;
 /// Returns `Arc<GpuInfo>` for efficient sharing without cloning.
 /// Use `get_async_owned()` if you need to mutate the data.
 ///
-/// # Returns
-/// * `Ok(Arc<GpuInfo>)` - The primary GPU information
-/// * `Err(GpuError)` - If GPU detection fails
+/// # Errors
+///
+/// Returns an error in the following cases:
+/// - [`GpuError::GpuNotFound`] - No GPU was detected in the system
+/// - [`GpuError::GpuNotActive`] - The async task was cancelled or panicked
 ///
 /// # Implementation Details
 /// - Uses cached GPU manager for efficient primary GPU retrieval
@@ -51,9 +53,11 @@ pub async fn get_async() -> Result<Arc<GpuInfo>> {
 /// Returns a cloned copy of GPU information. Use this when you need to mutate
 /// the GPU info. For read-only access, prefer `get_async()` which is more efficient.
 ///
-/// # Returns
-/// * `Ok(GpuInfo)` - Cloned primary GPU information
-/// * `Err(GpuError)` - If GPU detection fails
+/// # Errors
+///
+/// Returns an error in the following cases:
+/// - [`GpuError::GpuNotFound`] - No GPU was detected in the system
+/// - [`GpuError::GpuNotActive`] - The async task was cancelled or panicked
 ///
 /// # Example
 /// ```rust
@@ -91,9 +95,11 @@ pub async fn get_async_owned() -> Result<GpuInfo> {
 /// Returns `Vec<Arc<GpuInfo>>` for efficient sharing without cloning.
 /// Use `get_all_async_owned()` if you need to mutate the data.
 ///
-/// # Returns
-/// * `Ok(Vec<Arc<GpuInfo>>)` - Vector of all detected GPU information
-/// * `Err(GpuError)` - If GPU detection fails
+/// # Errors
+///
+/// Returns an error in the following cases:
+/// - [`GpuError::GpuNotFound`] - No GPUs were detected in the system
+/// - [`GpuError::GpuNotActive`] - The async task was cancelled or panicked
 ///
 /// # Example
 /// ```rust
@@ -137,9 +143,10 @@ pub async fn get_all_async() -> Result<Vec<Arc<GpuInfo>>> {
 /// Returns cloned copies of GPU information. Use this when you need to mutate
 /// the GPU info. For read-only access, prefer `get_all_async()` which is more efficient.
 ///
-/// # Returns
-/// * `Ok(Vec<GpuInfo>)` - Cloned vector of all detected GPU information
-/// * `Err(GpuError)` - If GPU detection fails
+/// # Errors
+///
+/// Returns an error in the following cases:
+/// - [`GpuError::GpuNotActive`] - The async task was cancelled or panicked
 ///
 /// # Example
 /// ```rust
@@ -167,9 +174,11 @@ pub async fn get_all_async_owned() -> Result<Vec<GpuInfo>> {
 /// # Arguments
 /// * `gpu` - Mutable reference to GPU to update
 ///
-/// # Returns
-/// * `Ok(())` - If GPU was successfully updated with fresh data
-/// * `Err(GpuError)` - If update failed (provider not found, API error, etc.)
+/// # Errors
+///
+/// Returns an error in the following cases:
+/// - [`GpuError::GpuNotFound`] - The GPU could not be found for update
+/// - [`GpuError::GpuNotActive`] - The GPU manager lock failed or async task was cancelled
 ///
 /// # Implementation Details
 /// - Uses provider pattern for vendor-specific updates
@@ -195,19 +204,16 @@ pub async fn update_gpu_async(gpu: &mut GpuInfo) -> Result<()> {
     let vendor = gpu.vendor;
     let name_gpu = gpu.name_gpu.clone();
     let result = tokio::task::spawn_blocking(move || {
-        // Use global cached manager instead of creating new one
         let manager = crate::gpu_manager::global_gpu_manager();
-        let mut manager_lock = manager.lock().unwrap();
-
-        // If no GPUs detected yet, detect them once
+        let mut manager_lock = match manager.lock() {
+            Ok(lock) => lock,
+            Err(_) => return Err(GpuError::GpuNotActive),
+        };
         if manager_lock.gpu_count() == 0 {
             manager_lock.detect_all_gpus();
         }
 
-        // Refresh to get latest metrics (this updates GPUs and clears cache)
         let _ = manager_lock.refresh_all_gpus();
-
-        // Find matching GPU directly without triggering cache update
         let gpu_count = manager_lock.gpu_count();
         for i in 0..gpu_count {
             if let Some(gpu) = manager_lock.get_gpu_by_index_owned(i) {

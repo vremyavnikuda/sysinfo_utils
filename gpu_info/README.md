@@ -2,6 +2,12 @@
 
 A cross-platform Rust library for retrieving GPU information and monitoring metrics with unified provider interface.
 
+## Minimum Supported Rust Version (MSRV)
+
+This crate requires **Rust 1.70** or later.
+
+The MSRV is tested in CI and will only be increased in minor or major version updates, never in patch releases.
+
 ## Features
 
 - Support for multiple GPU vendors (NVIDIA, AMD, Intel)
@@ -31,34 +37,6 @@ A cross-platform Rust library for retrieving GPU information and monitoring metr
 - Power limit
 - Memory utilization
 
-## Architecture
-
-The library follows a modular architecture with unified provider interfaces:
-
-```
-gpu_info/
-├── src/
-│   ├── gpu_info.rs          # Core data structures and traits
-│   ├── macros.rs            # Code generation macros for reduced duplication
-│   ├── provider_manager.rs   # Centralized provider manager
-│   ├── providers/            # GPU provider implementations
-│   │   ├── nvidia.rs        # NVIDIA provider
-│   │   ├── amd.rs           # AMD provider
-│   │   ├── intel.rs         # Intel provider
-│   │   ├── linux/           # Linux-specific providers
-│   │   ├── macos/           # macOS-specific providers
-│   │   └── windows/         # Windows-specific provider utilities
-│   │       ├── mod.rs       # Module exports
-│   │       ├── pdh.rs       # Performance Data Helper API
-│   │       └── intel_metrics.rs  # Intel Metrics API (GPA)
-│   ├── ffi_utils.rs         # Common FFI utilities
-│   ├── nvml_api.rs          # NVML API abstraction
-│   ├── adl_api.rs           # ADL API abstraction
-│   └── cache_utils.rs       # Common caching utilities
-├── examples/                # Usage examples
-└── tests/                   # Comprehensive test suite
-```
-
 ## Unified Provider Interface
 
 The library now provides a unified `GpuProvider` trait that eliminates code duplication:
@@ -87,7 +65,7 @@ use gpu_info::gpu_manager::GpuManager;
 use std::time::Duration;
 let manager = GpuManager::with_cache_config(Duration::from_secs(2), 10);
 if let Some(gpu) = manager.get_gpu_cached(0) {
-    println!("GPU: {} (temp: {}°C)", gpu.format_name_gpu(), gpu.format_temperature());
+    println!("GPU: {} (temp: {})", gpu.name_or_default(), gpu.display_temperature());
 }
 if let Some(stats) = manager.get_cache_stats() {
     println!("Cache entries: {}, Accesses: {}", stats.total_entries, stats.total_accesses);
@@ -96,38 +74,30 @@ if let Some(stats) = manager.get_cache_stats() {
 
 ### Formatting Examples
 
+The library provides two sets of formatting methods:
+- **`display_*` methods** (recommended): Return formatted strings with units included
+- **`format_*` methods** (deprecated): Legacy methods, use `display_*` instead
+
 ```rust
 let gpu = gpu_info::get()?;
-println!("Temperature: {}", gpu.format_temperature());
-println!("Core Clock: {}", gpu.format_core_clock());
-println!("Active: {}", gpu.format_active());
-println!("Name: {}", gpu.format_name_gpu());
-println!("Driver: {}", gpu.format_driver_version());
-println!("Temperature: {}", gpu.temperature.fmt_string());
-println!("Core Clock: {}", gpu.core_clock.fmt_string());
-println!("Active: {}", gpu.active.fmt_string());
-println!("Name: {}", gpu.name_gpu.fmt_string());
-println!("Driver: {}", gpu.driver_version.fmt_string());
-let temp: Option<f32> = Some(75.5);
-let clock: Option<u32> = Some(1800);
-let active: Option<bool> = Some(true);
-let name: Option<String> = Some("NVIDIA GeForce RTX 3080".to_string());
-let driver: Option<&str> = Some("512.95");
-println!("Temperature: {}", temp.fmt_string());  // "75.5"
-println!("Core Clock: {}", clock.fmt_string());  // "1800"
-println!("Active: {}", active.fmt_string());     // "true"
-println!("Name: {}", name.fmt_string());         // "NVIDIA GeForce RTX 3080"
-println!("Driver: {}", driver.fmt_string());     // "512.95"
-let temp: Option<f32> = None;
-let clock: Option<u32> = None;
-let active: Option<bool> = None;
-let name: Option<String> = None;
-let driver: Option<&str> = None;
-println!("Temperature: {}", temp.fmt_string());  // "N/A"
-println!("Core Clock: {}", clock.fmt_string());  // "N/A"
-println!("Active: {}", active.fmt_string());     // "N/A"
-println!("Name: {}", name.fmt_string());         // "N/A"
-println!("Driver: {}", driver.fmt_string());     // "N/A"
+
+// New display_* methods (recommended) - units are included in output
+println!("Temperature: {}", gpu.display_temperature());     // "65.50°C" or "Not supported"
+println!("Utilization: {}", gpu.display_utilization());     // "75.50%" or "N/A"
+println!("Core Clock: {}", gpu.display_core_clock());       // "1800 MHz" or "N/A"
+println!("Power Usage: {}", gpu.display_power_usage());     // "250.00W" or "Not supported"
+println!("Memory Total: {}", gpu.display_memory_total());   // "8.00 GB" or "N/A"
+println!("Active: {}", gpu.display_active());               // "Active" or "Inactive"
+println!("Name: {}", gpu.display_name_gpu());               // "NVIDIA GeForce RTX 3080" or "Unknown GPU"
+println!("Driver: {}", gpu.display_driver_version());       // "545.92.01" or "Unknown Driver Version"
+
+// Raw value access via getter methods (for custom formatting)
+if let Some(temp) = gpu.temperature() {
+    println!("Temperature: {:.1}°C", temp);
+}
+
+// Zero-allocation name access with Cow
+println!("Name: {}", gpu.name_or_default());  // Returns Cow<'_, str>
 ```
 
 ## Usage
@@ -139,26 +109,118 @@ use gpu_info::GpuInfo;
 
 fn main() {
     let gpu = gpu_info::get();
-    println!("Vendor: {}", gpu.vendor);
-    println!("Name GPU: {}", gpu.format_name_gpu());
-    println!("Driver: {}", gpu.format_driver_version());
-    println!("Temperature: {}°C", gpu.format_temperature());
-    println!("Utilization: {}%", gpu.format_utilization());
-    println!("Core Clock: {} MHz", gpu.format_core_clock());
-    println!("Memory Clock: {} MHz", gpu.format_memory_clock());
-    println!("Max Clock Speed: {} MHz", gpu.format_max_clock_speed());
-    println!("Memory Usage: {}%", gpu.format_memory_util());
-    println!("Total Memory: {} GB", gpu.format_memory_total());
-    println!("Current Usage: {} W", gpu.format_power_usage());
-    println!("Power Limit: {} W", gpu.format_power_limit());
-    println!("Active: {}", gpu.format_active());
+    
+    // Use getter methods for raw values
+    println!("Vendor: {}", gpu.vendor());
+    println!("Name: {}", gpu.name_or_default());
+    
+    // Use display_* methods for formatted output with units
+    println!("Driver: {}", gpu.display_driver_version());
+    println!("Temperature: {}", gpu.display_temperature());
+    println!("Utilization: {}", gpu.display_utilization());
+    println!("Core Clock: {}", gpu.display_core_clock());
+    println!("Memory Clock: {}", gpu.display_memory_clock());
+    println!("Max Clock Speed: {}", gpu.display_max_clock_speed());
+    println!("Memory Usage: {}", gpu.display_memory_util());
+    println!("Total Memory: {}", gpu.display_memory_total());
+    println!("Current Usage: {}", gpu.display_power_usage());
+    println!("Power Limit: {}", gpu.display_power_limit());
+    println!("Active: {}", gpu.display_active());
+    
+    // Or access raw Option values via getters
+    if let Some(temp) = gpu.temperature() {
+        println!("Raw temperature: {:.1}°C", temp);
+    }
 }
+```
+
+### Creating GpuInfo Instances
+
+You can create `GpuInfo` instances using the builder pattern, `unknown()`, conversion traits, or direct struct construction:
+
+```rust
+use gpu_info::{GpuInfo, vendor::Vendor};
+
+// Using the builder pattern (recommended)
+let gpu = GpuInfo::builder()
+    .vendor(Vendor::Nvidia)
+    .name("GeForce RTX 4090")
+    .temperature(65.0)
+    .utilization(45.0)
+    .build();
+
+// Using unknown() as a base for testing or fallback
+let unknown_gpu = GpuInfo::unknown();
+
+// Using From<Vendor> conversion
+let nvidia_gpu: GpuInfo = Vendor::Nvidia.into();
+
+// Using TryFrom<&str> for JSON parsing (requires serde feature)
+#[cfg(feature = "serde")]
+{
+    use std::convert::TryFrom;
+    let json = r#"{"vendor":"Nvidia","temperature":65.0}"#;
+    let gpu = GpuInfo::try_from(json)?;
+}
+```
+
+### Conversion Traits
+
+`GpuInfo` implements several conversion traits for flexibility:
+
+- `From<Vendor>` - Create a minimal `GpuInfo` from a vendor
+- `TryFrom<&str>` - Parse from JSON string (requires `serde` feature)
+- `AsRef<GpuInfo>` - Cheap reference conversion for generic functions
+
+### Standard Traits
+
+`GpuInfo` implements the following standard traits:
+
+- `Clone`, `Debug`, `PartialEq` - Standard derivable traits
+- `Default` - Creates an unknown GPU instance
+- `Display` - Human-readable formatting
+- `Hash` - Enables use as HashMap/HashSet keys (hashes by vendor + name only)
+- `Serialize`, `Deserialize` - JSON serialization (requires `serde` feature)
+
+Note: `Hash` only considers identity fields (vendor and name) to avoid issues with f32 metrics. Two GPUs with the same vendor and name but different metrics will hash to the same bucket.
+
+`GpuManager` implements collection traits:
+
+- `FromIterator<GpuInfo>` - Construct from an iterator of GPUs
+- `Extend<GpuInfo>` - Add GPUs from an iterator
+- `IntoIterator` - Iterate over GPUs (via `&GpuManager` and `&mut GpuManager`)
+
+`Vendor` also implements `FromStr` for parsing vendor names from strings:
+
+```rust
+use gpu_info::{GpuInfo, vendor::Vendor};
+use std::str::FromStr;
+
+// Parse vendor from string (case-insensitive)
+let nvidia = Vendor::from_str("nvidia").unwrap();
+let amd: Vendor = "AMD".parse().unwrap();
+let intel = Vendor::from_str("Intel Arc A770").unwrap();
+
+// Supported aliases: "geforce", "quadro", "radeon", "ati", "arc", "iris", etc.
+let nvidia_alias = Vendor::from_str("GeForce").unwrap();
+assert_eq!(nvidia_alias, Vendor::Nvidia);
+
+// Generic function accepting any type that can be referenced as GpuInfo
+fn print_gpu_info(gpu: impl AsRef<GpuInfo>) {
+    let g = gpu.as_ref();
+    println!("Vendor: {}", g.vendor());
+    println!("Name: {}", g.name_or_default());
+}
+
+let gpu = GpuInfo::unknown();
+print_gpu_info(&gpu);
 ```
 
 ### Working with Multiple GPUs
 
 ```rust
-use gpu_info::GpuManager;use std::time::Duration;
+use gpu_info::GpuManager;
+use std::time::Duration;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create manager with caching enabled
@@ -171,19 +233,50 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for i in 0..gpus.len() {
         // Use cached access for better performance (zero-copy via Arc)
         if let Some(gpu) = manager.get_gpu_cached(i) {
-            println!("GPU #{}: {} ({})", i, gpu.format_name_gpu(), gpu.vendor);
-            println!("  Temperature: {}°C", gpu.format_temperature());
-            println!("  Utilization: {}%", gpu.format_utilization());
-            println!("  Power Usage: {}W", gpu.format_power_usage());
+            println!("GPU #{}: {} ({})", i, gpu.name_or_default(), gpu.vendor());
+            println!("  Temperature: {}", gpu.display_temperature());
+            println!("  Utilization: {}", gpu.display_utilization());
+            println!("  Power Usage: {}", gpu.display_power_usage());
         }
     }
     
     // Get primary GPU with caching (zero-copy)
     if let Some(primary_gpu) = manager.get_primary_gpu_cached() {
-        println!("Primary GPU: {}", primary_gpu.format_name_gpu());
+        println!("Primary GPU: {}", primary_gpu.display_name_gpu());
     }
     Ok(())
 }
+```
+
+### Collection Traits
+
+`GpuManager` implements standard collection traits for flexible construction and extension:
+
+```rust
+use gpu_info::{GpuManager, GpuInfo};
+use std::iter::FromIterator;
+
+// Create manager from an iterator of GpuInfo
+let gpus = vec![GpuInfo::mock_nvidia(), GpuInfo::mock_amd()];
+let manager = GpuManager::from_iter(gpus);
+assert_eq!(manager.gpu_count(), 2);
+
+// Or use collect() for more idiomatic Rust
+let manager: GpuManager = vec![
+    GpuInfo::mock_nvidia(),
+    GpuInfo::mock_intel(),
+].into_iter().collect();
+
+// Extend an existing manager with more GPUs
+let mut manager = GpuManager::from_iter(vec![GpuInfo::mock_nvidia()]);
+manager.extend(vec![GpuInfo::mock_amd(), GpuInfo::mock_intel()]);
+assert_eq!(manager.gpu_count(), 3);
+```
+
+This is particularly useful for:
+- Testing with mock GPU data
+- Loading GPU configurations from files
+- Combining GPUs from different detection sources
 ```
 
 ### Using Provider Manager (Advanced)
@@ -211,7 +304,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let gpus = provider_manager.detect_all_gpus();
     println!("Detected {} GPU(s) using provider manager", gpus.len());
     for gpu in gpus {
-        println!("GPU: {} ({})", gpu.format_name_gpu(), gpu.vendor);
+        println!("GPU: {} ({})", gpu.name_or_default(), gpu.vendor());
     }
     Ok(())
 }
@@ -228,17 +321,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     
     let gpu = get_async().await?;
-    info!("Primary GPU: {}", gpu.format_name_gpu());
-    info!("Temperature: {}°C", gpu.format_temperature());
-    info!("Utilization: {}%", gpu.format_utilization());
+    info!("Primary GPU: {}", gpu.display_name_gpu());
+    info!("Temperature: {}", gpu.display_temperature());
+    info!("Utilization: {}", gpu.display_utilization());
     
     let gpus = get_all_async().await?;
     info!("Found {} GPU(s)", gpus.len());
     for (i, gpu) in gpus.iter().enumerate() {
-        info!("GPU {}: {}", i, gpu.format_name_gpu());
-        info!("  Temperature: {}°C", gpu.format_temperature());
-        info!("  Utilization: {}%", gpu.format_utilization());
-        info!("  Power Usage: {}W", gpu.format_power_usage());
+        info!("GPU {}: {}", i, gpu.display_name_gpu());
+        info!("  Temperature: {}", gpu.display_temperature());
+        info!("  Utilization: {}", gpu.display_utilization());
+        info!("  Power Usage: {}", gpu.display_power_usage());
     }
     Ok(())
 }

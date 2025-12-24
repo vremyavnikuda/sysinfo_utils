@@ -1,19 +1,106 @@
-//! Intel GPU provider implementation
+//! Intel GPU provider implementation.
 //!
-//! This module implements the GpuProvider trait for Intel GPUs using WMI queries.
+//! This module implements the [`GpuProvider`] trait for Intel GPUs using WMI queries.
+//!
+//! # Platform Support
+//!
+//! - Windows: Uses WMI (Win32_VideoController) for basic info, Intel MD API for metrics
+//! - Linux: Uses sysfs interfaces (see [`linux::IntelLinuxProvider`])
+//!
+//! # GPU Types
+//!
+//! Intel GPUs are classified into:
+//! - Integrated (UHD, Iris) - Uses shared system memory
+//! - Discrete (Arc) - Has dedicated VRAM
+//!
+//! [`GpuProvider`]: crate::gpu_info::GpuProvider
+//! [`linux::IntelLinuxProvider`]: crate::providers::linux::intel::IntelLinuxProvider
+
 use crate::gpu_info::{GpuInfo, GpuProvider, Result};
 use crate::vendor::{IntelGpuType, Vendor};
 #[allow(unused_imports)]
 use log::{debug, error, info, warn};
 use std::process::Command;
-/// Intel GPU provider
+
+/// Intel GPU provider.
+///
+/// Implements [`GpuProvider`] for Intel GPUs using WMI queries on Windows.
+/// This provider can detect Intel integrated (UHD, Iris) and discrete (Arc) GPUs.
+///
+/// For integrated GPUs, memory is calculated as 50% of system RAM (shared memory model).
+/// For discrete GPUs, dedicated VRAM is reported from WMI.
+///
+/// [`GpuProvider`]: crate::gpu_info::GpuProvider
 pub struct IntelProvider;
+
 impl IntelProvider {
+    /// Create a new Intel provider instance.
     pub fn new() -> Self {
         Self
     }
+
     fn determine_intel_gpu_type(&self, name: &str) -> IntelGpuType {
         crate::vendor::determine_intel_gpu_type_from_name(name)
+    }
+
+    /// Get total memory for Intel GPU
+    ///
+    /// For Integrated GPUs: Returns 50% of system RAM (shared memory model)
+    /// For Discrete GPUs: Returns AdapterRAM from WMI (dedicated memory)
+    fn get_memory_total(&self, gpu_type: &IntelGpuType, wmi_output: &str) -> Option<u32> {
+        match gpu_type {
+            IntelGpuType::Integrated => {
+                // Integrated GPU uses shared system memory (typically 50% of RAM)
+                self.get_system_shared_memory()
+            }
+            IntelGpuType::Discrete | IntelGpuType::Unknown => {
+                // Discrete GPU or unknown: use AdapterRAM from WMI
+                wmi_output
+                    .lines()
+                    .find(|line| line.contains("AdapterRAM"))
+                    .and_then(|line| {
+                        let bytes = line.split(":").nth(1)?.trim().parse::<u64>().ok()?;
+                        // Convert bytes to MB
+                        Some((bytes / 1024 / 1024) as u32)
+                    })
+            }
+        }
+    }
+
+    /// Get system shared memory available for integrated GPU
+    ///
+    /// Integrated Intel GPUs can use up to 50% of system RAM as shared memory.
+    /// This matches what Windows Task Manager shows for integrated GPUs.
+    fn get_system_shared_memory(&self) -> Option<u32> {
+        let output = Command::new("powershell")
+            .args([
+                "Get-WmiObject",
+                "Win32_ComputerSystem",
+                "|",
+                "Select-Object",
+                "TotalPhysicalMemory",
+                "|",
+                "Format-List",
+            ])
+            .output()
+            .ok()?;
+
+        let output_str = String::from_utf8_lossy(&output.stdout);
+
+        output_str
+            .lines()
+            .find(|line| line.contains("TotalPhysicalMemory"))
+            .and_then(|line| {
+                let bytes = line.split(":").nth(1)?.trim().parse::<u64>().ok()?;
+                // Integrated GPU can use 50% of system RAM
+                let shared_memory_mb = (bytes / 2 / 1024 / 1024) as u32;
+                info!(
+                    "System RAM: {} MB, Shared memory for iGPU: {} MB",
+                    bytes / 1024 / 1024,
+                    shared_memory_mb
+                );
+                Some(shared_memory_mb)
+            })
     }
     fn get_intel_gpu_info(&self) -> Result<String> {
         let output = Command::new("powershell")
@@ -25,7 +112,7 @@ impl IntelProvider {
                 "{ $_.Name -like '*Intel*' }",
                 "|",
                 "Select-Object",
-                "Name, AdapterRAM, DriverVersion, CurrentRefreshRate, MaxRefreshRate, Status",
+                "Name, AdapterRAM, DriverVersion, Status",
                 "|",
                 "Format-List",
             ])
@@ -50,21 +137,12 @@ impl IntelProvider {
             .lines()
             .find(|line| line.contains("DriverVersion"))
             .map(|line| line.split(":").nth(1).unwrap_or("").trim().to_string());
-        let memory_total = output_str
-            .lines()
-            .find(|line| line.contains("AdapterRAM"))
-            .and_then(|line| {
-                let bytes = line.split(":").nth(1)?.trim().parse::<u64>().ok()?;
-                Some((bytes / 1024 / 1024) as u32) // Convert bytes to MB
-            });
-        let core_clock = output_str
-            .lines()
-            .find(|line| line.contains("CurrentRefreshRate"))
-            .and_then(|line| line.split(":").nth(1)?.trim().parse::<u32>().ok());
-        let max_clock_speed = output_str
-            .lines()
-            .find(|line| line.contains("MaxRefreshRate"))
-            .and_then(|line| line.split(":").nth(1)?.trim().parse::<u32>().ok());
+        let memory_total = self.get_memory_total(&gpu_type, output_str);
+
+        // Note: WMI Win32_VideoController does not provide GPU clock speeds
+        // CurrentRefreshRate/MaxRefreshRate are monitor refresh rates, not GPU clocks
+        // GPU clock speeds are obtained from Intel Metrics Discovery API instead
+
         let status = output_str
             .lines()
             .find(|line| line.contains("Status"))
@@ -76,19 +154,16 @@ impl IntelProvider {
         if let Some(mem) = memory_total {
             info!("Total memory: {} MB", mem);
         }
-        if let Some(clock) = core_clock {
-            info!("Current clock speed: {} MHz", clock);
-        }
-        if let Some(max_clock) = max_clock_speed {
-            info!("Max clock speed: {} MHz", max_clock);
-        }
         Some(GpuInfo {
             name_gpu: Some(gpu_name),
             vendor: Vendor::Intel(gpu_type),
             driver_version,
             memory_total,
-            core_clock,
-            max_clock_speed,
+            memory_used: None,
+            // Will be set by Intel MD API
+            core_clock: None,
+            // Will be set by Intel MD API
+            max_clock_speed: None,
             active: status,
             temperature: None,
             utilization: None,
@@ -126,7 +201,7 @@ impl GpuProvider for IntelProvider {
             gpu.core_clock = updated_gpu.core_clock;
             gpu.max_clock_speed = updated_gpu.max_clock_speed;
             gpu.active = updated_gpu.active;
-            // Don't overwrite: temperature, utilization, power_usage, power_limit, memory_util, memory_clock
+            // TODO:Don't overwrite: temperature, utilization, power_usage, power_limit, memory_util, memory_clock
         }
 
         // Note: This is the platform-agnostic Intel provider that only uses WMI.
@@ -145,11 +220,26 @@ impl GpuProvider for IntelProvider {
         Vendor::Intel(IntelGpuType::Unknown)
     }
 }
-// Backwards compatibility functions
+/// Detect all Intel GPUs in the system.
+///
+/// This is a convenience function that creates a temporary [`IntelProvider`]
+/// and calls [`detect_gpus`](GpuProvider::detect_gpus).
+///
+/// Returns an empty vector if no Intel GPUs are found.
 pub fn detect_intel_gpus() -> Vec<GpuInfo> {
     let provider = IntelProvider::new();
     provider.detect_gpus().unwrap_or_default()
 }
+
+/// Update GPU information for an Intel GPU.
+///
+/// This is a convenience function that uses the appropriate provider for the platform.
+/// On Windows, it uses `IntelWindowsProvider` for better metrics via Intel MD API.
+/// On other platforms, it uses the basic [`IntelProvider`].
+///
+/// # Errors
+///
+/// Returns an error if the GPU update fails.
 pub fn update_intel_info(gpu: &mut GpuInfo) -> Result<()> {
     #[cfg(target_os = "windows")]
     {
@@ -164,13 +254,14 @@ pub fn update_intel_info(gpu: &mut GpuInfo) -> Result<()> {
         provider.update_gpu(gpu)
     }
 }
+
+// TODO: there should be no tests here. Transfer them to gpu_info\src\test
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
     fn test_intel_provider_vendor() {
         let provider = IntelProvider::new();
-        // Note: We can't directly compare Vendor::Intel values because they contain IntelGpuType
         match provider.get_vendor() {
             Vendor::Intel(_) => {}
             _ => panic!("Expected Intel vendor"),

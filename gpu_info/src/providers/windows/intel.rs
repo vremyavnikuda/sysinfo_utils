@@ -70,8 +70,8 @@
 //! - **Maintainable**: PDH is internal utility, not exposed to callers
 //!
 //! # References
-//! - Intel MD API: https://github.com/intel/metrics-discovery
-//! - Header: https://github.com/intel/metrics-discovery/blob/master/instrumentation/metrics_discovery/common/inc/metrics_discovery_api.h
+//! - Intel MD API: <https://github.com/intel/metrics-discovery>
+//! - Header: <https://github.com/intel/metrics-discovery/blob/master/instrumentation/metrics_discovery/common/inc/metrics_discovery_api.h>
 
 // Allow dead_code for FFI infrastructure that will be used in future enhancements
 use crate::gpu_info::{GpuError, GpuInfo, GpuProvider, Result};
@@ -461,7 +461,8 @@ impl IntelMetricsApi {
     /// Map Intel MD API error codes to GpuError
     fn map_md_error(code: i32, context: &str) -> GpuError {
         match code {
-            CC_OK => GpuError::GpuNotActive, // Should not be called with CC_OK
+            // Should not be called with CC_OK
+            CC_OK => GpuError::GpuNotActive,
             CC_ERROR_GENERAL | MD_ERROR_GENERAL => GpuError::DriverNotInstalled,
             CC_ERROR_INVALID_PARAMETER | MD_ERROR_INVALID_PARAMETER => {
                 GpuError::FeatureNotEnabled(format!("Invalid parameter in {}", context))
@@ -806,7 +807,8 @@ impl IntelMetricsDevice {
                 calculated_values.as_mut_ptr(),
                 metrics_count,
                 &mut calculated_count,
-                false, // useInformation
+                // useInformation
+                false,
             );
 
             if calc_result != CC_OK && calc_result != MD_SUCCESS {
@@ -926,7 +928,8 @@ impl IntelMetricsDevice {
             let open_result = ((*group_vtbl).open_io_stream)(
                 concurrent_group,
                 metric_set,
-                0, // process ID (0 = system-wide)
+                // process ID (0 = system-wide)
+                0,
                 &mut timer_period_ns,
                 &mut buffer_size,
             );
@@ -1015,7 +1018,8 @@ impl IntelMetricsDevice {
                 calculated_values.as_mut_ptr(),
                 metrics_count,
                 &mut calculated_count,
-                false, // useInformation
+                // useInformation
+                false,
             );
 
             if calc_result != CC_OK && calc_result != MD_SUCCESS {
@@ -1339,7 +1343,7 @@ impl IntelWindowsProvider {
 
         // Build counter paths for GPU utilization and memory
         let utilization_path = r"\GPU Engine(*engtype_3D)\Utilization Percentage";
-        let memory_path = r"\GPU Process Memory(*)\Dedicated Usage";
+        let memory_path = r"\GPU Adapter Memory(*)\Shared Usage";
 
         // Expand wildcard paths and add counters
         let util_paths = super::pdh::expand_wildcard_path(utilization_path);
@@ -1405,7 +1409,9 @@ impl IntelWindowsProvider {
             info!("Utilization from PDH: {:.2}%", total_util);
         }
 
-        // Calculate total memory usage
+        // Calculate shared memory usage
+        // Note: For integrated GPUs, we use "Shared Usage" counter which directly reports
+        // the amount of shared system memory used by the GPU in bytes.
         if !mem_counters.is_empty() {
             let mut total_mem_bytes = 0.0;
             let mut valid_count = 0;
@@ -1418,16 +1424,21 @@ impl IntelWindowsProvider {
             }
 
             if valid_count > 0 {
-                let mem_mb = (total_mem_bytes / (1024.0 * 1024.0)) as u64;
+                let mem_mb = (total_mem_bytes / (1024.0 * 1024.0)) as u32;
+
+                // Store absolute used memory value
+                gpu.memory_used = Some(mem_mb);
+
+                // Calculate percentage from absolute values
                 if let Some(total_mb) = gpu.memory_total {
                     let mem_percent = (mem_mb as f32 / total_mb as f32) * 100.0;
                     gpu.memory_util = Some(mem_percent.min(100.0));
                     info!(
-                        "Memory utilization from PDH: {:.2}% ({} MB / {} MB)",
-                        mem_percent, mem_mb, total_mb
+                        "Memory from PDH: {} MB used / {} MB total ({:.2}%)",
+                        mem_mb, total_mb, mem_percent
                     );
                 } else {
-                    debug!("Cannot calculate memory %: total memory unknown");
+                    info!("Memory from PDH: {} MB used (total unknown)", mem_mb);
                 }
             } else {
                 debug!("No valid memory values from PDH");

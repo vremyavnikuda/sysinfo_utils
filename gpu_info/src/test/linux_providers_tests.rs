@@ -26,7 +26,8 @@ mod tests {
         let provider = AmdLinuxProvider::new();
         let temp_dir = std::env::temp_dir();
         let result = provider.get_memory_info(&temp_dir);
-        assert_eq!(result, (None, None));
+        // (memory_total, memory_util, memory_used)
+        assert_eq!(result, (None, None, None));
     }
 
     #[test]

@@ -1,26 +1,48 @@
-//! Linux NVIDIA GPU provider using NVML API
+//! Linux NVIDIA GPU provider using NVML API.
+//!
+//! This module implements the [`GpuProvider`] trait for NVIDIA GPUs on Linux
+//! using the NVML (NVIDIA Management Library) API via dynamic loading.
+//!
+//! # Library Loading
+//!
+//! The provider attempts to load NVML from:
+//! 1. `NVML_LIB_PATH` environment variable (if set)
+//! 2. `/usr/lib/libnvidia-ml.so.1` (default)
+//!
+//! # Requirements
+//!
+//! NVIDIA drivers must be installed with the NVML library available.
+//!
+//! [`GpuProvider`]: crate::gpu_info::GpuProvider
+
 use crate::gpu_info::{GpuInfo, GpuProvider, Result};
 use crate::vendor::Vendor;
 use libloading::{Library, Symbol};
 use log::{debug, error};
 use std::{env, os::raw::c_char, ptr};
+
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 struct NvmlDevice {
     _private: [u8; 0],
 }
+
 #[allow(non_camel_case_types)]
 type NvmlDevice_t = *mut NvmlDevice;
+
 #[allow(non_camel_case_types)]
 type nvmlReturn_t = i32;
+
 const NVML_SUCCESS: nvmlReturn_t = 0;
 const NVML_TEMPERATURE_GPU: u32 = 0;
+
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 struct NvmlUtilization {
     gpu: u32,
     memory: u32,
 }
+
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 struct NvmlMemory {
@@ -28,6 +50,7 @@ struct NvmlMemory {
     free: u64,
     used: u64,
 }
+
 type NvmlInitFn = unsafe extern "C" fn() -> nvmlReturn_t;
 type NvmlShutdownFn = unsafe extern "C" fn() -> nvmlReturn_t;
 type NvmlDeviceGetHandleByIndexFn = unsafe extern "C" fn(u32, *mut NvmlDevice_t) -> nvmlReturn_t;
@@ -40,9 +63,27 @@ type NvmlDeviceGetClockInfoFn = unsafe extern "C" fn(NvmlDevice_t, u32, *mut u32
 type NvmlDeviceGetMemoryInfoFn =
     unsafe extern "C" fn(NvmlDevice_t, *mut NvmlMemory) -> nvmlReturn_t;
 const NVML_CLOCK_GRAPHICS: u32 = 0;
+
+/// NVIDIA GPU provider for Linux.
+///
+/// Implements [`GpuProvider`] for NVIDIA GPUs on Linux using the NVML API.
+/// The library is loaded dynamically at runtime, allowing the provider to
+/// gracefully handle systems without NVIDIA drivers.
+///
+/// # Supported Metrics
+///
+/// - Temperature (GPU core)
+/// - GPU utilization percentage
+/// - Memory utilization percentage
+/// - Power usage (in watts)
+/// - Core clock speed
+/// - Memory total and used
+///
+/// [`GpuProvider`]: crate::gpu_info::GpuProvider
 pub struct NvidiaLinuxProvider;
 
 impl NvidiaLinuxProvider {
+    /// Create a new NVIDIA Linux provider instance.
     pub fn new() -> Self {
         Self
     }
@@ -182,10 +223,14 @@ impl GpuProvider for NvidiaLinuxProvider {
                 free: 0,
                 used: 0,
             };
-            let memory_total = if get_meminfo(device, &mut mem_info) == NVML_SUCCESS {
-                Some((mem_info.total / 1024 / 1024) as u32)
+            let (memory_total, memory_used) = if get_meminfo(device, &mut mem_info) == NVML_SUCCESS
+            {
+                (
+                    Some((mem_info.total / 1024 / 1024) as u32),
+                    Some((mem_info.used / 1024 / 1024) as u32),
+                )
             } else {
-                None
+                (None, None)
             };
             shutdown();
             let gpu_info = GpuInfo {
@@ -201,6 +246,7 @@ impl GpuProvider for NvidiaLinuxProvider {
                 active: Some(true),
                 power_limit: None,
                 memory_total,
+                memory_used,
                 driver_version: None,
             };
             Ok(vec![gpu_info])

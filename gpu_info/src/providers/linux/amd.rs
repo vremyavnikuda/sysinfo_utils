@@ -1,12 +1,42 @@
-//! Linux AMD GPU provider using sysfs
+//! Linux AMD GPU provider using sysfs.
+//!
+//! This module implements the [`GpuProvider`] trait for AMD GPUs on Linux
+//! using sysfs and hwmon interfaces.
+//!
+//! # Sysfs Paths
+//!
+//! - `/sys/class/drm/cardX/device/` - Device information
+//! - `/sys/class/drm/cardX/device/hwmon/` - Hardware monitoring (temperature, power)
+//! - `/sys/class/drm/cardX/device/pp_dpm_sclk` - Core clock states
+//! - `/sys/class/drm/cardX/device/pp_dpm_mclk` - Memory clock states
+//!
+//! [`GpuProvider`]: crate::gpu_info::GpuProvider
+
 use crate::gpu_info::{GpuError, GpuInfo, GpuProvider, Result};
 use crate::vendor::Vendor;
 use log::{debug, info, warn};
 use std::fs;
 use std::path::Path;
 
+/// AMD GPU provider for Linux.
+///
+/// Implements [`GpuProvider`] for AMD GPUs on Linux using sysfs and hwmon interfaces.
+/// This provider reads GPU information from `/sys/class/drm/` and collects metrics
+/// from hwmon sensors.
+///
+/// # Supported Metrics
+///
+/// - Temperature (from hwmon temp1_input)
+/// - Power usage (from hwmon power1_average)
+/// - GPU utilization (from gpu_busy_percent)
+/// - Memory info (from mem_info_vram_total/used)
+/// - Clock speeds (from pp_dpm_sclk/mclk)
+///
+/// [`GpuProvider`]: crate::gpu_info::GpuProvider
 pub struct AmdLinuxProvider;
+
 impl AmdLinuxProvider {
+    /// Create a new AMD Linux provider instance.
     pub fn new() -> Self {
         Self
     }
@@ -63,6 +93,7 @@ impl AmdLinuxProvider {
             utilization,
             power_usage,
             memory_total: memory_info.0,
+            memory_used: memory_info.2,
             memory_util: memory_info.1,
             driver_version,
             active: Some(true),
@@ -308,7 +339,10 @@ impl AmdLinuxProvider {
         None
     }
 
-    pub(crate) fn get_memory_info(&self, device_path: &Path) -> (Option<u32>, Option<f32>) {
+    pub(crate) fn get_memory_info(
+        &self,
+        device_path: &Path,
+    ) -> (Option<u32>, Option<f32>, Option<u32>) {
         // Try to get memory information from sysfs
         // Check /sys/class/drm/cardX/device/mem_info_* files
 
@@ -327,27 +361,28 @@ impl AmdLinuxProvider {
 
         // Get used VRAM size and calculate utilization
         let vram_used_path = device_path.join("mem_info_vram_used");
-        let vram_util = if let Ok(content) = fs::read_to_string(&vram_used_path) {
+        let (vram_used, vram_util) = if let Ok(content) = fs::read_to_string(&vram_used_path) {
             if let Ok(bytes) = content.trim().parse::<u64>() {
+                let used_mb = (bytes / (1024 * 1024)) as u32;
                 // Calculate utilization percentage if we have total memory
-                if let Some(total_mb) = vram_total {
+                let util = if let Some(total_mb) = vram_total {
                     if total_mb > 0 {
-                        let used_mb = (bytes / (1024 * 1024)) as u32;
                         Some(((used_mb as f32) / (total_mb as f32)) * 100.0)
                     } else {
                         None
                     }
                 } else {
                     None
-                }
+                };
+                (Some(used_mb), util)
             } else {
-                None
+                (None, None)
             }
         } else {
-            None
+            (None, None)
         };
 
-        (vram_total, vram_util)
+        (vram_total, vram_util, vram_used)
     }
 }
 impl Default for AmdLinuxProvider {

@@ -1,11 +1,10 @@
 use crate::gpu_info::{GpuInfo, Result};
 #[cfg(target_os = "windows")]
 use crate::vendor::Vendor;
-use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 /// Extended GPU information with additional metrics
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ExtendedGpuInfo {
     /// Basic GPU information
     pub base_info: GpuInfo,
@@ -30,7 +29,7 @@ pub struct ExtendedGpuInfo {
 }
 /// Cooling system information
 #[derive(Debug, Clone, PartialEq, Default)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FanInfo {
     /// Fan speed in RPM
     pub fan_speed_rpm: Option<u32>,
@@ -52,7 +51,7 @@ pub struct FanInfo {
 }
 /// Individual fan information
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct IndividualFanInfo {
     /// Fan index
     pub index: u8,
@@ -68,7 +67,7 @@ pub struct IndividualFanInfo {
 }
 /// Video encoder/decoder information
 #[derive(Debug, Clone, PartialEq, Default)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EncoderInfo {
     /// Video encoder utilization (%)
     pub encoder_utilization: Option<f32>,
@@ -90,7 +89,7 @@ pub struct EncoderInfo {
 }
 /// Extended memory information
 #[derive(Debug, Clone, PartialEq, Default)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MemoryInfo {
     /// Total video memory in MB
     pub total_memory_mb: Option<u64>,
@@ -121,7 +120,7 @@ pub struct MemoryInfo {
 }
 /// Connection information
 #[derive(Debug, Clone, PartialEq, Default)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ConnectionInfo {
     /// PCIe generation (3, 4, 5, etc.)
     pub pcie_generation: Option<u8>,
@@ -152,7 +151,7 @@ pub struct ConnectionInfo {
 }
 /// Extended thermal information
 #[derive(Debug, Clone, PartialEq, Default)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ThermalInfo {
     /// GPU temperature in °C
     pub gpu_temperature: Option<f32>,
@@ -178,19 +177,29 @@ pub struct ThermalInfo {
     /// Throttling reason
     pub throttle_reason: Option<ThrottleReason>,
 }
-/// Throttling reasons
+
+/// Throttling reasons for GPU performance limiting.
+///
+/// This enum represents the various reasons why a GPU might be throttling
+/// its performance to stay within safe operating parameters.
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub enum ThrottleReason {
+    /// No throttling is occurring.
     None,
+    /// Throttling due to high temperature.
     Temperature,
+    /// Throttling due to power limit being reached.
     PowerLimit,
+    /// Throttling due to voltage limit being reached.
     VoltageLimit,
+    /// Throttling for an unknown reason.
     Unknown,
 }
 /// Performance information
 #[derive(Debug, Clone, PartialEq, Default)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PerformanceInfo {
     /// Base core clock in MHz
     pub base_core_clock: Option<u32>,
@@ -218,7 +227,8 @@ pub struct PerformanceInfo {
 }
 /// GPU performance states
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub enum PerformanceState {
     /// Maximum performance
     Maximum,
@@ -235,7 +245,7 @@ pub enum PerformanceState {
 }
 /// Overclocking information
 #[derive(Debug, Clone, PartialEq, Default)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OverclockingInfo {
     /// Overclocking support
     pub overclocking_supported: Option<bool>,
@@ -371,9 +381,27 @@ impl Default for ExtendedGpuInfo {
         Self::unknown()
     }
 }
-/// Trait for converting basic GpuInfo to extended
+
+/// Trait for converting basic GpuInfo to extended information.
+///
+/// This trait provides methods to convert a basic [`GpuInfo`] struct into
+/// an [`ExtendedGpuInfo`] with additional details, or to enhance an existing
+/// GPU info with extended information.
 pub trait GpuInfoExtensions {
+    /// Converts this GPU info into an extended GPU info struct.
+    ///
+    /// This method consumes the original `GpuInfo` and returns an
+    /// `ExtendedGpuInfo` with the base information populated.
     fn to_extended(self) -> ExtendedGpuInfo;
+
+    /// Enhances this GPU info with extended information.
+    ///
+    /// This method attempts to gather additional information about the GPU
+    /// and populate extended fields.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the extended information cannot be retrieved.
     fn enhance(&mut self) -> Result<()>;
 }
 impl GpuInfoExtensions for GpuInfo {

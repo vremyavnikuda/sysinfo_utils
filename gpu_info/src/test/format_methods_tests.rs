@@ -9,25 +9,18 @@ use crate::GpuInfo;
 #[test]
 fn test_format_methods_with_unknown_gpu() {
     let gpu = GpuInfo::unknown();
-
-    // Numeric f32 fields should return 0.0
-    assert_eq!(gpu.format_temperature(), 0.0);
-    assert_eq!(gpu.format_utilization(), 0.0);
-    assert_eq!(gpu.format_power_usage(), 0.0);
-    assert_eq!(gpu.format_memory_util(), 0.0);
-    assert_eq!(gpu.format_power_limit(), 0.0);
-
-    // Numeric u32 fields should return 0
-    assert_eq!(gpu.format_core_clock(), 0);
-    assert_eq!(gpu.format_memory_clock(), 0);
-    assert_eq!(gpu.format_memory_total(), 0);
-    assert_eq!(gpu.format_max_clock_speed(), 0);
-
-    // String fields should return default strings
+    assert_eq!(gpu.format_temperature(), "Not supported");
+    assert_eq!(gpu.format_power_usage(), "Not supported");
+    assert_eq!(gpu.format_power_limit(), "Not supported");
+    assert_eq!(gpu.format_utilization(), "N/A");
+    assert_eq!(gpu.format_memory_util(), "N/A");
+    assert_eq!(gpu.format_core_clock(), "N/A");
+    assert_eq!(gpu.format_memory_clock(), "N/A");
+    assert_eq!(gpu.format_memory_total(), "N/A");
+    assert_eq!(gpu.format_memory_used(), "N/A");
+    assert_eq!(gpu.format_max_clock_speed(), "N/A");
     assert_eq!(gpu.format_name_gpu(), "Unknown GPU");
     assert_eq!(gpu.format_driver_version(), "Unknown Driver Version");
-
-    // Active status (custom logic, not macro-generated)
     assert_eq!(gpu.format_active(), "Inactive");
 }
 
@@ -44,30 +37,25 @@ fn test_format_methods_with_populated_gpu() {
         .memory_util(45.5)
         .memory_clock(10501)
         .power_limit(450.0)
-        .memory_total(24)
+        .memory_total(24576)
+        .memory_used(12288)
         .max_clock_speed(2610)
         .driver_version("545.92")
         .active(true)
         .build();
 
-    // Numeric f32 fields
-    assert_eq!(gpu.format_temperature(), 65.5);
-    assert_eq!(gpu.format_utilization(), 85.0);
-    assert_eq!(gpu.format_power_usage(), 350.0);
-    assert_eq!(gpu.format_memory_util(), 45.5);
-    assert_eq!(gpu.format_power_limit(), 450.0);
-
-    // Numeric u32 fields
-    assert_eq!(gpu.format_core_clock(), 2520);
-    assert_eq!(gpu.format_memory_clock(), 10501);
-    assert_eq!(gpu.format_memory_total(), 24);
-    assert_eq!(gpu.format_max_clock_speed(), 2610);
-
-    // String fields
+    assert_eq!(gpu.format_temperature(), "65.50°C");
+    assert_eq!(gpu.format_utilization(), "85.00%");
+    assert_eq!(gpu.format_power_usage(), "350.00W");
+    assert_eq!(gpu.format_memory_util(), "45.50%");
+    assert_eq!(gpu.format_power_limit(), "450.00W");
+    assert_eq!(gpu.format_core_clock(), "2520 MHz");
+    assert_eq!(gpu.format_memory_clock(), "10501 MHz");
+    assert_eq!(gpu.format_memory_total(), "24.00 GB");
+    assert_eq!(gpu.format_memory_used(), "12.00 GB");
+    assert_eq!(gpu.format_max_clock_speed(), "2610 MHz");
     assert_eq!(gpu.format_name_gpu(), "NVIDIA GeForce RTX 4090");
     assert_eq!(gpu.format_driver_version(), "545.92");
-
-    // Active status
     assert_eq!(gpu.format_active(), "Active");
 }
 
@@ -78,45 +66,32 @@ fn test_format_methods_with_partial_data() {
         .vendor(Vendor::Amd)
         .name("AMD Radeon RX 7900 XTX")
         .temperature(72.0)
-        // utilization is None
         .power_usage(300.0)
-        // core_clock is None
         .memory_util(60.0)
-        // memory_clock is None
         .active(false)
         .build();
 
-    // Populated fields return their values
     assert_eq!(gpu.format_name_gpu(), "AMD Radeon RX 7900 XTX");
-    assert_eq!(gpu.format_temperature(), 72.0);
-    assert_eq!(gpu.format_power_usage(), 300.0);
-    assert_eq!(gpu.format_memory_util(), 60.0);
-
-    // None fields return defaults
-    assert_eq!(gpu.format_utilization(), 0.0);
-    assert_eq!(gpu.format_core_clock(), 0);
-    assert_eq!(gpu.format_memory_clock(), 0);
-    assert_eq!(gpu.format_memory_total(), 0);
-    assert_eq!(gpu.format_max_clock_speed(), 0);
-    assert_eq!(gpu.format_power_limit(), 0.0);
+    assert_eq!(gpu.format_temperature(), "72.00°C");
+    assert_eq!(gpu.format_power_usage(), "300.00W");
+    assert_eq!(gpu.format_memory_util(), "60.00%");
+    assert_eq!(gpu.format_utilization(), "N/A");
+    assert_eq!(gpu.format_core_clock(), "N/A");
+    assert_eq!(gpu.format_memory_clock(), "N/A");
+    assert_eq!(gpu.format_memory_total(), "N/A");
+    assert_eq!(gpu.format_max_clock_speed(), "N/A");
+    assert_eq!(gpu.format_power_limit(), "Not supported");
     assert_eq!(gpu.format_driver_version(), "Unknown Driver Version");
-
-    // Active is false
     assert_eq!(gpu.format_active(), "Inactive");
 }
 
 /// Test format_active with different states
 #[test]
 fn test_format_active_states() {
-    // Active = Some(true)
     let gpu_active = GpuInfo::builder().active(true).build();
     assert_eq!(gpu_active.format_active(), "Active");
-
-    // Active = Some(false)
     let gpu_inactive = GpuInfo::builder().active(false).build();
     assert_eq!(gpu_inactive.format_active(), "Inactive");
-
-    // Active = None (unknown GPU)
     let gpu_unknown = GpuInfo::unknown();
     assert_eq!(gpu_unknown.format_active(), "Inactive");
 }
@@ -124,7 +99,6 @@ fn test_format_active_states() {
 /// Test format methods with edge case values
 #[test]
 fn test_format_methods_edge_cases() {
-    // Zero values
     let gpu_zeros = GpuInfo::builder()
         .temperature(0.0)
         .utilization(0.0)
@@ -134,41 +108,37 @@ fn test_format_methods_edge_cases() {
         .memory_total(0)
         .build();
 
-    assert_eq!(gpu_zeros.format_temperature(), 0.0);
-    assert_eq!(gpu_zeros.format_utilization(), 0.0);
-    assert_eq!(gpu_zeros.format_power_usage(), 0.0);
-    assert_eq!(gpu_zeros.format_core_clock(), 0);
-    assert_eq!(gpu_zeros.format_memory_clock(), 0);
-    assert_eq!(gpu_zeros.format_memory_total(), 0);
-
-    // Maximum reasonable values
+    assert_eq!(gpu_zeros.format_temperature(), "0.00°C");
+    assert_eq!(gpu_zeros.format_utilization(), "0.00%");
+    assert_eq!(gpu_zeros.format_power_usage(), "0.00W");
+    assert_eq!(gpu_zeros.format_core_clock(), "0 MHz");
+    assert_eq!(gpu_zeros.format_memory_clock(), "0 MHz");
+    assert_eq!(gpu_zeros.format_memory_total(), "0.00 GB");
     let gpu_max = GpuInfo::builder()
         .temperature(100.0)
         .utilization(100.0)
         .power_usage(1000.0)
         .core_clock(5000)
         .memory_clock(20000)
-        .memory_total(128)
+        .memory_total(131072)
         .max_clock_speed(5000)
         .power_limit(1000.0)
         .build();
 
-    assert_eq!(gpu_max.format_temperature(), 100.0);
-    assert_eq!(gpu_max.format_utilization(), 100.0);
-    assert_eq!(gpu_max.format_power_usage(), 1000.0);
-    assert_eq!(gpu_max.format_core_clock(), 5000);
-    assert_eq!(gpu_max.format_memory_clock(), 20000);
-    assert_eq!(gpu_max.format_memory_total(), 128);
-    assert_eq!(gpu_max.format_max_clock_speed(), 5000);
-    assert_eq!(gpu_max.format_power_limit(), 1000.0);
+    assert_eq!(gpu_max.format_temperature(), "100.00°C");
+    assert_eq!(gpu_max.format_utilization(), "100.00%");
+    assert_eq!(gpu_max.format_power_usage(), "1000.00W");
+    assert_eq!(gpu_max.format_core_clock(), "5000 MHz");
+    assert_eq!(gpu_max.format_memory_clock(), "20000 MHz");
+    assert_eq!(gpu_max.format_memory_total(), "128.00 GB");
+    assert_eq!(gpu_max.format_max_clock_speed(), "5000 MHz");
+    assert_eq!(gpu_max.format_power_limit(), "1000.00W");
 }
 
 /// Test format methods with empty string values
 #[test]
 fn test_format_methods_empty_strings() {
     let gpu = GpuInfo::builder().name("").driver_version("").build();
-
-    // Empty strings are still valid values, not defaults
     assert_eq!(gpu.format_name_gpu(), "");
     assert_eq!(gpu.format_driver_version(), "");
 }
@@ -196,12 +166,11 @@ fn test_format_methods_float_precision() {
         .power_limit(450.0)
         .build();
 
-    // Values should be returned as-is (no rounding in format methods)
-    assert!((gpu.format_temperature() - 65.123).abs() < 0.001);
-    assert!((gpu.format_utilization() - 99.999).abs() < 0.001);
-    assert!((gpu.format_power_usage() - 350.5).abs() < 0.001);
-    assert!((gpu.format_memory_util() - 45.123).abs() < 0.001);
-    assert!((gpu.format_power_limit() - 450.0).abs() < 0.001);
+    assert_eq!(gpu.format_temperature(), "65.12°C"); // 65.123 -> 65.12
+    assert_eq!(gpu.format_utilization(), "100.00%"); // 99.999 -> 100.0
+    assert_eq!(gpu.format_power_usage(), "350.50W"); // 350.5 -> 350.50
+    assert_eq!(gpu.format_memory_util(), "45.12%"); // 45.123 -> 45.12
+    assert_eq!(gpu.format_power_limit(), "450.00W"); // 450.0 -> 450.00
 }
 
 /// Test that format methods work correctly with Intel GPU type
@@ -214,15 +183,15 @@ fn test_format_methods_intel_gpu() {
         .name("Intel UHD Graphics 770")
         .temperature(55.0)
         .utilization(30.0)
-        .memory_total(1)
+        .memory_total(1024)
         .driver_version("31.0.101.4502")
         .active(true)
         .build();
 
     assert_eq!(gpu.format_name_gpu(), "Intel UHD Graphics 770");
-    assert_eq!(gpu.format_temperature(), 55.0);
-    assert_eq!(gpu.format_utilization(), 30.0);
-    assert_eq!(gpu.format_memory_total(), 1);
+    assert_eq!(gpu.format_temperature(), "55.00°C");
+    assert_eq!(gpu.format_utilization(), "30.00%");
+    assert_eq!(gpu.format_memory_total(), "1.00 GB");
     assert_eq!(gpu.format_driver_version(), "31.0.101.4502");
     assert_eq!(gpu.format_active(), "Active");
 }
@@ -246,25 +215,15 @@ fn test_format_methods_consistency_with_getters() {
         .active(true)
         .build();
 
-    // format_* methods should return the same values as getters with unwrap_or
-    assert_eq!(gpu.format_temperature(), gpu.temperature().unwrap_or(0.0));
-    assert_eq!(gpu.format_utilization(), gpu.utilization().unwrap_or(0.0));
-    assert_eq!(gpu.format_power_usage(), gpu.power_usage().unwrap_or(0.0));
-    assert_eq!(gpu.format_core_clock(), gpu.core_clock().unwrap_or(0));
-    assert_eq!(gpu.format_memory_util(), gpu.memory_util().unwrap_or(0.0));
-    assert_eq!(gpu.format_memory_clock(), gpu.memory_clock().unwrap_or(0));
-    assert_eq!(gpu.format_power_limit(), gpu.power_limit().unwrap_or(0.0));
-    assert_eq!(gpu.format_memory_total(), gpu.memory_total().unwrap_or(0));
-    assert_eq!(
-        gpu.format_max_clock_speed(),
-        gpu.max_clock_speed().unwrap_or(0)
-    );
-    assert_eq!(
-        gpu.format_name_gpu(),
-        gpu.name_gpu().unwrap_or("Unknown GPU")
-    );
-    assert_eq!(
-        gpu.format_driver_version(),
-        gpu.driver_version().unwrap_or("Unknown Driver Version")
-    );
+    assert_eq!(gpu.format_temperature(), "70.00°C");
+    assert_eq!(gpu.format_utilization(), "50.00%");
+    assert_eq!(gpu.format_power_usage(), "200.00W");
+    assert_eq!(gpu.format_core_clock(), "1800 MHz");
+    assert_eq!(gpu.format_memory_util(), "40.00%");
+    assert_eq!(gpu.format_memory_clock(), "7000 MHz");
+    assert_eq!(gpu.format_power_limit(), "250.00W");
+    assert_eq!(gpu.format_memory_total(), "0.01 GB");
+    assert_eq!(gpu.format_max_clock_speed(), "2000 MHz");
+    assert_eq!(gpu.format_name_gpu(), "Test GPU");
+    assert_eq!(gpu.format_driver_version(), "500.00");
 }

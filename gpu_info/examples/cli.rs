@@ -1,6 +1,6 @@
 //! # GPU Info CLI Example
 //!
-//! This example demonstrates basic usage of the `gpu_info` library with logging.
+//! This example demonstrates comprehensive GPU information display with all available metrics.
 //!
 //! ## Usage
 //!
@@ -22,27 +22,33 @@
 //! ## Features Demonstrated
 //!
 //! - Basic GPU detection with `gpu_info::get()`
-//! - Accessing GPU metrics (temperature, utilization, power, memory)
-//! - Using the `Formattable` trait for user-friendly output
+//! - Accessing all GPU metrics (temperature, utilization, power, memory, clocks)
+//! - Using format methods that automatically show "N/A" for unsupported metrics
 //! - Proper error handling and graceful degradation
 
 use log::info;
 
-/// Entry point that initializes logging and displays GPU metrics.
+/// Entry point that initializes logging and displays all GPU metrics.
 fn main() {
     env_logger::init();
     let gpu = gpu_info::get();
+
     info!("Vendor: {}", gpu.vendor());
     info!("Name: {}", gpu.format_name_gpu());
-    info!("Utilization: {}", gpu.format_utilization());
-    info!("Temperature: {}", gpu.format_temperature());
-    info!("Clock Speed: {}", gpu.format_core_clock());
-    info!("Power Usage: {}", gpu.format_power_usage());
-    info!("Memory Usage: {}", gpu.format_memory_util());
-    info!("Memory Total: {}", gpu.format_memory_total());
+    info!("Driver Version: {}", gpu.format_driver_version());
     match gpu.active() {
-        Some(true) => info!("Is active: Yes"),
-        Some(false) => info!("Is active: No"),
-        None => info!("Is active: Unknown"),
+        Some(true) => info!("Status: Active"),
+        Some(false) => info!("Status: Inactive"),
+        None => info!("Status: Unknown"),
     }
+    info!("GPU Utilization: {}", gpu.format_utilization());
+    info!("Temperature: {}", gpu.format_temperature());
+    info!("Core Clock: {}", gpu.format_core_clock());
+    info!("Memory Clock: {}", gpu.format_memory_clock());
+    info!("Max Clock Speed: {}", gpu.format_max_clock_speed());
+    info!("Memory Used: {}", gpu.format_memory_used());
+    info!("Memory Total: {}", gpu.format_memory_total());
+    info!("Memory Utilization: {}", gpu.format_memory_util());
+    info!("Power Usage: {}", gpu.format_power_usage());
+    info!("Power Limit: {}", gpu.format_power_limit());
 }

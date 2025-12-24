@@ -40,9 +40,14 @@ use crate::gpu_info::{GpuInfo, GpuProvider, Result};
 use crate::vendor::Vendor;
 use log::{debug, info, warn};
 use std::process::Command;
-/// GPU provider for macOS
+/// GPU provider for macOS systems.
+///
+/// This provider uses system_profiler and IOKit to detect and query
+/// GPU information on macOS, including both discrete GPUs and Apple Silicon.
 pub struct MacosProvider;
+
 impl MacosProvider {
+    /// Creates a new macOS GPU provider.
     pub fn new() -> Self {
         Self
     }
@@ -252,6 +257,8 @@ impl MacosProvider {
                 name_gpu: Some(gpu_name),
                 active: Some(true),
                 memory_total: self.get_unified_memory_size(),
+                // macOS doesn't provide direct GPU memory usage for unified memory
+                memory_used: None,
                 core_clock: self.estimate_apple_gpu_clock(&cpu_info),
                 utilization: self.get_apple_gpu_utilization(),
                 temperature: self.get_apple_gpu_temperature(),
@@ -264,27 +271,36 @@ impl MacosProvider {
     fn determine_apple_gpu_info(&self, cpu_info: &str) -> (String, Option<u32>) {
         if cpu_info.contains("M3") {
             if cpu_info.contains("Pro") {
-                ("Apple M3 Pro GPU".to_string(), Some(18)) // M3 Pro has up to 18 GPU cores
+                // M3 Pro has up to 18 GPU cores
+                ("Apple M3 Pro GPU".to_string(), Some(18))
             } else if cpu_info.contains("Max") {
-                ("Apple M3 Max GPU".to_string(), Some(40)) // M3 Max has up to 40 GPU cores
+                // M3 Max has up to 40 GPU cores
+                ("Apple M3 Max GPU".to_string(), Some(40))
             } else {
-                ("Apple M3 GPU".to_string(), Some(10)) // Base M3 has 8-10 GPU cores
+                // Base M3 has 8-10 GPU cores
+                ("Apple M3 GPU".to_string(), Some(10))
             }
         } else if cpu_info.contains("M2") {
             if cpu_info.contains("Pro") {
-                ("Apple M2 Pro GPU".to_string(), Some(19)) // M2 Pro has 19 GPU cores
+                // M2 Pro has 19 GPU cores
+                ("Apple M2 Pro GPU".to_string(), Some(19))
             } else if cpu_info.contains("Max") {
-                ("Apple M2 Max GPU".to_string(), Some(38)) // M2 Max has 38 GPU cores
+                // M2 Max has 38 GPU cores
+                ("Apple M2 Max GPU".to_string(), Some(38))
             } else {
-                ("Apple M2 GPU".to_string(), Some(8)) // Base M2 has 8-10 GPU cores
+                // Base M2 has 8-10 GPU cores
+                ("Apple M2 GPU".to_string(), Some(8))
             }
         } else if cpu_info.contains("M1") {
             if cpu_info.contains("Pro") {
-                ("Apple M1 Pro GPU".to_string(), Some(16)) // M1 Pro has 14-16 GPU cores
+                // M1 Pro has 14-16 GPU cores
+                ("Apple M1 Pro GPU".to_string(), Some(16))
             } else if cpu_info.contains("Max") {
-                ("Apple M1 Max GPU".to_string(), Some(32)) // M1 Max has 24-32 GPU cores
+                // M1 Max has 24-32 GPU cores
+                ("Apple M1 Max GPU".to_string(), Some(32))
             } else {
-                ("Apple M1 GPU".to_string(), Some(8)) // Base M1 has 7-8 GPU cores
+                // Base M1 has 7-8 GPU cores
+                ("Apple M1 GPU".to_string(), Some(8))
             }
         } else {
             ("Apple Silicon GPU".to_string(), None)
@@ -294,13 +310,17 @@ impl MacosProvider {
     fn estimate_apple_gpu_clock(&self, cpu_info: &str) -> Option<u32> {
         // Estimate based on chip type
         if cpu_info.contains("M3") {
-            Some(1400) // M3 GPU clock around 1.4 GHz
+            // M3 GPU clock around 1.4 GHz
+            Some(1400)
         } else if cpu_info.contains("M2") {
-            Some(1300) // M2 GPU clock around 1.3 GHz
+            // M2 GPU clock around 1.3 GHz
+            Some(1300)
         } else if cpu_info.contains("M1") {
-            Some(1200) // M1 GPU clock around 1.2 GHz
+            // M1 GPU clock around 1.2 GHz
+            Some(1200)
         } else {
-            Some(1000) // General estimate
+            // General estimate
+            Some(1000)
         }
     }
     /// Get Apple GPU utilization
@@ -430,6 +450,8 @@ impl GpuProvider for MacosProvider {
         Vendor::Unknown
     }
 }
+
+// TODO: there should be no tests here. Transfer them to gpu_info\src\test
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -439,7 +461,6 @@ mod tests {
     fn test_macos_provider_creation() {
         let provider = MacosProvider::new();
         let default_provider = MacosProvider;
-        // Ensure both creation methods work
         assert_eq!(provider.get_vendor(), Vendor::Unknown);
         assert_eq!(default_provider.get_vendor(), Vendor::Unknown);
     }
@@ -447,24 +468,17 @@ mod tests {
     #[test]
     fn test_macos_provider_vendor() {
         let provider = MacosProvider::new();
-        // For macOS provider, we return Unknown as it can detect multiple vendors
         assert_eq!(provider.get_vendor(), Vendor::Unknown);
     }
 
     #[test]
     fn test_parse_vram_string() {
         let provider = MacosProvider::new();
-
-        // Test megabytes parsing
         assert_eq!(provider.parse_vram_string("4096 MB"), Some(4));
         assert_eq!(provider.parse_vram_string("8192 MB"), Some(8));
-        assert_eq!(provider.parse_vram_string("512 MB"), Some(1)); // Rounds up
-
-        // Test gigabytes parsing
+        assert_eq!(provider.parse_vram_string("512 MB"), Some(1));
         assert_eq!(provider.parse_vram_string("8 GB"), Some(8));
         assert_eq!(provider.parse_vram_string("16 GB"), Some(16));
-
-        // Test invalid inputs
         assert_eq!(provider.parse_vram_string("invalid"), None);
         assert_eq!(provider.parse_vram_string(""), None);
     }
@@ -472,16 +486,10 @@ mod tests {
     #[test]
     fn test_parse_clock_speed() {
         let provider = MacosProvider::new();
-
-        // Test MHz parsing
         assert_eq!(provider.parse_clock_speed("1200 MHz"), Some(1200));
         assert_eq!(provider.parse_clock_speed("2400 MHz"), Some(2400));
-
-        // Test GHz parsing
         assert_eq!(provider.parse_clock_speed("1.5 GHz"), Some(1500));
         assert_eq!(provider.parse_clock_speed("2.0 GHz"), Some(2000));
-
-        // Test invalid inputs
         assert_eq!(provider.parse_clock_speed("invalid"), None);
         assert_eq!(provider.parse_clock_speed(""), None);
     }
@@ -489,8 +497,6 @@ mod tests {
     #[test]
     fn test_extract_vram_from_name() {
         let provider = MacosProvider::new();
-
-        // Test various GPU name formats
         assert_eq!(
             provider.extract_vram_from_name("NVIDIA GeForce RTX 3080 10GB"),
             Some(10)
@@ -503,8 +509,6 @@ mod tests {
             provider.extract_vram_from_name("Intel Iris Plus Graphics 2gb"),
             Some(2)
         );
-
-        // Test names without VRAM info
         assert_eq!(provider.extract_vram_from_name("Intel HD Graphics"), None);
         assert_eq!(provider.extract_vram_from_name(""), None);
     }
@@ -512,20 +516,12 @@ mod tests {
     #[test]
     fn test_determine_vendor() {
         let provider = MacosProvider::new();
-
-        // Test NVIDIA detection
         let nvidia_vendor = provider.determine_vendor("NVIDIA GeForce GTX 1080");
         assert_eq!(nvidia_vendor, Vendor::Nvidia);
-
-        // Test AMD detection
         let amd_vendor = provider.determine_vendor("AMD Radeon Pro 5500M");
         assert_eq!(amd_vendor, Vendor::Amd);
-
-        // Test Apple detection
         let apple_vendor = provider.determine_vendor("Apple M1 GPU");
         assert_eq!(apple_vendor, Vendor::Apple);
-
-        // Test unknown vendor
         let unknown_vendor = provider.determine_vendor("Unknown GPU");
         assert_eq!(unknown_vendor, Vendor::Unknown);
     }
@@ -533,29 +529,19 @@ mod tests {
     #[test]
     fn test_determine_apple_gpu_info() {
         let provider = MacosProvider::new();
-
-        // Test M3 variants
         let (m3_name, m3_cores) = provider.determine_apple_gpu_info("Apple M3");
         assert!(m3_name.contains("M3"));
         assert!(m3_cores.is_some());
-
         let (m3_pro_name, m3_pro_cores) = provider.determine_apple_gpu_info("Apple M3 Pro");
         assert!(m3_pro_name.contains("M3 Pro"));
         assert_eq!(m3_pro_cores, Some(18));
-
         let (m3_max_name, m3_max_cores) = provider.determine_apple_gpu_info("Apple M3 Max");
         assert!(m3_max_name.contains("M3 Max"));
         assert_eq!(m3_max_cores, Some(40));
-
-        // Test M2 variants
         let (m2_name, _) = provider.determine_apple_gpu_info("Apple M2");
         assert!(m2_name.contains("M2"));
-
-        // Test M1 variants
         let (m1_name, _) = provider.determine_apple_gpu_info("Apple M1");
         assert!(m1_name.contains("M1"));
-
-        // Test unknown Apple chip
         let (unknown_name, unknown_cores) = provider.determine_apple_gpu_info("Apple Unknown");
         assert_eq!(unknown_name, "Apple Silicon GPU");
         assert_eq!(unknown_cores, None);
@@ -564,21 +550,13 @@ mod tests {
     #[test]
     fn test_estimate_apple_gpu_clock() {
         let provider = MacosProvider::new();
-
-        // Test M3 clock estimation
         assert_eq!(provider.estimate_apple_gpu_clock("Apple M3"), Some(1400));
         assert_eq!(
             provider.estimate_apple_gpu_clock("Apple M3 Pro"),
             Some(1400)
         );
-
-        // Test M2 clock estimation
         assert_eq!(provider.estimate_apple_gpu_clock("Apple M2"), Some(1300));
-
-        // Test M1 clock estimation
         assert_eq!(provider.estimate_apple_gpu_clock("Apple M1"), Some(1200));
-
-        // Test unknown chip
         assert_eq!(
             provider.estimate_apple_gpu_clock("Apple Unknown"),
             Some(1000)
@@ -588,14 +566,10 @@ mod tests {
     #[test]
     fn test_extract_string_value() {
         let provider = MacosProvider::new();
-
-        // Test valid XML string
         assert_eq!(
             provider.extract_string_value("<string>Test Value</string>"),
             Some("Test Value".to_string())
         );
-
-        // Test invalid format
         assert_eq!(provider.extract_string_value("<int>123</int>"), None);
         assert_eq!(provider.extract_string_value(""), None);
         assert_eq!(provider.extract_string_value("Plain text"), None);
@@ -604,20 +578,14 @@ mod tests {
     #[test]
     fn test_parse_temperature_from_sysctl() {
         let provider = MacosProvider::new();
-
-        // Test Celsius temperature
         assert_eq!(
             provider.parse_temperature_from_sysctl("thermal.gpu: 45.5"),
             Some(45.5)
         );
-
-        // Test Kelvin temperature (should convert to Celsius)
         assert_eq!(
             provider.parse_temperature_from_sysctl("thermal.gpu: 318.15"),
             Some(45.0)
         );
-
-        // Test invalid format
         assert_eq!(
             provider.parse_temperature_from_sysctl("thermal.gpu invalid"),
             None
@@ -628,7 +596,6 @@ mod tests {
     #[test]
     fn test_detect_gpus_returns_result() {
         let provider = MacosProvider::new();
-        // Should always return Ok, even if no GPUs found
         let result = provider.detect_gpus();
         assert!(result.is_ok());
     }
@@ -637,11 +604,9 @@ mod tests {
     fn test_update_gpu_does_not_panic() {
         let provider = MacosProvider::new();
         let mut gpu = GpuInfo::unknown();
-
-        // Should not panic even with unknown GPU
         let result = provider.update_gpu(&mut gpu);
         assert!(result.is_ok());
-        assert_eq!(gpu.active, Some(true)); // Should set active to true
+        assert_eq!(gpu.active, Some(true));
     }
 
     #[test]
@@ -655,8 +620,6 @@ mod tests {
         };
 
         let _ = provider.update_gpu(&mut gpu);
-
-        // Should preserve existing information
         assert_eq!(gpu.vendor, Vendor::Apple);
         assert_eq!(gpu.name_gpu, Some("Apple M1 GPU".to_string()));
         assert_eq!(gpu.memory_total, Some(8));

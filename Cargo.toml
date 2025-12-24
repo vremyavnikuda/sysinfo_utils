@@ -1,11 +1,11 @@
 [package]
 name = "sysinfo_utils"
 version = "0.1.0"
-authors = ["Andrew Nevsky <hopperplayer0@gmail.com>"]
+authors = ["vremyavnikuda <hopperplayer0@gmail.com>"]
 edition = "2021"
 description = "A utility library for system and GPU information"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/yourusername/sysinfo_utils"
+repository = "https://github.com/vremyavnikuda/sysinfo_utils"
 keywords = ["system", "gpu", "info", "monitoring"]
 categories = ["hardware-support", "system-tools"]
 

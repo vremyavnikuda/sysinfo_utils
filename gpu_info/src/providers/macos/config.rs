@@ -58,10 +58,10 @@ impl Default for MacosConfig {
 ///
 /// # Performance Comparison
 ///
-/// - [`IOKit`](MacosBackend::IOKit): 1-10ms (fastest)
-/// - [`Metal`](MacosBackend::Metal): 1-5ms (real-time metrics)
-/// - [`PowerMetrics`](MacosBackend::PowerMetrics): ~100ms (CLI tool)
-/// - [`SystemProfiler`](MacosBackend::SystemProfiler): 500-1000ms (slowest, most compatible)
+/// - `Iokit`: 1-10ms (fastest)
+/// - `Metal`: 1-5ms (real-time metrics)
+/// - `PowerMetrics`: ~100ms (CLI tool)
+/// - `SystemProfiler`: 500-1000ms (slowest, most compatible)
 ///
 /// # Examples
 ///
@@ -175,6 +175,7 @@ impl MacosBackend {
     }
 }
 
+// TODO: there should be no tests here. Transfer them to gpu_info\src\test
 #[cfg(test)]
 mod tests {
     use super::*;

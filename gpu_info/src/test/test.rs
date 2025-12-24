@@ -34,7 +34,7 @@ mod gpu_info_tests {
             max_clock_speed: Some(1800),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_max_clock_speed(), 1800);
+        assert_eq!(gpu_info.format_max_clock_speed(), "1800 MHz");
     }
     /// Test formater fn `format_max_clock_speed()`
     #[test]
@@ -43,7 +43,7 @@ mod gpu_info_tests {
             max_clock_speed: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_max_clock_speed(), 0);
+        assert_eq!(gpu_info.format_max_clock_speed(), "N/A");
     }
     /// Verifies that the default implementation of `GpuInfo` returns an instance with all fields set to unknown values.
     /// Test `default()` method of `GpuInfo` struct.
@@ -76,10 +76,10 @@ mod gpu_info_tests {
     #[test]
     fn _format_memory_total_returns_total_memory_when_present() {
         let gpu_info = GpuInfo {
-            memory_total: Some(8192),
+            memory_total: Some(8192), // 8192 MB = 8.0 GB
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_memory_total(), 8192);
+        assert_eq!(gpu_info.format_memory_total(), "8.00 GB");
     }
     /// Format test fn `format_memory_total()`
     #[test]
@@ -88,7 +88,7 @@ mod gpu_info_tests {
             memory_total: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_memory_total(), 0);
+        assert_eq!(gpu_info.format_memory_total(), "N/A");
     }
     /// Test formater fn `format_power_limit()`
     #[test]
@@ -97,7 +97,7 @@ mod gpu_info_tests {
             power_limit: Some(250.0),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_power_limit(), 250.0);
+        assert_eq!(gpu_info.format_power_limit(), "250.00W");
     }
     /// Test formater fn `format_power_limit()`
     #[test]
@@ -106,7 +106,7 @@ mod gpu_info_tests {
             power_limit: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_power_limit(), 0.0);
+        assert_eq!(gpu_info.format_power_limit(), "Not supported");
     }
     /// Test formater fn `format_active()`
     #[test]
@@ -142,7 +142,7 @@ mod gpu_info_tests {
             memory_clock: Some(7000),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_memory_clock(), 7000);
+        assert_eq!(gpu_info.format_memory_clock(), "7000 MHz");
     }
     /// Test formater fn `format_memory_clock(&self)`
     #[test]
@@ -151,7 +151,7 @@ mod gpu_info_tests {
             memory_clock: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_memory_clock(), 0);
+        assert_eq!(gpu_info.format_memory_clock(), "N/A");
     }
     /// Test format fn `format_memory_util()`
     #[test]
@@ -160,7 +160,7 @@ mod gpu_info_tests {
             memory_util: Some(75.5),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_memory_util(), 75.5);
+        assert_eq!(gpu_info.format_memory_util(), "75.50%");
     }
     /// Test format fn `format_memory_util()`
     #[test]
@@ -169,7 +169,7 @@ mod gpu_info_tests {
             memory_util: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_memory_util(), 0.0);
+        assert_eq!(gpu_info.format_memory_util(), "N/A");
     }
     /// Test format fn `format_core_clock()`
     #[test]
@@ -178,7 +178,7 @@ mod gpu_info_tests {
             core_clock: Some(1500),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_core_clock(), 1500);
+        assert_eq!(gpu_info.format_core_clock(), "1500 MHz");
     }
     /// Test format fn `format_core_clock()`
     #[test]
@@ -187,7 +187,7 @@ mod gpu_info_tests {
             core_clock: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_core_clock(), 0);
+        assert_eq!(gpu_info.format_core_clock(), "N/A");
     }
     /// Test format fn `format_power_usage(&self)`
     #[test]
@@ -196,7 +196,7 @@ mod gpu_info_tests {
             power_usage: Some(150.5),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_power_usage(), 150.5);
+        assert_eq!(gpu_info.format_power_usage(), "150.50W");
     }
     /// Test format fn `format_power_usage(&self)`
     #[test]
@@ -205,7 +205,7 @@ mod gpu_info_tests {
             power_usage: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_power_usage(), 0.0);
+        assert_eq!(gpu_info.format_power_usage(), "Not supported");
     }
     /// Test format fn `format_utilization(&self)`
     #[test]
@@ -214,7 +214,7 @@ mod gpu_info_tests {
             utilization: Some(85.3),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_utilization(), 85.3);
+        assert_eq!(gpu_info.format_utilization(), "85.30%");
     }
     /// Test format fn `format_utilization(&self)`
     #[test]
@@ -223,7 +223,7 @@ mod gpu_info_tests {
             utilization: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_utilization(), 0.0);
+        assert_eq!(gpu_info.format_utilization(), "N/A");
     }
     /// Test format fn `format_temperature(&self)`
     #[test]
@@ -232,7 +232,7 @@ mod gpu_info_tests {
             temperature: Some(65.5),
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_temperature(), 65.5);
+        assert_eq!(gpu_info.format_temperature(), "65.50°C");
     }
     /// Test format fn `format_temperature(&self)`
     #[test]
@@ -241,7 +241,7 @@ mod gpu_info_tests {
             temperature: None,
             ..GpuInfo::default()
         };
-        assert_eq!(gpu_info.format_temperature(), 0.0);
+        assert_eq!(gpu_info.format_temperature(), "Not supported");
     }
     /// Test format fn `format_name_gpu(&self)`
     #[test]
@@ -542,6 +542,7 @@ mod gpu_info_tests {
             active: Some(true),
             power_limit: Some(250.0),
             memory_total: Some(8192),
+            memory_used: None,
             driver_version: Some("470.57.02".to_string()),
             max_clock_speed: Some(2100),
         };
@@ -662,6 +663,7 @@ mod gpu_info_tests {
             active: None,
             power_limit: None,
             memory_total: None,
+            memory_used: None,
             driver_version: None,
             max_clock_speed: None,
         };
@@ -699,7 +701,7 @@ fn _test_power_state_check() {
     let _ = manager.power_usage();
     assert_eq!(manager.power_usage(), None);
 }
-// Mock implementation for system commands
+
 #[cfg(all(not(target_os = "hermit"), any(unix, windows)))]
 mod mock_impl {
     #[cfg(unix)]
@@ -725,8 +727,6 @@ mod mock_impl {
     ///   the corresponding status and output; otherwise, it defaults to a
     ///   success status with empty output.
     pub fn _command_mock(_cmd: &mut Command) -> Result<Output, std::io::Error> {
-        // This is just a stub for compatibility
-        // MOCK_COMMAND is not available here, so return empty result
         Ok(Output {
             status: ExitStatus::from_raw(0),
             stdout: vec![],
@@ -793,8 +793,6 @@ mod linux_nvidia_provider_test {
     fn test_nvidia_provider_creation() {
         let provider = NvidiaLinuxProvider::new();
         assert_eq!(provider.get_vendor(), Vendor::Nvidia);
-
-        // Test Default trait
         let provider_default = NvidiaLinuxProvider;
         assert_eq!(provider_default.get_vendor(), Vendor::Nvidia);
     }
@@ -806,7 +804,6 @@ mod linux_nvidia_provider_test {
 
         match provider.detect_gpus() {
             Ok(gpus) => {
-                // If NVML is available and GPU detected
                 assert!(!gpus.is_empty(), "Should detect at least one GPU");
                 for gpu in gpus {
                     assert_eq!(gpu.vendor, Vendor::Nvidia);
@@ -814,7 +811,6 @@ mod linux_nvidia_provider_test {
                 }
             }
             Err(e) => {
-                // Expected error if NVML is not installed or no NVIDIA GPU
                 println!("Expected error (no NVML or no GPU): {:?}", e);
             }
         }
@@ -824,13 +820,9 @@ mod linux_nvidia_provider_test {
     #[test]
     fn test_nvidia_provider_update_gpu_integration() {
         let provider = NvidiaLinuxProvider::new();
-
-        // First detect GPUs
         match provider.detect_gpus() {
             Ok(gpus) if !gpus.is_empty() => {
                 let mut gpu = gpus[0].clone();
-
-                // Try to update the GPU info
                 match provider.update_gpu(&mut gpu) {
                     Ok(()) => {
                         assert_eq!(gpu.vendor, Vendor::Nvidia);

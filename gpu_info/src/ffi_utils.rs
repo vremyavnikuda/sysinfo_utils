@@ -2,6 +2,21 @@
 //!
 //! This module provides abstractions for loading dynamic libraries and resolving symbols
 //! across different platforms, reducing code duplication in GPU vendor implementations.
+//!
+//! # Overview
+//!
+//! The module provides:
+//! - `DynamicLibrary` - Cross-platform dynamic library wrapper
+//! - `LibraryLoader` - Builder for loading libraries with fallback paths
+//! - `SymbolResolver` - Type-safe symbol resolution with error handling
+//! - `ApiTable` - Generic container for API function pointers
+//! - Result types (`NvmlResult`, `AdlResult`, `IntelMdResult`) for vendor APIs
+//!
+//! # Safety
+//!
+//! This module contains unsafe FFI code. All unsafe operations are documented
+//! with safety invariants.
+
 #[cfg(unix)]
 use libloading::{Library, Symbol};
 use log::error;
@@ -13,25 +28,66 @@ use windows::{
     Win32::Foundation::HMODULE,
     Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryA, LoadLibraryW},
 };
-/// Represents the result of an API call with a success/error code
+
+/// Represents the result of an API call with a success/error code.
+///
+/// This trait provides a common interface for handling results from different
+/// GPU vendor APIs (NVML, ADL, Intel MD) with consistent error handling.
 pub trait ApiResult<T> {
-    /// Check if the result represents success
+    /// Check if the result represents success.
     fn is_success(&self) -> bool;
-    /// Convert to Option<T> based on success status
+    /// Check if the error code indicates the feature is not supported.
+    fn is_not_supported(&self) -> bool;
+    /// Convert to `Option<T>` based on success status.
     fn to_option(self) -> Option<T>;
-    /// Get error code for logging
+    /// Convert to `MetricValue<T>` based on success status and error type.
+    fn to_metric_value(self) -> crate::metric_value::MetricValue<T>
+    where
+        Self: Sized,
+    {
+        if self.is_success() {
+            // SAFETY: is_success() guarantees to_option() returns Some
+            match self.to_option() {
+                Some(value) => crate::metric_value::MetricValue::Available(value),
+                None => crate::metric_value::MetricValue::Unavailable,
+            }
+        } else if self.is_not_supported() {
+            crate::metric_value::MetricValue::NotSupported
+        } else {
+            crate::metric_value::MetricValue::Unavailable
+        }
+    }
+    /// Get error code for logging.
     fn error_code(&self) -> i32;
 }
-/// NVML API result wrapper
+
+/// NVML API result wrapper.
+///
+/// Wraps the result of an NVML API call with the return code and value.
 pub struct NvmlResult<T> {
+    /// NVML return code (0 = success).
     pub code: i32,
+    /// The value returned by the API call.
     pub value: T,
 }
+
+// NVML error codes #nvml.h
+const NVML_SUCCESS: i32 = 0;
+const NVML_ERROR_NOT_SUPPORTED: i32 = 3;
+#[allow(dead_code)]
+const NVML_ERROR_NO_PERMISSION: i32 = 4;
+const NVML_ERROR_NOT_FOUND: i32 = 6;
+
 impl<T> ApiResult<T> for NvmlResult<T> {
     fn is_success(&self) -> bool {
-        // NVML_SUCCESS
-        self.code == 0
+        self.code == NVML_SUCCESS
     }
+
+    fn is_not_supported(&self) -> bool {
+        // NVML returns NOT_SUPPORTED for features not available on this GPU
+        self.code == NVML_ERROR_NOT_SUPPORTED || self.code == NVML_ERROR_NOT_FOUND
+    }
+
     fn to_option(self) -> Option<T> {
         if self.is_success() {
             Some(self.value)
@@ -43,16 +99,35 @@ impl<T> ApiResult<T> for NvmlResult<T> {
         self.code
     }
 }
-/// ADL API result wrapper
+/// ADL API result wrapper.
+///
+/// Wraps the result of an ADL API call with the return code and value.
 pub struct AdlResult<T> {
+    /// ADL return code (0 = success).
     pub code: i32,
+    /// The value returned by the API call.
     pub value: T,
 }
+
+// ADL error codes (from adl_defines.h)
+const ADL_OK: i32 = 0;
+const ADL_ERR_NOT_SUPPORTED: i32 = -8;
+// TODO: you can't use the macro #[allow(dead_code)]
+#[allow(dead_code)]
+const ADL_ERR_NOT_INIT: i32 = -2;
+const ADL_ERR_INVALID_ADL_IDX: i32 = -5;
+
 impl<T> ApiResult<T> for AdlResult<T> {
     fn is_success(&self) -> bool {
-        // ADL_OK
-        self.code == 0
+        self.code == ADL_OK
     }
+
+    fn is_not_supported(&self) -> bool {
+        // ADL returns NOT_SUPPORTED for features not available on this GPU
+        // Also treat INVALID_ADL_IDX as not supported (GPU doesn't have this sensor)
+        self.code == ADL_ERR_NOT_SUPPORTED || self.code == ADL_ERR_INVALID_ADL_IDX
+    }
+
     fn to_option(self) -> Option<T> {
         if self.is_success() {
             Some(self.value)
@@ -64,6 +139,48 @@ impl<T> ApiResult<T> for AdlResult<T> {
         self.code
     }
 }
+
+/// Intel Metrics Discovery API result wrapper.
+///
+/// Wraps the result of an Intel MD API call with the return code and value.
+pub struct IntelMdResult<T> {
+    /// Intel MD return code (0 = success).
+    pub code: i32,
+    /// The value returned by the API call.
+    pub value: T,
+}
+
+// Intel MD API error codes (from metrics_discovery_api.h)
+const MD_CC_OK: i32 = 0;
+const MD_CC_ERROR_NOT_SUPPORTED: i32 = 44;
+#[allow(dead_code)]
+const MD_CC_ERROR_INVALID_PARAMETER: i32 = 40;
+#[allow(dead_code)]
+const MD_CC_ERROR_GENERAL: i32 = 42;
+
+impl<T> ApiResult<T> for IntelMdResult<T> {
+    fn is_success(&self) -> bool {
+        self.code == MD_CC_OK
+    }
+
+    fn is_not_supported(&self) -> bool {
+        // Intel MD API returns NOT_SUPPORTED for features not available on this GPU
+        self.code == MD_CC_ERROR_NOT_SUPPORTED
+    }
+
+    fn to_option(self) -> Option<T> {
+        if self.is_success() {
+            Some(self.value)
+        } else {
+            None
+        }
+    }
+    fn error_code(&self) -> i32 {
+        self.code
+    }
+}
+
+// TODO: all macros should be located here gpu_info\src\macros.rs
 /// Macro to handle API result conversion with error logging
 #[macro_export]
 macro_rules! handle_api_result {
@@ -90,11 +207,17 @@ macro_rules! handle_api_result_vec {
         }
     };
 }
-/// Cross-platform dynamic library wrapper
+/// Cross-platform dynamic library wrapper.
+///
+/// Provides a unified interface for loading and accessing dynamic libraries
+/// on Windows (using `LoadLibrary`) and Unix (using `libloading`).
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum DynamicLibrary {
+    /// Windows library handle (HMODULE).
     #[cfg(windows)]
     Windows(HMODULE),
+    /// Unix library handle (libloading::Library).
     #[cfg(unix)]
     Unix(Library),
 }
@@ -183,7 +306,6 @@ impl LibraryLoader {
     }
     /// Attempt to load the library, trying fallback paths if necessary
     pub fn load(self) -> Result<DynamicLibrary, String> {
-        // Try loading by name first
         #[cfg(windows)]
         {
             if let Ok(lib) = DynamicLibrary::load_windows_a(&self.library_name) {
@@ -196,7 +318,6 @@ impl LibraryLoader {
                 return Ok(lib);
             }
         }
-        // Try fallback paths
         for path in &self.fallback_paths {
             #[cfg(windows)]
             {
@@ -269,18 +390,25 @@ impl<'a> SymbolResolver<'a> {
         Some(symbols)
     }
 }
-/// GPU API function table - generic structure for organizing API functions
+/// GPU API function table - generic structure for organizing API functions.
+///
+/// This structure holds a collection of function pointers for a GPU vendor API,
+/// providing type-safe access to the loaded functions.
 pub struct ApiTable<T> {
     functions: T,
     _phantom: PhantomData<T>,
 }
+
 impl<T> ApiTable<T> {
+    /// Create a new API table with the given functions.
     pub fn new(functions: T) -> Self {
         Self {
             functions,
             _phantom: PhantomData,
         }
     }
+
+    /// Get a reference to the function table.
     pub fn functions(&self) -> &T {
         &self.functions
     }

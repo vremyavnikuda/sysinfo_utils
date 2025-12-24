@@ -484,6 +484,7 @@ impl MetalBackend {
 
 /// GPU power state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum PowerState {
     /// GPU is powered off
     Off,

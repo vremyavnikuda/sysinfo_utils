@@ -1,24 +1,57 @@
 use std::fmt::Display;
+use std::str::FromStr;
+
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[non_exhaustive]
+/// GPU vendor information.
 ///
-/// GPU vendor information
-/// Vendor enum representing different GPU vendors
+/// Represents the manufacturer of a GPU. This enum is `#[non_exhaustive]`
+/// to allow adding new vendors in future versions without breaking changes.
+///
+/// # Examples
+///
+/// ```
+/// use gpu_info::vendor::Vendor;
+/// use std::str::FromStr;
+///
+/// let vendor = Vendor::from_str("nvidia").unwrap();
+/// assert_eq!(vendor, Vendor::Nvidia);
+///
+/// let vendor: Vendor = "AMD".parse().unwrap();
+/// assert_eq!(vendor, Vendor::Amd);
+/// ```
 pub enum Vendor {
+    /// NVIDIA Corporation GPUs (GeForce, Quadro, Tesla, etc.)
     Nvidia,
+    /// AMD (Advanced Micro Devices) GPUs (Radeon, FirePro, etc.)
     Amd,
+    /// Intel Corporation GPUs (integrated or discrete Arc)
     Intel(IntelGpuType),
+    /// Apple Silicon GPUs (M1, M2, M3, etc.)
     Apple,
+    /// Unknown or unrecognized GPU vendor
     Unknown,
 }
+
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+#[non_exhaustive]
+/// Intel GPU type classification.
+///
+/// Distinguishes between integrated graphics (built into the CPU)
+/// and discrete graphics (separate GPU like Intel Arc).
+///
+/// This enum is `#[non_exhaustive]` to allow adding new Intel GPU
+/// types in future versions without breaking changes.
 pub enum IntelGpuType {
+    /// Integrated graphics (Intel UHD, Iris, HD Graphics)
     Integrated,
+    /// Discrete graphics (Intel Arc series)
     Discrete,
+    /// Unknown Intel GPU type
     #[default]
     Unknown,
 }
@@ -29,7 +62,6 @@ impl Default for Vendor {
     }
 }
 
-///
 /// Display trait implementation for Vendor enum
 impl Display for Vendor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -49,6 +81,117 @@ impl Display for IntelGpuType {
             IntelGpuType::Discrete => write!(f, "Discrete"),
             IntelGpuType::Unknown => write!(f, "Unknown"),
         }
+    }
+}
+
+/// Error type for parsing a `Vendor` from a string.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParseVendorError {
+    /// The invalid input string
+    pub input: String,
+}
+
+impl std::fmt::Display for ParseVendorError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "unknown GPU vendor: '{}'", self.input)
+    }
+}
+
+impl std::error::Error for ParseVendorError {}
+
+/// Parses a `Vendor` from a string.
+///
+/// The parsing is case-insensitive and supports common vendor names
+/// and aliases.
+///
+/// # Supported Values
+///
+/// - NVIDIA: "nvidia", "geforce", "quadro", "tesla"
+/// - AMD: "amd", "radeon", "ati"
+/// - Intel: "intel", "arc", "iris", "uhd"
+/// - Apple: "apple", "m1", "m2", "m3"
+///
+/// # Examples
+///
+/// ```
+/// use gpu_info::vendor::Vendor;
+/// use std::str::FromStr;
+///
+/// assert_eq!(Vendor::from_str("nvidia").unwrap(), Vendor::Nvidia);
+/// assert_eq!(Vendor::from_str("AMD").unwrap(), Vendor::Amd);
+/// assert_eq!(Vendor::from_str("GeForce").unwrap(), Vendor::Nvidia);
+/// assert_eq!(Vendor::from_str("Radeon").unwrap(), Vendor::Amd);
+///
+/// // Unknown vendor returns error
+/// assert!(Vendor::from_str("unknown_vendor").is_err());
+/// ```
+impl FromStr for Vendor {
+    type Err = ParseVendorError;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let lower = s.to_lowercase();
+        let trimmed = lower.trim();
+
+        // NVIDIA
+        if trimmed == "nvidia"
+            || trimmed == "geforce"
+            || trimmed == "quadro"
+            || trimmed == "tesla"
+            || trimmed.starts_with("nvidia ")
+        {
+            return Ok(Vendor::Nvidia);
+        }
+
+        // AMD
+        if trimmed == "amd"
+            || trimmed == "radeon"
+            || trimmed == "ati"
+            || trimmed.starts_with("amd ")
+            || trimmed.starts_with("radeon ")
+        {
+            return Ok(Vendor::Amd);
+        }
+
+        // Intel
+        if trimmed == "intel" || trimmed.starts_with("intel ") {
+            let gpu_type = if trimmed.contains("arc") {
+                IntelGpuType::Discrete
+            } else if trimmed.contains("iris")
+                || trimmed.contains("uhd")
+                || trimmed.contains("hd graphics")
+            {
+                IntelGpuType::Integrated
+            } else {
+                IntelGpuType::Unknown
+            };
+            return Ok(Vendor::Intel(gpu_type));
+        }
+
+        // Intel Arc
+        if trimmed == "arc" || trimmed.starts_with("arc ") {
+            return Ok(Vendor::Intel(IntelGpuType::Discrete));
+        }
+
+        // Intel integrated
+        if trimmed == "iris" || trimmed == "uhd" || trimmed.starts_with("iris ") {
+            return Ok(Vendor::Intel(IntelGpuType::Integrated));
+        }
+
+        // Apple
+        if trimmed == "apple"
+            || trimmed == "m1"
+            || trimmed == "m2"
+            || trimmed == "m3"
+            || trimmed == "m4"
+            || trimmed.starts_with("apple ")
+        {
+            return Ok(Vendor::Apple);
+        }
+
+        // Unknown - return error instead of Unknown variant
+        Err(ParseVendorError {
+            input: s.to_string(),
+        })
     }
 }
 /// Determine GPU vendor from GPU name

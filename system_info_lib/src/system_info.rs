@@ -404,6 +404,32 @@ impl InfoBuilder {
             kernel_version: self.kernel_version,
         }
     }
+
+    /// Builds the [`Info`] instance with validation.
+    ///
+    /// This method builds the `Info` instance. Since all system information
+    /// values are inherently valid, this method always succeeds. It is provided
+    /// for API consistency with other builders in the workspace.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Info)` - The built `Info` instance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use system_info_lib::{Info, Type, SystemVersion, BitDepth};
+    ///
+    /// let info = Info::builder()
+    ///     .system_type(Type::Linux)
+    ///     .version(SystemVersion::Semantic(5, 15, 0))
+    ///     .try_build();
+    ///
+    /// assert!(info.is_ok());
+    /// ```
+    pub fn try_build(self) -> Result<Info, std::convert::Infallible> {
+        Ok(self.build())
+    }
 }
 
 #[cfg(test)]
