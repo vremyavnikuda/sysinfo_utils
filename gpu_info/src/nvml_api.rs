@@ -145,16 +145,41 @@ pub struct NvmlFunctions<'a> {
     pub device_get_memory_info:
         Symbol<'a, unsafe extern "C" fn(*mut nvmlDevice_st, *mut nvmlMemory_t) -> i32>,
 }
-/// NVML API client that abstracts library loading and function calls
+
+/// NVIDIA Management Library (NVML) client for GPU monitoring.
 ///
-/// This structure owns the DynamicLibrary to ensure proper lifetime management.
-/// On Unix, the Symbol<'a> types borrow from the library, so we must keep it alive.
+/// This struct provides a safe wrapper around the NVML FFI interface,
+/// handling library loading, initialization, and GPU metric collection.
+///
+/// # Platform Support
+///
+/// - **Windows**: Loads `nvml.dll` from NVIDIA driver installation
+/// - **Linux**: Loads `libnvidia-ml.so` from system library paths
+///
+/// # Safety
+///
+/// All unsafe FFI calls are isolated within this module. The client
+/// ensures proper initialization and cleanup of NVML resources.
 #[cfg(windows)]
 pub struct NvmlClient {
     _library: DynamicLibrary,
     api_table: ApiTable<NvmlFunctions>,
 }
 
+/// NVIDIA Management Library (NVML) client for GPU monitoring.
+///
+/// This struct provides a safe wrapper around the NVML FFI interface,
+/// handling library loading, initialization, and GPU metric collection.
+///
+/// # Platform Support
+///
+/// - **Windows**: Loads `nvml.dll` from NVIDIA driver installation
+/// - **Linux**: Loads `libnvidia-ml.so` from system library paths
+///
+/// # Safety
+///
+/// All unsafe FFI calls are isolated within this module. The client
+/// ensures proper initialization and cleanup of NVML resources.
 #[cfg(unix)]
 pub struct NvmlClient {
     _library: DynamicLibrary,
