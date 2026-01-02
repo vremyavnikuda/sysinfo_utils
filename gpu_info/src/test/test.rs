@@ -9,7 +9,7 @@ mod gpu_info_tests {
         success: bool,
         output: &'static str,
     }
-    
+
     /// Test format driver version fn `format_driver_version()`
     #[test]
     fn _format_driver_version_returns_driver_version_when_present() {
@@ -19,7 +19,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_driver_version(), "460.39");
     }
-    
+
     /// Test format driver version fn `format_driver_version()`
     #[test]
     fn _format_driver_version_returns_unknown_when_absent() {
@@ -29,7 +29,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_driver_version(), "Unknown Driver Version");
     }
-    
+
     /// Test formater fn `format_max_clock_speed()`
     #[test]
     fn _format_max_clock_speed_returns_max_clock_speed_when_present() {
@@ -39,7 +39,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_max_clock_speed(), "1800 MHz");
     }
-    
+
     /// Test formater fn `format_max_clock_speed()`
     #[test]
     fn _format_max_clock_speed_returns_zero_when_absent() {
@@ -49,7 +49,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_max_clock_speed(), "N/A");
     }
-    
+
     /// Verifies that the default implementation of `GpuInfo` returns an instance with all fields set to unknown values.
     /// Test `default()` method of `GpuInfo` struct.
     /// impl Default for GpuInfo {}
@@ -438,7 +438,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.memory_util().fmt_string(), "N/A");
     }
- 
+
     /// Test default format fn `core_clock(&self)`
     #[test]
     fn _core_clock_returns_value_when_present() {
