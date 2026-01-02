@@ -33,10 +33,8 @@ fn test_metric_value_not_supported() {
 fn test_format_with_unit() {
     let temp = MetricValue::Available(65.5);
     assert_eq!(temp.format_with_unit("°C"), "65.5°C");
-
     let unavailable: MetricValue<f32> = MetricValue::Unavailable;
     assert_eq!(unavailable.format_with_unit("°C"), "N/A");
-
     let not_supported: MetricValue<f32> = MetricValue::NotSupported;
     assert_eq!(
         not_supported.format_with_unit("°C"),
@@ -48,10 +46,8 @@ fn test_format_with_unit() {
 fn test_format_value() {
     let metric = MetricValue::Available(42);
     assert_eq!(metric.format_value(), "42");
-
     let unavailable: MetricValue<i32> = MetricValue::Unavailable;
     assert_eq!(unavailable.format_value(), "N/A");
-
     let not_supported: MetricValue<i32> = MetricValue::NotSupported;
     assert_eq!(
         not_supported.format_value(),
@@ -64,7 +60,6 @@ fn test_from_option() {
     let some_value = MetricValue::from(Some(42));
     assert!(some_value.is_available());
     assert_eq!(some_value.value(), Some(&42));
-
     let none_value: MetricValue<i32> = MetricValue::from(None);
     assert!(none_value.is_unavailable());
 }
@@ -73,10 +68,8 @@ fn test_from_option() {
 fn test_into_option() {
     let available = MetricValue::Available(42);
     assert_eq!(available.into_option(), Some(42));
-
     let unavailable: MetricValue<i32> = MetricValue::Unavailable;
     assert_eq!(unavailable.into_option(), None);
-
     let not_supported: MetricValue<i32> = MetricValue::NotSupported;
     assert_eq!(not_supported.into_option(), None);
 }
@@ -86,11 +79,9 @@ fn test_map() {
     let metric = MetricValue::Available(10);
     let doubled = metric.map(|v| v * 2);
     assert_eq!(doubled.value(), Some(&20));
-
     let unavailable: MetricValue<i32> = MetricValue::Unavailable;
     let mapped = unavailable.map(|v| v * 2);
     assert!(mapped.is_unavailable());
-
     let not_supported: MetricValue<i32> = MetricValue::NotSupported;
     let mapped = not_supported.map(|v| v * 2);
     assert!(mapped.is_not_supported());

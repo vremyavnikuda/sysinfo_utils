@@ -286,7 +286,6 @@ mod tests {
                 result.is_success(),
                 result.error_code()
             );
-
             if result.is_success() {
                 println!("  Operation succeeded");
             } else {

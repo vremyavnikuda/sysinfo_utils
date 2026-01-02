@@ -84,7 +84,6 @@ impl AmdLinuxProvider {
         let memory_clock = self.get_memory_clock(&device_path);
         let power_limit = self.get_power_limit(&device_path);
         let max_clock_speed = self.get_max_clock_speed(&device_path);
-
         info!("Found AMD GPU: {}", name);
         Ok(GpuInfo {
             vendor: Vendor::Amd,
@@ -103,11 +102,13 @@ impl AmdLinuxProvider {
             max_clock_speed,
         })
     }
+
     fn read_hex_file(&self, path: &Path) -> Result<u32> {
         let content = fs::read_to_string(path).map_err(|_| GpuError::GpuNotFound)?;
         let hex_str = content.trim().trim_start_matches("0x");
         u32::from_str_radix(hex_str, 16).map_err(|_| GpuError::GpuNotFound)
     }
+
     fn get_gpu_name(&self, device_path: &Path) -> Result<String> {
         if let Ok(content) = fs::read_to_string(device_path.join("product_name")) {
             return Ok(content.trim().to_string());
@@ -171,7 +172,6 @@ impl AmdLinuxProvider {
                 }
             }
         }
-
         let hwmon_path = device_path.join("hwmon");
         if let Ok(entries) = fs::read_dir(&hwmon_path) {
             for entry in entries.flatten() {
@@ -189,9 +189,9 @@ impl AmdLinuxProvider {
                 }
             }
         }
-
         None
     }
+
     fn get_core_clock(&self, device_path: &Path) -> Option<u32> {
         // Try to get core clock from pp_dpm_sclk
         let sclk_path = device_path.join("pp_dpm_sclk");
@@ -215,7 +215,6 @@ impl AmdLinuxProvider {
                 }
             }
         }
-
         let hwmon_path = device_path.join("hwmon");
         if let Ok(entries) = fs::read_dir(&hwmon_path) {
             for entry in entries.flatten() {
@@ -227,7 +226,6 @@ impl AmdLinuxProvider {
                 }
             }
         }
-
         None
     }
 
@@ -254,7 +252,6 @@ impl AmdLinuxProvider {
                 }
             }
         }
-
         // Fallback to hwmon freq2_input
         let hwmon_path = device_path.join("hwmon");
         if let Ok(entries) = fs::read_dir(&hwmon_path) {
@@ -267,7 +264,6 @@ impl AmdLinuxProvider {
                 }
             }
         }
-
         None
     }
 
@@ -275,10 +271,10 @@ impl AmdLinuxProvider {
         // Try to get power limit from power1_cap (in microWatts)
         if let Ok(power_str) = fs::read_to_string(device_path.join("power1_cap")) {
             if let Ok(power_microwatts) = power_str.trim().parse::<u64>() {
-                return Some((power_microwatts as f32) / 1_000_000.0); // Convert to watts
+                // Convert to watts
+                return Some((power_microwatts as f32) / 1_000_000.0);
             }
         }
-
         // Fallback to hwmon power1_cap
         let hwmon_path = device_path.join("hwmon");
         if let Ok(entries) = fs::read_dir(&hwmon_path) {
@@ -286,12 +282,12 @@ impl AmdLinuxProvider {
                 let hwmon_device = entry.path();
                 if let Ok(power_str) = fs::read_to_string(hwmon_device.join("power1_cap")) {
                     if let Ok(power_microwatts) = power_str.trim().parse::<u64>() {
-                        return Some((power_microwatts as f32) / 1_000_000.0); // Convert to watts
+                        // Convert to watts
+                        return Some((power_microwatts as f32) / 1_000_000.0);
                     }
                 }
             }
         }
-
         None
     }
 
@@ -322,7 +318,6 @@ impl AmdLinuxProvider {
                 return Some(max_freq);
             }
         }
-
         // Fallback to hwmon freq1_max
         let hwmon_path = device_path.join("hwmon");
         if let Ok(entries) = fs::read_dir(&hwmon_path) {
@@ -335,7 +330,6 @@ impl AmdLinuxProvider {
                 }
             }
         }
-
         None
     }
 
@@ -345,7 +339,6 @@ impl AmdLinuxProvider {
     ) -> (Option<u32>, Option<f32>, Option<u32>) {
         // Try to get memory information from sysfs
         // Check /sys/class/drm/cardX/device/mem_info_* files
-
         // Get total VRAM size
         let vram_total_path = device_path.join("mem_info_vram_total");
         let vram_total = if let Ok(content) = fs::read_to_string(&vram_total_path) {
@@ -358,7 +351,6 @@ impl AmdLinuxProvider {
         } else {
             None
         };
-
         // Get used VRAM size and calculate utilization
         let vram_used_path = device_path.join("mem_info_vram_used");
         let (vram_used, vram_util) = if let Ok(content) = fs::read_to_string(&vram_used_path) {
@@ -381,15 +373,16 @@ impl AmdLinuxProvider {
         } else {
             (None, None)
         };
-
         (vram_total, vram_util, vram_used)
     }
 }
+
 impl Default for AmdLinuxProvider {
     fn default() -> Self {
         Self::new()
     }
 }
+
 impl GpuProvider for AmdLinuxProvider {
     fn detect_gpus(&self) -> Result<Vec<GpuInfo>> {
         debug!("Detecting AMD GPUs on Linux using sysfs");

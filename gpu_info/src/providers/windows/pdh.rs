@@ -73,7 +73,6 @@ unsafe fn expand_wildcard_path_unsafe(wildcard_path: &str) -> Vec<String> {
         .encode_wide()
         .chain(std::iter::once(0))
         .collect();
-
     let mut buffer_size: u32 = 0;
     let result = PdhExpandWildCardPathW(
         PCWSTR::null(),
@@ -82,16 +81,13 @@ unsafe fn expand_wildcard_path_unsafe(wildcard_path: &str) -> Vec<String> {
         &mut buffer_size,
         0,
     );
-
     if result != 0x800007D2 && result != 0 {
         warn!("PdhExpandWildCardPathW failed: 0x{:X}", result);
         return Vec::new();
     }
-
     if buffer_size == 0 {
         return Vec::new();
     }
-
     let mut buffer: Vec<u16> = vec![0; buffer_size as usize];
     let result = PdhExpandWildCardPathW(
         PCWSTR::null(),
@@ -100,15 +96,12 @@ unsafe fn expand_wildcard_path_unsafe(wildcard_path: &str) -> Vec<String> {
         &mut buffer_size,
         0,
     );
-
     if result != 0 {
         warn!("PdhExpandWildCardPathW second call failed: 0x{:X}", result);
         return Vec::new();
     }
-
     let mut paths = Vec::new();
     let mut start = 0;
-
     for i in 0..buffer.len() {
         if buffer[i] == 0 {
             if i > start {
@@ -117,13 +110,11 @@ unsafe fn expand_wildcard_path_unsafe(wildcard_path: &str) -> Vec<String> {
                 }
             }
             start = i + 1;
-
             if i + 1 < buffer.len() && buffer[i + 1] == 0 {
                 break;
             }
         }
     }
-
     paths
 }
 
@@ -137,16 +128,12 @@ unsafe fn add_counter_unsafe(query: PdhQuery, path: &str) -> Option<PdhCounter> 
         .encode_wide()
         .chain(std::iter::once(0))
         .collect();
-
     let mut hcounter: PdhCounter = 0;
-
     let result = PdhAddCounterW(query, PCWSTR(wide_path.as_ptr()), 0, &mut hcounter);
-
     if result != 0 {
         warn!("Failed to add counter '{}': error code {}", path, result);
         return None;
     }
-
     debug!("Added PDH counter: {}", path);
     Some(hcounter)
 }
@@ -158,12 +145,9 @@ pub(crate) fn get_counter_value(counter: PdhCounter) -> Result<f64> {
 
 unsafe fn get_counter_value_unsafe(counter: PdhCounter) -> Result<f64> {
     let mut value: PDH_FMT_COUNTERVALUE = std::mem::zeroed();
-
     let result = PdhGetFormattedCounterValue(counter, PDH_FMT_DOUBLE, None, &mut value);
-
     if result != 0 {
         return Err(GpuError::GpuNotActive);
     }
-
     Ok(value.Anonymous.doubleValue)
 }

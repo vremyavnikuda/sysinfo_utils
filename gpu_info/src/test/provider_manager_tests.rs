@@ -285,8 +285,6 @@ mod tests {
                 i, current_count, gpu.temperature, gpu.utilization
             );
         }
-
-        // Final verification
         assert_eq!(provider.get_update_count(), 5);
         println!("Final update count: {}", provider.get_update_count());
     }

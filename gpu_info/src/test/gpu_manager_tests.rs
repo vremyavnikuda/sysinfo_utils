@@ -41,8 +41,6 @@ mod tests {
         let cache_ttl = Duration::from_millis(100);
         let manager = GpuManager::with_cache_ttl(cache_ttl);
         println!("GPU Manager created with custom cache TTL: {:?}", cache_ttl);
-
-        // Verify the manager is functional
         let gpu_count = manager.gpu_count();
         let stats = manager.get_gpu_statistics();
         assert_eq!(gpu_count, stats.total_gpus);
@@ -59,18 +57,13 @@ mod tests {
             "GPU Manager created with cache config: TTL={:?}, max_entries={}",
             cache_ttl, max_entries
         );
-
-        // Verify the manager is functional and cache settings work
         let gpu_count = manager.gpu_count();
         let all_gpus = manager.get_all_gpus();
         assert_eq!(gpu_count, all_gpus.len());
-
-        // Test cache functionality if GPUs are available
         if gpu_count > 0 {
             let cached_gpu = manager.get_gpu_cached(0);
             assert!(cached_gpu.is_some());
         }
-
         println!("Manager with cache config detected {} GPUs", gpu_count);
     }
 
@@ -348,7 +341,6 @@ mod tests {
             println!("No GPUs to test cache access");
             return;
         }
-        // Reduced from 10000 to 100 to avoid long test times with PDH
         const ACCESS_COUNT: usize = 100;
         let start_time = std::time::Instant::now();
         let mut cache_hits = 0;
@@ -364,10 +356,7 @@ mod tests {
         println!("  {} accesses in {:?}", ACCESS_COUNT, access_time);
         println!("  Cache hits: {}", cache_hits);
         println!("  Accesses per second: {:.0}", accesses_per_second);
-        // With PDH metrics (500ms per cache miss), we can't achieve 100k accesses/sec
-        // Just verify that cache is working (we got some hits)
         assert!(cache_hits > 0, "Cache should have some hits");
-        // Verify test completed in reasonable time (< 60 seconds)
         assert!(
             access_time.as_secs() < 60,
             "Test took too long: {:?}",
@@ -444,7 +433,6 @@ mod tests {
             println!("No GPUs for performance testing");
             return;
         }
-        // Reduced from 1000 to 10 to avoid long test times with PDH
         const ITERATIONS: usize = 10;
         let start = std::time::Instant::now();
         for _ in 0..ITERATIONS {
@@ -492,9 +480,6 @@ mod tests {
         );
         let avg_get_all = get_all_time / ITERATIONS as u32;
         let avg_cached = cached_access_time / ITERATIONS as u32;
-
-        // With PDH metrics (500ms per cache miss), performance expectations are different
-        // Just verify operations complete in reasonable time
         assert!(
             avg_get_all < Duration::from_secs(1),
             "get_all_gpus too slow: {:?}",

@@ -340,7 +340,6 @@ type OpenMetricsDeviceFn = unsafe extern "C" fn(device: *mut *mut IMetricsDevice
 type CloseMetricsDeviceFn = unsafe extern "C" fn(device: *mut IMetricsDevice_1_0) -> i32;
 
 // Intel Metrics Discovery API wrapper
-
 /// Intel Metrics Discovery API client
 ///
 /// Provides safe access to Intel GPU metrics through the Metrics Discovery API.
@@ -357,22 +356,18 @@ impl IntelMetricsApi {
     pub fn new() -> Result<Self> {
         // Search for igdmd64.dll in DriverStore
         let driver_store = PathBuf::from(r"C:\Windows\System32\DriverStore\FileRepository");
-
         if !driver_store.exists() {
             error!("DriverStore directory not found");
             return Err(GpuError::DriverNotInstalled);
         }
-
         // Search for Intel Graphics Driver directories
         let entries = std::fs::read_dir(&driver_store).map_err(|e| {
             error!("Failed to read DriverStore: {}", e);
             GpuError::DriverNotInstalled
         })?;
-
         for entry in entries.flatten() {
             let path = entry.path();
             if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                // Look for Intel Graphics Driver directories
                 if name.starts_with("iigd_dch") || name.starts_with("igdlh64") {
                     let dll_path = path.join("igdmd64.dll");
                     if dll_path.exists() {
@@ -382,7 +377,6 @@ impl IntelMetricsApi {
                 }
             }
         }
-
         error!("Intel Metrics Discovery API (igdmd64.dll) not found");
         Err(GpuError::DriverNotInstalled)
     }
@@ -395,9 +389,7 @@ impl IntelMetricsApi {
                 GpuError::DriverNotInstalled
             })?
         };
-
         info!("Successfully loaded Intel Metrics Discovery API");
-
         // Load function symbols as raw function pointers
         // SAFETY: Function pointers are 'static by nature and valid as long as the library is loaded.
         // The library is owned by this struct, ensuring the functions remain valid.
@@ -409,7 +401,6 @@ impl IntelMetricsApi {
                     GpuError::DriverNotInstalled
                 })?
         };
-
         let close_device: CloseMetricsDeviceFn = unsafe {
             *library
                 .get::<CloseMetricsDeviceFn>(b"CloseMetricsDevice")
@@ -418,9 +409,7 @@ impl IntelMetricsApi {
                     GpuError::DriverNotInstalled
                 })?
         };
-
         debug!("All Intel MD API functions loaded successfully");
-
         Ok(Self {
             _library: library,
             open_device,
@@ -441,19 +430,15 @@ impl IntelMetricsApi {
     /// Returns error if the API call fails or returns a null pointer.
     fn open_device(&self) -> Result<*mut IMetricsDevice_1_0> {
         let mut device: *mut IMetricsDevice_1_0 = ptr::null_mut();
-
         let result = unsafe { (self.open_device)(&mut device) };
-
         if result != CC_OK && result != MD_SUCCESS {
             error!("OpenMetricsDevice failed with code: {}", result);
             return Err(Self::map_md_error(result, "OpenMetricsDevice"));
         }
-
         if device.is_null() {
             error!("OpenMetricsDevice returned null device");
             return Err(GpuError::GpuNotFound);
         }
-
         debug!("Metrics device opened successfully");
         Ok(device)
     }
@@ -482,14 +467,11 @@ impl IntelMetricsApi {
         if device.is_null() {
             return Ok(());
         }
-
         let result = (self.close_device)(device);
-
         if result != CC_OK && result != MD_SUCCESS {
             warn!("CloseMetricsDevice failed with code: {}", result);
             return Err(GpuError::GpuNotActive);
         }
-
         debug!("Metrics device closed successfully");
         Ok(())
     }
@@ -510,7 +492,6 @@ impl IntelMetricsDevice {
     pub fn new() -> Result<Self> {
         let api = IntelMetricsApi::new()?;
         let device = api.open_device()?;
-
         Ok(Self { api, device })
     }
 
@@ -528,26 +509,21 @@ impl IntelMetricsDevice {
         if self.device.is_null() {
             return Err(GpuError::GpuNotFound);
         }
-
         unsafe {
             let vtbl = (*self.device).vtbl;
             if vtbl.is_null() {
                 return Err(GpuError::GpuNotFound);
             }
-
             let symbol_name_cstr = std::ffi::CString::new(symbol_name)
                 .map_err(|_| GpuError::FeatureNotEnabled("Invalid symbol name".to_string()))?;
-
             let typed_value_ptr =
                 ((*vtbl).get_global_symbol_value_by_name)(self.device, symbol_name_cstr.as_ptr());
-
             if typed_value_ptr.is_null() {
                 return Err(GpuError::FeatureNotEnabled(format!(
                     "Global symbol '{}' not found",
                     symbol_name
                 )));
             }
-
             // Copy the value to avoid lifetime issues
             let typed_value = std::ptr::read(typed_value_ptr as *const TTypedValue_1_0);
             Ok(typed_value)
@@ -575,83 +551,68 @@ impl IntelMetricsDevice {
         if self.device.is_null() {
             return Err(GpuError::GpuNotFound);
         }
-
         unsafe {
             let vtbl = (*self.device).vtbl;
             if vtbl.is_null() {
                 return Err(GpuError::GpuNotFound);
             }
-
             // Get device parameters to know how many concurrent groups exist
             let params = ((*vtbl).get_params)(self.device);
             if params.is_null() {
                 return Err(GpuError::GpuNotFound);
             }
-
             let concurrent_groups_count = (*params).concurrent_groups_count;
             debug!(
                 "Searching for metric '{}' in {} concurrent groups",
                 metric_name, concurrent_groups_count
             );
-
             // Iterate through all concurrent groups
             for group_idx in 0..concurrent_groups_count {
                 let concurrent_group = ((*vtbl).get_concurrent_group)(self.device, group_idx);
                 if concurrent_group.is_null() {
                     continue;
                 }
-
                 let group_vtbl = (*concurrent_group).vtbl;
                 if group_vtbl.is_null() {
                     continue;
                 }
-
                 // Get concurrent group parameters
                 let group_params = ((*group_vtbl).get_params)(concurrent_group);
                 if group_params.is_null() {
                     continue;
                 }
-
                 let metric_sets_count = (*group_params).metric_sets_count;
-
                 // Iterate through all metric sets in this concurrent group
                 for set_idx in 0..metric_sets_count {
                     let metric_set = ((*group_vtbl).get_metric_set)(concurrent_group, set_idx);
                     if metric_set.is_null() {
                         continue;
                     }
-
                     let set_vtbl = (*metric_set).vtbl;
                     if set_vtbl.is_null() {
                         continue;
                     }
-
                     // Get metric set parameters
                     let set_params = ((*set_vtbl).get_params)(metric_set);
                     if set_params.is_null() {
                         continue;
                     }
-
                     let metrics_count = (*set_params).metrics_count;
-
                     // Iterate through all metrics in this metric set
                     for metric_idx in 0..metrics_count {
                         let metric = ((*set_vtbl).get_metric)(metric_set, metric_idx);
                         if metric.is_null() {
                             continue;
                         }
-
                         let metric_vtbl = (*metric).vtbl;
                         if metric_vtbl.is_null() {
                             continue;
                         }
-
                         // Get metric parameters
                         let metric_params = ((*metric_vtbl).get_params)(metric);
                         if metric_params.is_null() {
                             continue;
                         }
-
                         // Check if this is the metric we're looking for
                         let symbol_name = (*metric_params).symbol_name;
                         if !symbol_name.is_null() {
@@ -670,7 +631,6 @@ impl IntelMetricsDevice {
                 }
             }
         }
-
         warn!("Metric '{}' not found in any metric set", metric_name);
         Err(GpuError::FeatureNotEnabled(format!(
             "Metric '{}' not found",
@@ -689,18 +649,15 @@ impl IntelMetricsDevice {
     pub fn get_temperature(&self) -> Result<f32> {
         // Try to find temperature metric
         let (concurrent_group, metric_set, _metric) = self.find_metric("Temperature")?;
-
         unsafe {
             let set_vtbl = (*metric_set).vtbl;
             if set_vtbl.is_null() {
                 return Err(GpuError::GpuNotFound);
             }
-
             let group_vtbl = (*concurrent_group).vtbl;
             if group_vtbl.is_null() {
                 return Err(GpuError::GpuNotFound);
             }
-
             // Activate the metric set
             let result = ((*set_vtbl).activate)(metric_set);
             if result != CC_OK && result != MD_SUCCESS {
@@ -710,11 +667,9 @@ impl IntelMetricsDevice {
                     "Failed to activate temperature metric set".to_string(),
                 ));
             }
-
             // Try to open IoStream
             let mut timer_period_ns: u32 = 0;
             let mut buffer_size: u32 = 0;
-
             let open_result = ((*group_vtbl).open_io_stream)(
                 concurrent_group,
                 metric_set,
@@ -722,7 +677,6 @@ impl IntelMetricsDevice {
                 &mut timer_period_ns,
                 &mut buffer_size,
             );
-
             if open_result != CC_OK && open_result != MD_SUCCESS {
                 warn!(
                     "Failed to open IoStream for temperature: error code {}",
@@ -733,63 +687,51 @@ impl IntelMetricsDevice {
                     "Failed to open IoStream for temperature".to_string(),
                 ));
             }
-
             debug!(
                 "IoStream opened: timer_period={}ns, buffer_size={}",
                 timer_period_ns, buffer_size
             );
-
             // Wait for data to be collected
             std::thread::sleep(std::time::Duration::from_millis(100));
-
             // Read data from IoStream
             let mut report_count: u32 = 1;
             let mut report_buffer: Vec<u8> = vec![0; buffer_size as usize];
-
             let read_result = ((*group_vtbl).read_io_stream)(
                 concurrent_group,
                 &mut report_count,
                 report_buffer.as_mut_ptr(),
                 buffer_size,
             );
-
             // Close IoStream
             let _ = ((*group_vtbl).close_io_stream)(concurrent_group);
             let _ = ((*set_vtbl).deactivate)(metric_set);
-
             if read_result != CC_OK && read_result != MD_SUCCESS {
                 warn!("Failed to read IoStream: error code {}", read_result);
                 return Err(GpuError::FeatureNotEnabled(
                     "Failed to read temperature data".to_string(),
                 ));
             }
-
             if report_count == 0 {
                 warn!("No reports available from IoStream");
                 return Err(GpuError::FeatureNotEnabled(
                     "No temperature data available".to_string(),
                 ));
             }
-
             debug!("Read {} reports from IoStream", report_count);
-
             // Try to calculate metrics using IMetricSet_1_1
             let set_1_1 = metric_set as *mut IMetricSet_1_1;
             let set_1_1_vtbl = (*set_1_1).vtbl;
-
             if set_1_1_vtbl.is_null() {
                 warn!("IMetricSet_1_1 vtable is null");
                 return Err(GpuError::FeatureNotEnabled(
                     "CalculateMetrics not available".to_string(),
                 ));
             }
-
             // Get metric set parameters to know how many metrics to allocate
             let set_params = ((*set_vtbl).get_params)(metric_set);
             if set_params.is_null() {
                 return Err(GpuError::GpuNotFound);
             }
-
             let metrics_count = (*set_params).metrics_count;
             let mut calculated_values: Vec<TTypedValue_1_0> = vec![
                 TTypedValue_1_0 {
@@ -799,7 +741,6 @@ impl IntelMetricsDevice {
                 metrics_count as usize
             ];
             let mut calculated_count: u32 = 0;
-
             let calc_result = ((*set_1_1_vtbl).calculate_metrics)(
                 set_1_1,
                 report_buffer.as_ptr(),
@@ -810,33 +751,27 @@ impl IntelMetricsDevice {
                 // useInformation
                 false,
             );
-
             if calc_result != CC_OK && calc_result != MD_SUCCESS {
                 warn!("CalculateMetrics failed: error code {}", calc_result);
                 return Err(GpuError::FeatureNotEnabled(
                     "Failed to calculate temperature metrics".to_string(),
                 ));
             }
-
             debug!("Calculated {} metric values", calculated_count);
-
             // Search for temperature value in calculated metrics
             for metric_idx in 0..metrics_count {
                 let metric = ((*set_vtbl).get_metric)(metric_set, metric_idx);
                 if metric.is_null() {
                     continue;
                 }
-
                 let metric_vtbl = (*metric).vtbl;
                 if metric_vtbl.is_null() {
                     continue;
                 }
-
                 let metric_params = ((*metric_vtbl).get_params)(metric);
                 if metric_params.is_null() {
                     continue;
                 }
-
                 let symbol_name = (*metric_params).symbol_name;
                 if !symbol_name.is_null() {
                     let name_cstr = std::ffi::CStr::from_ptr(symbol_name);
@@ -881,7 +816,6 @@ impl IntelMetricsDevice {
                 }
             }
         }
-
         warn!("Temperature value not found in calculated metrics");
         Err(GpuError::FeatureNotEnabled(
             "Temperature metric not found in results".to_string(),
@@ -899,18 +833,15 @@ impl IntelMetricsDevice {
     pub fn get_power(&self) -> Result<f32> {
         // Try to find power metric
         let (concurrent_group, metric_set, _metric) = self.find_metric("Power")?;
-
         unsafe {
             let set_vtbl = (*metric_set).vtbl;
             if set_vtbl.is_null() {
                 return Err(GpuError::GpuNotFound);
             }
-
             let group_vtbl = (*concurrent_group).vtbl;
             if group_vtbl.is_null() {
                 return Err(GpuError::GpuNotFound);
             }
-
             // Activate the metric set
             let result = ((*set_vtbl).activate)(metric_set);
             if result != CC_OK && result != MD_SUCCESS {
@@ -920,11 +851,9 @@ impl IntelMetricsDevice {
                     "Failed to activate power metric set".to_string(),
                 ));
             }
-
             // Try to open IoStream
             let mut timer_period_ns: u32 = 0;
             let mut buffer_size: u32 = 0;
-
             let open_result = ((*group_vtbl).open_io_stream)(
                 concurrent_group,
                 metric_set,
@@ -933,7 +862,6 @@ impl IntelMetricsDevice {
                 &mut timer_period_ns,
                 &mut buffer_size,
             );
-
             if open_result != CC_OK && open_result != MD_SUCCESS {
                 warn!(
                     "Failed to open IoStream for power: error code {}",
@@ -944,63 +872,51 @@ impl IntelMetricsDevice {
                     "Failed to open IoStream for power".to_string(),
                 ));
             }
-
             debug!(
                 "IoStream opened: timer_period={}ns, buffer_size={}",
                 timer_period_ns, buffer_size
             );
-
             // Wait for data to be collected
             std::thread::sleep(std::time::Duration::from_millis(100));
-
             // Read data from IoStream
             let mut report_count: u32 = 1;
             let mut report_buffer: Vec<u8> = vec![0; buffer_size as usize];
-
             let read_result = ((*group_vtbl).read_io_stream)(
                 concurrent_group,
                 &mut report_count,
                 report_buffer.as_mut_ptr(),
                 buffer_size,
             );
-
             // Close IoStream
             let _ = ((*group_vtbl).close_io_stream)(concurrent_group);
             let _ = ((*set_vtbl).deactivate)(metric_set);
-
             if read_result != CC_OK && read_result != MD_SUCCESS {
                 warn!("Failed to read IoStream: error code {}", read_result);
                 return Err(GpuError::FeatureNotEnabled(
                     "Failed to read power data".to_string(),
                 ));
             }
-
             if report_count == 0 {
                 warn!("No reports available from IoStream");
                 return Err(GpuError::FeatureNotEnabled(
                     "No power data available".to_string(),
                 ));
             }
-
             debug!("Read {} reports from IoStream", report_count);
-
             // Try to calculate metrics using IMetricSet_1_1
             let set_1_1 = metric_set as *mut IMetricSet_1_1;
             let set_1_1_vtbl = (*set_1_1).vtbl;
-
             if set_1_1_vtbl.is_null() {
                 warn!("IMetricSet_1_1 vtable is null");
                 return Err(GpuError::FeatureNotEnabled(
                     "CalculateMetrics not available".to_string(),
                 ));
             }
-
             // Get metric set parameters to know how many metrics to allocate
             let set_params = ((*set_vtbl).get_params)(metric_set);
             if set_params.is_null() {
                 return Err(GpuError::GpuNotFound);
             }
-
             let metrics_count = (*set_params).metrics_count;
             let mut calculated_values: Vec<TTypedValue_1_0> = vec![
                 TTypedValue_1_0 {
@@ -1010,7 +926,6 @@ impl IntelMetricsDevice {
                 metrics_count as usize
             ];
             let mut calculated_count: u32 = 0;
-
             let calc_result = ((*set_1_1_vtbl).calculate_metrics)(
                 set_1_1,
                 report_buffer.as_ptr(),
@@ -1021,33 +936,27 @@ impl IntelMetricsDevice {
                 // useInformation
                 false,
             );
-
             if calc_result != CC_OK && calc_result != MD_SUCCESS {
                 warn!("CalculateMetrics failed: error code {}", calc_result);
                 return Err(GpuError::FeatureNotEnabled(
                     "Failed to calculate power metrics".to_string(),
                 ));
             }
-
             debug!("Calculated {} metric values", calculated_count);
-
             // Search for power value in calculated metrics
             for metric_idx in 0..metrics_count {
                 let metric = ((*set_vtbl).get_metric)(metric_set, metric_idx);
                 if metric.is_null() {
                     continue;
                 }
-
                 let metric_vtbl = (*metric).vtbl;
                 if metric_vtbl.is_null() {
                     continue;
                 }
-
                 let metric_params = ((*metric_vtbl).get_params)(metric);
                 if metric_params.is_null() {
                     continue;
                 }
-
                 let symbol_name = (*metric_params).symbol_name;
                 if !symbol_name.is_null() {
                     let name_cstr = std::ffi::CStr::from_ptr(symbol_name);
@@ -1092,7 +1001,6 @@ impl IntelMetricsDevice {
                 }
             }
         }
-
         warn!("Power value not found in calculated metrics");
         Err(GpuError::FeatureNotEnabled(
             "Power metric not found in results".to_string(),
@@ -1104,7 +1012,6 @@ impl IntelMetricsDevice {
     /// Returns the maximum frequency the GPU can reach.
     pub fn get_max_frequency(&self) -> Result<u32> {
         let symbol_names = ["GpuMaxFrequencyMHz", "MaxFrequency", "GpuMaxFreq"];
-
         for symbol_name in &symbol_names {
             if let Ok(typed_value) = self.get_global_symbol(symbol_name) {
                 unsafe {
@@ -1128,7 +1035,6 @@ impl IntelMetricsDevice {
                 }
             }
         }
-
         Err(GpuError::FeatureNotEnabled(
             "Max frequency not available".to_string(),
         ))
@@ -1170,7 +1076,6 @@ impl IntelMetricsDevice {
             "GpuFrequencyMHz",
             "GpuCoreFrequencyMHz",
         ];
-
         for symbol_name in &symbol_names {
             if let Ok(typed_value) = self.get_global_symbol(symbol_name) {
                 unsafe {
@@ -1214,7 +1119,6 @@ impl IntelMetricsDevice {
                 }
             }
         }
-
         // Fallback: try metric collection (more complex, requires IoStream)
         warn!("Frequency not available via global symbols, metric collection not yet implemented");
         Err(GpuError::FeatureNotEnabled(
@@ -1273,7 +1177,6 @@ impl IntelWindowsProvider {
     fn enhance_with_md_api(&self, gpu: &mut GpuInfo) {
         if let Ok(device) = IntelMetricsDevice::new() {
             debug!("Intel Metrics Discovery API available, collecting metrics");
-
             // Temperature - primary source
             if let Ok(temp) = device.get_temperature() {
                 gpu.temperature = Some(temp);
@@ -1281,7 +1184,6 @@ impl IntelWindowsProvider {
             } else {
                 debug!("Temperature not available from Intel MD API");
             }
-
             // Power usage - primary source
             if let Ok(power) = device.get_power() {
                 gpu.power_usage = Some(power);
@@ -1289,7 +1191,6 @@ impl IntelWindowsProvider {
             } else {
                 debug!("Power usage not available from Intel MD API");
             }
-
             // Core frequency - primary source
             if let Ok(freq) = device.get_frequency() {
                 gpu.core_clock = Some(freq);
@@ -1297,7 +1198,6 @@ impl IntelWindowsProvider {
             } else {
                 debug!("Core clock not available from Intel MD API");
             }
-
             // Max frequency - primary source
             if let Ok(max_freq) = device.get_max_frequency() {
                 gpu.max_clock_speed = Some(max_freq);
@@ -1305,7 +1205,6 @@ impl IntelWindowsProvider {
             } else {
                 debug!("Max clock not available from Intel MD API");
             }
-
             // Memory frequency - primary source
             if let Ok(mem_freq) = device.get_memory_frequency() {
                 gpu.memory_clock = Some(mem_freq);
@@ -1313,7 +1212,6 @@ impl IntelWindowsProvider {
             } else {
                 debug!("Memory clock not available from Intel MD API");
             }
-
             debug!("Intel MD API metrics collection complete");
         } else {
             debug!("Intel Metrics Discovery API not available (igdmd64.dll not found)");
@@ -1331,7 +1229,6 @@ impl IntelWindowsProvider {
     /// Intel MD API's utilization metric is complex and unreliable (requires IoStream).
     fn get_utilization(&self, gpu: &mut GpuInfo) {
         debug!("→ Collecting PDH metrics (utilization & memory)");
-
         // Open PDH query
         let query = match super::pdh::open_query() {
             Ok(q) => q,
@@ -1340,95 +1237,78 @@ impl IntelWindowsProvider {
                 return;
             }
         };
-
         // Build counter paths for GPU utilization and memory
         let utilization_path = r"\GPU Engine(*engtype_3D)\Utilization Percentage";
         let memory_path = r"\GPU Adapter Memory(*)\Shared Usage";
-
         // Expand wildcard paths and add counters
         let util_paths = super::pdh::expand_wildcard_path(utilization_path);
         let mem_paths = super::pdh::expand_wildcard_path(memory_path);
-
         let mut util_counters = Vec::new();
         let mut mem_counters = Vec::new();
-
         // Add utilization counters
         for path in &util_paths {
             if let Some(counter) = super::pdh::add_counter(query, path) {
                 util_counters.push(counter);
             }
         }
-
         // Add memory counters
         for path in &mem_paths {
             if let Some(counter) = super::pdh::add_counter(query, path) {
                 mem_counters.push(counter);
             }
         }
-
         if util_counters.is_empty() && mem_counters.is_empty() {
             warn!("No PDH counters available");
             super::pdh::close_query(query);
             return;
         }
-
         // Collect first snapshot
         if let Err(e) = super::pdh::collect_query_data(query) {
             warn!("First PDH collection failed: {:?}", e);
             super::pdh::close_query(query);
             return;
         }
-
         // Wait for PDH collection interval
         std::thread::sleep(std::time::Duration::from_millis(
             super::pdh::PDH_COLLECTION_INTERVAL_MS,
         ));
-
         // Collect second snapshot
         if let Err(e) = super::pdh::collect_query_data(query) {
             warn!("Second PDH collection failed: {:?}", e);
             super::pdh::close_query(query);
             return;
         }
-
         // Calculate total GPU utilization
         // Note: PDH returns multiple GPU Engine counters (one per execution unit).
         // We need to SUM all values, not average them, as each counter represents
         // a portion of the total GPU utilization.
         if !util_counters.is_empty() {
             let mut total_util = 0.0;
-
             for counter in &util_counters {
                 if let Ok(value) = super::pdh::get_counter_value(*counter) {
                     total_util += value;
                 }
             }
-
             // Total utilization is the sum of all engine utilizations
             gpu.utilization = Some(total_util as f32);
             info!("Utilization from PDH: {:.2}%", total_util);
         }
-
         // Calculate shared memory usage
         // Note: For integrated GPUs, we use "Shared Usage" counter which directly reports
         // the amount of shared system memory used by the GPU in bytes.
         if !mem_counters.is_empty() {
             let mut total_mem_bytes = 0.0;
             let mut valid_count = 0;
-
             for counter in &mem_counters {
                 if let Ok(value) = super::pdh::get_counter_value(*counter) {
                     total_mem_bytes += value;
                     valid_count += 1;
                 }
             }
-
             if valid_count > 0 {
                 let mem_mb = (total_mem_bytes / (1024.0 * 1024.0)) as u32;
-
                 // Store absolute used memory value
                 gpu.memory_used = Some(mem_mb);
-
                 // Calculate percentage from absolute values
                 if let Some(total_mb) = gpu.memory_total {
                     let mem_percent = (mem_mb as f32 / total_mb as f32) * 100.0;
@@ -1444,7 +1324,6 @@ impl IntelWindowsProvider {
                 debug!("No valid memory values from PDH");
             }
         }
-
         // Close PDH query
         super::pdh::close_query(query);
         debug!("PDH metrics collection complete");
@@ -1461,15 +1340,11 @@ impl GpuProvider for IntelWindowsProvider {
     /// Detect Intel GPUs on Windows
     fn detect_gpus(&self) -> Result<Vec<GpuInfo>> {
         debug!("Detecting Intel GPUs on Windows");
-
         let mut gpu = self.get_basic_gpu_info()?;
-
         // Enhance with Intel Metrics Discovery API
         self.enhance_with_md_api(&mut gpu);
-
         // Get utilization and memory via PDH
         self.get_utilization(&mut gpu);
-
         info!("Successfully detected Intel GPU: {:?}", gpu.name_gpu);
         Ok(vec![gpu])
     }
@@ -1477,28 +1352,22 @@ impl GpuProvider for IntelWindowsProvider {
     /// Update Intel GPU information
     fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
         debug!("Updating Intel GPU information on Windows");
-
         // Get fresh basic info
         let basic_info = self.get_basic_gpu_info()?;
-
         // Update basic fields
         gpu.name_gpu = basic_info.name_gpu;
         gpu.vendor = basic_info.vendor;
         gpu.driver_version = basic_info.driver_version;
         gpu.memory_total = basic_info.memory_total;
         gpu.active = basic_info.active;
-
         // Enhance with Intel Metrics Discovery API
         self.enhance_with_md_api(gpu);
-
         // Get utilization and memory via PDH
         self.get_utilization(gpu);
-
         if !gpu.is_valid() {
             warn!("GPU data validation failed");
             return Err(GpuError::GpuNotActive);
         }
-
         info!("Successfully updated Intel GPU information");
         Ok(())
     }

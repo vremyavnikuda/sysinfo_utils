@@ -68,7 +68,6 @@ mod tests {
         let mut join_set = JoinSet::new();
         let _ = get_async().await;
         tokio::time::sleep(Duration::from_millis(100)).await;
-
         let start_time = Instant::now();
         for i in 0..concurrent_requests {
             join_set.spawn(async move {
@@ -123,7 +122,6 @@ mod tests {
         let iterations = 3;
         let _ = get_async().await;
         tokio::time::sleep(Duration::from_millis(100)).await;
-
         let start_time = Instant::now();
         for _i in 0..iterations {
             let _result = get_async().await;
@@ -144,7 +142,6 @@ mod tests {
         shared_gpu.lock().await.vendor = Vendor::Nvidia;
         let concurrent_updates = 5;
         let mut join_set = JoinSet::new();
-
         for i in 0..concurrent_updates {
             let gpu_clone = shared_gpu.clone();
             join_set.spawn(async move {
@@ -153,10 +150,8 @@ mod tests {
                 (i, result)
             });
         }
-
         let mut successful_updates = 0;
         let mut failed_updates = 0;
-
         while let Some(task_result) = join_set.join_next().await {
             match task_result {
                 Ok((_task_id, update_result)) => match update_result {
@@ -172,7 +167,6 @@ mod tests {
                 }
             }
         }
-
         assert!(successful_updates + failed_updates == concurrent_updates);
     }
 

@@ -18,11 +18,9 @@ mod tests {
     fn test_extended_gpu_info_creation() {
         let basic_gpu = create_test_gpu();
         let extended_gpu = ExtendedGpuInfo::from_basic(basic_gpu.clone());
-
         assert_eq!(extended_gpu.base_info.vendor, basic_gpu.vendor);
         assert_eq!(extended_gpu.base_info.name_gpu, basic_gpu.name_gpu);
         assert_eq!(extended_gpu.base_info.temperature, basic_gpu.temperature);
-
         println!("Extended GPU info created from basic info");
     }
 
@@ -262,7 +260,6 @@ mod tests {
         assert!(display_string.contains("Name:"));
         assert!(display_string.contains("Vendor:"));
         assert!(display_string.contains("Health Score:"));
-
         println!("Display output:\n{}", display_string);
     }
 

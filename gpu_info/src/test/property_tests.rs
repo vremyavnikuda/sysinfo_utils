@@ -132,7 +132,6 @@ proptest! {
         let gpu = GpuInfo::builder()
             .temperature(temp)
             .build();
-
         prop_assert!(
             gpu.validate().is_ok(),
             "Temperature {:.1}°C should be valid (range: 0-1000°C)",
@@ -151,14 +150,12 @@ proptest! {
         let gpu = GpuInfo::builder()
             .temperature(temp)
             .build();
-
         let result = gpu.validate();
         prop_assert!(
             result.is_err(),
             "Temperature {:.1}°C should be invalid (> 1000°C)",
             temp
         );
-
         if let Err(e) = result {
             let error_str = format!("{}", e);
             prop_assert!(
@@ -180,7 +177,6 @@ proptest! {
         let gpu = GpuInfo::builder()
             .utilization(util)
             .build();
-
         prop_assert!(
             gpu.validate().is_ok(),
             "Utilization {:.1}% should be valid (range: 0-100%)",
@@ -199,7 +195,6 @@ proptest! {
         let gpu = GpuInfo::builder()
             .utilization(util)
             .build();
-
         let result = gpu.validate();
         prop_assert!(
             result.is_err(),
@@ -219,7 +214,6 @@ proptest! {
         let gpu = GpuInfo::builder()
             .power_usage(power)
             .build();
-
         prop_assert!(
             gpu.validate().is_ok(),
             "Power usage {:.1}W should be valid (range: 0-1000W)",
@@ -238,7 +232,6 @@ proptest! {
         let gpu = GpuInfo::builder()
             .power_usage(power)
             .build();
-
         let result = gpu.validate();
         prop_assert!(
             result.is_err(),
@@ -258,7 +251,6 @@ proptest! {
         let gpu = GpuInfo::builder()
             .vendor(vendor)
             .build();
-
         prop_assert_eq!(gpu.vendor(), vendor, "Vendor should be preserved");
     }
 
@@ -285,7 +277,6 @@ proptest! {
     #[test]
     fn prop_clone_equivalence(gpu in arb_gpu_info_valid()) {
         let cloned = gpu.clone();
-
         prop_assert_eq!(gpu.vendor(), cloned.vendor());
         prop_assert_eq!(gpu.name_gpu(), cloned.name_gpu());
         prop_assert_eq!(gpu.temperature(), cloned.temperature());
@@ -303,7 +294,6 @@ proptest! {
     fn prop_hash_consistency(vendor in arb_vendor(), name in arb_gpu_name()) {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-
         let gpu1 = {
             let mut builder = GpuInfo::builder().vendor(vendor);
             if let Some(ref n) = name {
@@ -311,7 +301,6 @@ proptest! {
             }
             builder.build()
         };
-
         let gpu2 = {
             let mut builder = GpuInfo::builder().vendor(vendor);
             if let Some(ref n) = name {
@@ -319,13 +308,10 @@ proptest! {
             }
             builder.build()
         };
-
         let mut hasher1 = DefaultHasher::new();
         let mut hasher2 = DefaultHasher::new();
-
         gpu1.hash(&mut hasher1);
         gpu2.hash(&mut hasher2);
-
         prop_assert_eq!(
             hasher1.finish(),
             hasher2.finish(),

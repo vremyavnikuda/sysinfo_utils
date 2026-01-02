@@ -44,16 +44,13 @@ impl IntelLinuxProvider {
     fn detect_intel_gpus(&self) -> Result<Vec<GpuInfo>> {
         let mut gpus = Vec::new();
         let drm_path = Path::new("/sys/class/drm");
-
         if !drm_path.exists() {
             warn!("DRM sysfs path not found, Intel GPU detection unavailable");
             return Ok(gpus);
         }
-
         for entry in fs::read_dir(drm_path).map_err(|_| GpuError::GpuNotFound)? {
             let entry = entry.map_err(|_| GpuError::GpuNotFound)?;
             let path = entry.path();
-
             if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
                 if name.starts_with("card") && !name.contains("-") {
                     if let Ok(gpu_info) = self.probe_intel_card(&path) {
@@ -62,7 +59,6 @@ impl IntelLinuxProvider {
                 }
             }
         }
-
         if gpus.is_empty() {
             Err(GpuError::GpuNotFound)
         } else {
@@ -77,7 +73,6 @@ impl IntelLinuxProvider {
         if vendor_id != 0x8086 {
             return Err(GpuError::GpuNotFound);
         }
-
         let name = self.get_gpu_name(&device_path)?;
         let driver_version = self.get_driver_version();
         let power_usage = self.get_power_usage(&device_path);
@@ -88,9 +83,7 @@ impl IntelLinuxProvider {
         let memory_clock = self.get_memory_clock(&device_path);
         let power_limit = self.get_power_limit(&device_path);
         let max_clock_speed = self.get_max_clock_speed(&device_path);
-
         info!("Found Intel GPU: {}", name);
-
         Ok(GpuInfo {
             vendor: Vendor::Intel(IntelGpuType::Integrated),
             name_gpu: Some(name),
@@ -128,7 +121,6 @@ impl IntelLinuxProvider {
             }
             return Ok(format!("Intel GPU (Device ID: 0x{:04x})", device_id));
         }
-
         Ok("Intel GPU".to_string())
     }
 
@@ -136,13 +128,11 @@ impl IntelLinuxProvider {
         if let Ok(content) = fs::read_to_string("/sys/module/i915/version") {
             return Some(content.trim().to_string());
         }
-
         if let Ok(content) = fs::read_to_string("/proc/version") {
             if let Some(version_part) = content.split_whitespace().nth(2) {
                 return Some(format!("i915 (kernel {})", version_part));
             }
         }
-
         None
     }
 
@@ -172,7 +162,6 @@ impl IntelLinuxProvider {
                 }
             }
         }
-
         None
     }
 
@@ -191,7 +180,6 @@ impl IntelLinuxProvider {
                 }
             }
         }
-
         None
     }
 
@@ -201,13 +189,11 @@ impl IntelLinuxProvider {
                 return Some(freq);
             }
         }
-
         if let Ok(content) = fs::read_to_string(device_path.join("gt_act_freq_mhz")) {
             if let Ok(freq) = content.trim().parse::<u32>() {
                 return Some(freq);
             }
         }
-
         None
     }
 
@@ -217,7 +203,6 @@ impl IntelLinuxProvider {
                 return Some(freq);
             }
         }
-
         None
     }
 
@@ -233,7 +218,6 @@ impl IntelLinuxProvider {
                 }
             }
         }
-
         None
     }
 
@@ -243,13 +227,11 @@ impl IntelLinuxProvider {
                 return Some(freq);
             }
         }
-
         if let Ok(content) = fs::read_to_string(device_path.join("gt_boost_freq_mhz")) {
             if let Ok(freq) = content.trim().parse::<u32>() {
                 return Some(freq);
             }
         }
-
         None
     }
 

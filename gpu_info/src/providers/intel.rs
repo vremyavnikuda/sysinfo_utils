@@ -84,15 +84,14 @@ impl IntelProvider {
             ])
             .output()
             .ok()?;
-
         let output_str = String::from_utf8_lossy(&output.stdout);
-
         output_str
             .lines()
             .find(|line| line.contains("TotalPhysicalMemory"))
             .and_then(|line| {
                 let bytes = line.split(":").nth(1)?.trim().parse::<u64>().ok()?;
                 // Integrated GPU can use 50% of system RAM
+                // TODO: This information is not accurate, so you need to double-check how the RAM is allocated from the GPU component integrated into the intel CPU.
                 let shared_memory_mb = (bytes / 2 / 1024 / 1024) as u32;
                 info!(
                     "System RAM: {} MB, Shared memory for iGPU: {} MB",
@@ -102,6 +101,7 @@ impl IntelProvider {
                 Some(shared_memory_mb)
             })
     }
+
     fn get_intel_gpu_info(&self) -> Result<String> {
         let output = Command::new("powershell")
             .args([
@@ -123,6 +123,7 @@ impl IntelProvider {
             })?;
         Ok(String::from_utf8_lossy(&output.stdout).into_owned())
     }
+
     fn parse_gpu_info(&self, output_str: &str) -> Option<GpuInfo> {
         let gpu_name = output_str
             .lines()
@@ -142,7 +143,6 @@ impl IntelProvider {
         // Note: WMI Win32_VideoController does not provide GPU clock speeds
         // CurrentRefreshRate/MaxRefreshRate are monitor refresh rates, not GPU clocks
         // GPU clock speeds are obtained from Intel Metrics Discovery API instead
-
         let status = output_str
             .lines()
             .find(|line| line.contains("Status"))
@@ -189,6 +189,7 @@ impl GpuProvider for IntelProvider {
         };
         crate::gpu_info::handle_empty_result(gpus)
     }
+
     /// Update the information for a specific Intel GPU
     fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
         info!("Updating Intel GPU information");
@@ -203,15 +204,12 @@ impl GpuProvider for IntelProvider {
             gpu.active = updated_gpu.active;
             // TODO:Don't overwrite: temperature, utilization, power_usage, power_limit, memory_util, memory_clock
         }
-
         // Note: This is the platform-agnostic Intel provider that only uses WMI.
         // For advanced metrics (PDH, Intel MD API), use IntelWindowsProvider on Windows.
-
         if !gpu.is_valid() {
             warn!("GPU data validation failed");
             return Err(crate::gpu_info::GpuError::GpuNotActive);
         }
-
         info!("Successfully updated Intel GPU information");
         Ok(())
     }
@@ -220,6 +218,7 @@ impl GpuProvider for IntelProvider {
         Vendor::Intel(IntelGpuType::Unknown)
     }
 }
+
 /// Detect all Intel GPUs in the system.
 ///
 /// This is a convenience function that creates a temporary [`IntelProvider`]

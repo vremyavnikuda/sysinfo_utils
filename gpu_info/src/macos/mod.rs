@@ -1,4 +1,4 @@
-//src/platform/macos.rs
+//gpu_info/src/macos/mod.rs
 use crate::{
     gpu_info::{GpuInfo, Result},
     vendor::{IntelGpuType, Vendor},

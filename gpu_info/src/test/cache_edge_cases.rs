@@ -31,6 +31,7 @@ mod tests {
         assert_eq!(cache.len(), 11);
         assert_eq!(cache.get_owned(&key), Some(gpu_info));
     }
+
     #[test]
     fn test_cache_with_very_short_ttl() {
         let cache = GpuInfoCache::new(Duration::from_nanos(1));
@@ -38,6 +39,7 @@ mod tests {
         cache.set(gpu_info.clone());
         assert_eq!(cache.get_owned(), None);
     }
+
     #[test]
     fn test_multi_cache_with_very_short_ttl() {
         let cache = MultiGpuInfoCache::new(Duration::from_nanos(1));
@@ -46,6 +48,7 @@ mod tests {
         cache.set(key, gpu_info.clone());
         assert_eq!(cache.get_owned(&key), None);
     }
+
     #[test]
     fn test_cache_with_zero_max_entries() {
         let cache = MultiGpuInfoCache::with_max_entries(Duration::from_secs(1), 0);
@@ -55,6 +58,7 @@ mod tests {
         }
         assert_eq!(cache.len(), 100);
     }
+
     #[test]
     fn test_cache_with_one_max_entry() {
         let cache = MultiGpuInfoCache::with_max_entries(Duration::from_secs(1), 1);
@@ -65,6 +69,7 @@ mod tests {
         cache.set(1, gpu_info2.clone());
         assert!(cache.len() <= 1);
     }
+
     #[test]
     fn test_cache_stats_with_no_entries() {
         let cache = MultiGpuInfoCache::new(Duration::from_secs(1));
@@ -73,6 +78,7 @@ mod tests {
         assert_eq!(stats.total_accesses, 0);
         assert_eq!(stats.oldest_entry_age, Duration::from_secs(0));
     }
+
     #[test]
     fn test_cache_clear_operations_on_empty_cache() {
         let cache = MultiGpuInfoCache::new(Duration::from_secs(1));
@@ -80,16 +86,19 @@ mod tests {
         cache.clear_key(&0);
         assert!(cache.is_empty());
     }
+
     #[test]
     fn test_cache_has_entry_on_nonexistent_key() {
         let cache = MultiGpuInfoCache::new(Duration::from_secs(1));
         assert!(!cache.has_entry(&999));
     }
+
     #[test]
     fn test_cache_get_on_nonexistent_key() {
         let cache = MultiGpuInfoCache::new(Duration::from_secs(1));
         assert_eq!(cache.get_owned(&999), None);
     }
+
     #[test]
     fn test_cache_with_very_large_key() {
         let cache = MultiGpuInfoCache::new(Duration::from_secs(1));
@@ -101,6 +110,7 @@ mod tests {
         cache.clear_key(&large_key);
         assert!(!cache.has_entry(&large_key));
     }
+
     #[test]
     fn test_cache_entry_methods_with_immediate_access() {
         let gpu_info = GpuInfo::write_vendor(Vendor::Nvidia);
@@ -109,6 +119,7 @@ mod tests {
         assert!(entry.age() < Duration::from_millis(1));
         assert_eq!(entry.access_count, 0);
     }
+
     #[test]
     fn test_gpubuffer_cache_methods_with_immediate_access() {
         let cache = GpuInfoCache::new(Duration::from_secs(1));
@@ -116,6 +127,7 @@ mod tests {
         assert_eq!(cache.get_owned(), None);
         assert_eq!(cache.age(), None);
     }
+
     #[test]
     fn test_multi_gpu_cache_methods_with_immediate_access() {
         let cache = MultiGpuInfoCache::new(Duration::from_secs(1));

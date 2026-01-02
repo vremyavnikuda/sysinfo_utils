@@ -9,6 +9,7 @@ mod gpu_info_tests {
         success: bool,
         output: &'static str,
     }
+    
     /// Test format driver version fn `format_driver_version()`
     #[test]
     fn _format_driver_version_returns_driver_version_when_present() {
@@ -18,6 +19,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_driver_version(), "460.39");
     }
+    
     /// Test format driver version fn `format_driver_version()`
     #[test]
     fn _format_driver_version_returns_unknown_when_absent() {
@@ -27,6 +29,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_driver_version(), "Unknown Driver Version");
     }
+    
     /// Test formater fn `format_max_clock_speed()`
     #[test]
     fn _format_max_clock_speed_returns_max_clock_speed_when_present() {
@@ -36,6 +39,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_max_clock_speed(), "1800 MHz");
     }
+    
     /// Test formater fn `format_max_clock_speed()`
     #[test]
     fn _format_max_clock_speed_returns_zero_when_absent() {
@@ -45,6 +49,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_max_clock_speed(), "N/A");
     }
+    
     /// Verifies that the default implementation of `GpuInfo` returns an instance with all fields set to unknown values.
     /// Test `default()` method of `GpuInfo` struct.
     /// impl Default for GpuInfo {}
@@ -65,6 +70,7 @@ mod gpu_info_tests {
         assert!(gpu_info.driver_version.is_none());
         assert!(gpu_info.max_clock_speed.is_none());
     }
+
     /// Format test fn `format_memory_total()`
     #[test]
     fn _default_creates_new_instance_each_time() {
@@ -72,6 +78,7 @@ mod gpu_info_tests {
         let gpu_info2 = GpuInfo::default();
         assert_ne!(&gpu_info1 as *const _, &gpu_info2 as *const _);
     }
+
     /// Format test fn `format_memory_total()`
     #[test]
     fn _format_memory_total_returns_total_memory_when_present() {
@@ -81,6 +88,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_memory_total(), "8.00 GB");
     }
+
     /// Format test fn `format_memory_total()`
     #[test]
     fn _format_memory_total_returns_zero_when_absent() {
@@ -90,6 +98,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_memory_total(), "N/A");
     }
+
     /// Test formater fn `format_power_limit()`
     #[test]
     fn _format_power_limit_returns_power_limit_when_present() {
@@ -99,6 +108,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_power_limit(), "250.00W");
     }
+
     /// Test formater fn `format_power_limit()`
     #[test]
     fn _format_power_limit_returns_zero_when_absent() {
@@ -108,6 +118,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_power_limit(), "Not supported");
     }
+
     /// Test formater fn `format_active()`
     #[test]
     fn _format_active_returns_active_when_gpu_is_active() {
@@ -117,6 +128,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_active(), "Active");
     }
+
     /// Test formater fn `format_active()`
     #[test]
     fn _format_active_returns_inactive_when_gpu_is_inactive() {
@@ -126,6 +138,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_active(), "Inactive");
     }
+
     /// Test formater fn `format_active()`
     #[test]
     fn _format_active_returns_inactive_when_active_status_is_unknown() {
@@ -135,6 +148,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_active(), "Inactive");
     }
+
     /// Test formater fn `format_memory_clock(&self)`
     #[test]
     fn _format_memory_clock_returns_memory_clock_when_present() {
@@ -144,6 +158,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_memory_clock(), "7000 MHz");
     }
+
     /// Test formater fn `format_memory_clock(&self)`
     #[test]
     fn _format_memory_clock_returns_zero_when_absent() {
@@ -153,6 +168,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_memory_clock(), "N/A");
     }
+
     /// Test format fn `format_memory_util()`
     #[test]
     fn _format_memory_util_returns_memory_utilization_when_present() {
@@ -162,6 +178,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_memory_util(), "75.50%");
     }
+
     /// Test format fn `format_memory_util()`
     #[test]
     fn _format_memory_util_returns_zero_when_absent() {
@@ -171,6 +188,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_memory_util(), "N/A");
     }
+
     /// Test format fn `format_core_clock()`
     #[test]
     fn _format_core_clock_returns_core_clock_when_present() {
@@ -180,6 +198,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_core_clock(), "1500 MHz");
     }
+
     /// Test format fn `format_core_clock()`
     #[test]
     fn _format_core_clock_returns_zero_when_absent() {
@@ -189,6 +208,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_core_clock(), "N/A");
     }
+
     /// Test format fn `format_power_usage(&self)`
     #[test]
     fn _format_power_usage_returns_power_usage_when_present() {
@@ -198,6 +218,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_power_usage(), "150.50W");
     }
+
     /// Test format fn `format_power_usage(&self)`
     #[test]
     fn _format_power_usage_returns_zero_when_absent() {
@@ -207,6 +228,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_power_usage(), "Not supported");
     }
+
     /// Test format fn `format_utilization(&self)`
     #[test]
     fn _format_utilization_returns_utilization_when_present() {
@@ -216,6 +238,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_utilization(), "85.30%");
     }
+
     /// Test format fn `format_utilization(&self)`
     #[test]
     fn _format_utilization_returns_zero_when_absent() {
@@ -225,6 +248,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_utilization(), "N/A");
     }
+
     /// Test format fn `format_temperature(&self)`
     #[test]
     fn _format_temperature_returns_temperature_when_present() {
@@ -234,6 +258,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_temperature(), "65.50°C");
     }
+
     /// Test format fn `format_temperature(&self)`
     #[test]
     fn _format_temperature_returns_zero_when_absent() {
@@ -243,6 +268,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_temperature(), "Not supported");
     }
+
     /// Test format fn `format_name_gpu(&self)`
     #[test]
     fn _format_name_gpu_returns_name_when_present() {
@@ -252,6 +278,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_name_gpu(), "NVIDIA GeForce RTX 3080");
     }
+
     /// Test format fn `format_name_gpu(&self)`
     #[test]
     fn _format_name_gpu_returns_unknown_when_absent() {
@@ -261,6 +288,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.format_name_gpu(), "Unknown GPU");
     }
+
     /// Test default format fn `max_clock_speed(&self)`
     #[test]
     fn _max_clock_speed_returns_value_when_present() {
@@ -270,6 +298,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.max_clock_speed().fmt_string(), "2100");
     }
+
     /// Test default format fn `max_clock_speed(&self)`
     #[test]
     fn _max_clock_speed_returns_none_when_absent() {
@@ -279,6 +308,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.max_clock_speed().fmt_string(), "N/A");
     }
+
     /// Test default format fn `driver_version(&self)`
     #[test]
     fn _driver_version_returns_value_when_present() {
@@ -288,6 +318,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.driver_version().fmt_string(), "470.57.02");
     }
+
     /// Test default format fn `driver_version(&self)`
     #[test]
     fn _driver_version_returns_none_when_absent() {
@@ -297,6 +328,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.driver_version().fmt_string(), "N/A");
     }
+
     /// Test default format fn `memory_total(&self)`
     #[test]
     fn _memory_total_returns_value_when_present() {
@@ -306,6 +338,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.memory_total().fmt_string(), "8192");
     }
+
     /// Test format fn `memory_total(&self)`
     #[test]
     fn _memory_total_returns_none_when_absent() {
@@ -315,6 +348,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.memory_total().fmt_string(), "N/A");
     }
+
     /// Test default format fn `power_limit(&self)`
     #[test]
     fn _power_limit_returns_value_when_present() {
@@ -324,6 +358,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.power_limit().fmt_string(), "250.0");
     }
+
     /// Test default format fn `power_limit(&self)`
     #[test]
     fn _power_limit_returns_none_when_absent() {
@@ -333,6 +368,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.power_limit().fmt_string(), "N/A");
     }
+
     /// Test default format fn `active(&self)`
     #[test]
     fn _active_returns_true_when_gpu_is_active() {
@@ -342,6 +378,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.active(), Some(true));
     }
+
     /// Test default format fn `active(&self)`
     #[test]
     fn _active_returns_false_when_gpu_is_inactive() {
@@ -351,6 +388,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.active(), Some(false));
     }
+
     /// Test default format fn `active(&self)`
     #[test]
     fn _active_returns_none_when_status_is_unknown() {
@@ -360,6 +398,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.active().fmt_string(), "N/A");
     }
+
     /// Test default format fn `memory_clock(&self)`
     #[test]
     fn _memory_clock_returns_value_when_present() {
@@ -369,6 +408,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.memory_clock().fmt_string(), "7000");
     }
+
     /// Test default format fn `memory_clock(&self)`
     #[test]
     fn _memory_clock_returns_none_when_absent() {
@@ -378,6 +418,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.memory_clock().fmt_string(), "N/A");
     }
+
     /// Test default format fn `memory_util(&self)`
     #[test]
     fn _memory_util_returns_value_when_present() {
@@ -387,6 +428,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.memory_util().fmt_string(), "75.5");
     }
+
     /// Test default format fn `memory_util(&self)`
     #[test]
     fn _memory_util_returns_none_when_absent() {
@@ -396,6 +438,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.memory_util().fmt_string(), "N/A");
     }
+ 
     /// Test default format fn `core_clock(&self)`
     #[test]
     fn _core_clock_returns_value_when_present() {
@@ -405,6 +448,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.core_clock().fmt_string(), "1500");
     }
+
     /// Test default format fn `core_clock(&self)`
     #[test]
     fn _core_clock_returns_none_when_absent() {
@@ -414,6 +458,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.core_clock().fmt_string(), "N/A");
     }
+
     /// Test default format fn `power_usage(&self)`
     #[test]
     fn _power_usage_returns_value_when_present() {
@@ -423,6 +468,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.power_usage().fmt_string(), "120.5");
     }
+
     /// Test default format fn `power_usage(&self)`
     #[test]
     fn _power_usage_returns_none_when_absent() {
@@ -432,6 +478,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.power_usage().fmt_string(), "N/A");
     }
+
     /// Test default format fn `utilization(&self)`
     #[test]
     fn _utilization_returns_value_when_present() {
@@ -441,6 +488,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.utilization().fmt_string(), "85.0");
     }
+
     /// Test default format fn `utilization(&self)`
     #[test]
     fn _utilization_returns_none_when_absent() {
@@ -450,6 +498,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.utilization().fmt_string(), "N/A");
     }
+
     /// Test default format fn `temperature(&self)`
     #[test]
     fn _temperature_returns_value_when_present() {
@@ -459,6 +508,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.temperature().fmt_string(), "70.5");
     }
+
     /// Test default format fn `temperature(&self)`
     #[test]
     fn _temperature_returns_none_when_absent() {
@@ -468,6 +518,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.temperature().fmt_string(), "N/A");
     }
+
     /// Test default format fn `name_gpu(&self)`
     #[test]
     fn _name_gpu_returns_value_when_present() {
@@ -477,6 +528,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.name_gpu().fmt_string(), "NVIDIA GeForce RTX 3080");
     }
+
     /// Test default format fn `name_gpu(&self)`
     #[test]
     fn _name_gpu_returns_none_when_absent() {
@@ -486,6 +538,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.name_gpu().fmt_string(), "N/A");
     }
+
     /// Test default format fn `vendor(&self)`
     #[test]
     fn _vendor_returns_correct_vendor_when_present() {
@@ -495,6 +548,7 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.vendor(), Vendor::Nvidia);
     }
+
     /// Test default format fn `vendor(&self)
     #[test]
     fn _vendor_returns_unknown_when_vendor_is_not_set() {
@@ -504,12 +558,14 @@ mod gpu_info_tests {
         };
         assert_eq!(gpu_info.vendor(), Vendor::Unknown);
     }
+
     /// Test default format fn `write_vendor(vendor: Vendor)`
     #[test]
     fn _write_vendor_creates_instance_with_specified_vendor() {
         let gpu_info = GpuInfo::write_vendor(Vendor::Nvidia);
         assert_eq!(gpu_info.vendor, Vendor::Nvidia);
     }
+
     /// Test `write_vendor()`
     #[test]
     fn _write_vendor_sets_other_fields_to_default() {
@@ -527,6 +583,7 @@ mod gpu_info_tests {
         assert_eq!(gpu_info.driver_version, None);
         assert_eq!(gpu_info.max_clock_speed, None);
     }
+
     /// Test `Display` implementation for `GpuInfo`
     #[test]
     fn _display_includes_all_fields_when_present() {
@@ -561,6 +618,7 @@ mod gpu_info_tests {
         assert!(display_output.contains("470.57.02"));
         assert!(display_output.contains("2100"));
     }
+
     /// Test `Display` implementation for `GpuInfo` with missing fields
     #[test]
     fn _display_handles_missing_fields_gracefully() {
@@ -583,6 +641,7 @@ mod gpu_info_tests {
         assert!(!display_output.contains("470.57.02"));
         assert!(!display_output.contains("2100"));
     }
+
     impl MockCommand {
         /// Creates a init `MockCommand` with the given success state and output.
         ///
@@ -638,6 +697,7 @@ mod gpu_info_tests {
             *mc.borrow_mut() = Some(MockCommand::new(success, output));
         });
     }
+
     /// Tests various methods of `GpuInfo` struct.
     ///
     /// This test initializes a `GpuInfo` instance with sample data
@@ -677,6 +737,7 @@ mod gpu_info_tests {
         assert_eq!(gpu.power_limit(), None);
         assert_eq!(gpu.active(), None);
     }
+
     /// Tests that `GpuManager` can be successfully created and that it is
     /// initialized with a non-empty list of GPUs and the active GPU set to 0.
     #[test]
@@ -689,6 +750,7 @@ mod gpu_info_tests {
         assert_eq!(gpu.active.fmt_string(), "N/A");
     }
 }
+
 /// Tests the `check_power_state` method of `GpuManager`.
 ///
 /// # Note
@@ -734,6 +796,7 @@ mod mock_impl {
         })
     }
 }
+
 #[test]
 #[cfg(target_os = "linux")]
 fn integration_test_real_system() {
@@ -741,10 +804,8 @@ fn integration_test_real_system() {
     use crate::GpuManager;
     use std::fs;
     use std::path::Path;
-
     let manager = GpuManager::new();
     let gpus = manager.get_all_gpus_owned();
-
     if Path::new("/usr/bin/nvidia-smi").exists() {
         assert!(gpus.iter().any(|g| matches!(g.vendor, Vendor::Nvidia)));
     }
@@ -762,6 +823,7 @@ fn integration_test_real_system() {
         }
     }
 }
+
 /// Tests that `GpuManager` correctly returns the vendor of the first GPU in its list
 ///
 /// # Assertions
@@ -774,6 +836,7 @@ fn test_get_vendor_nvidia() {
     let gpu = manager;
     assert!(matches!(gpu.vendor, crate::vendor::Vendor::Unknown));
 }
+
 #[cfg(test)]
 #[cfg(target_os = "linux")]
 mod linux_nvidia_provider_test {
@@ -801,7 +864,6 @@ mod linux_nvidia_provider_test {
     #[test]
     fn test_nvidia_provider_detect_gpus_integration() {
         let provider = NvidiaLinuxProvider::new();
-
         match provider.detect_gpus() {
             Ok(gpus) => {
                 assert!(!gpus.is_empty(), "Should detect at least one GPU");

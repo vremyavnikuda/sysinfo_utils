@@ -252,6 +252,7 @@ impl GpuProvider for NvidiaLinuxProvider {
             Ok(vec![gpu_info])
         }
     }
+
     fn update_gpu(&self, gpu: &mut GpuInfo) -> Result<()> {
         let gpus = self.detect_gpus()?;
         if let Some(updated_gpu) = gpus.first() {
